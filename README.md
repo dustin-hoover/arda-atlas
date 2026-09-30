@@ -30,7 +30,8 @@ npm run dev          # builds, then serves http://localhost:8765/dist/preview.ht
 | `site/index.html`, `site/blueprint.html` | Full documents for any static host |
 
 MapLibre, three.js and the fonts load from jsDelivr and Google Fonts at runtime, so the built page is
-one file. To deploy, upload the contents of `site/` to GitHub Pages, Netlify or Cloudflare Pages.
+one file. Every push to `main` rebuilds and publishes `site/` to GitHub Pages
+(`.github/workflows/pages.yml`): https://dustin-hoover.github.io/arda-atlas/
 
 ## Project layout
 
