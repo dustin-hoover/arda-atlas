@@ -1,0 +1,16 @@
+{
+  "name": "arda-atlas",
+  "version": "0.3.0",
+  "private": true,
+  "description": "A procedurally generated, Earth-like globe of Middle-earth: 3D terrain, GIS layers, timeline, weather, ground view and a generative score.",
+  "scripts": {
+    "build": "node build.js",
+    "dev": "node build.js && node scripts/serve.js",
+    "serve": "node scripts/serve.js",
+    "check": "for f in src/*.js; do node --check $f || exit 1; done && echo syntax ok"
+  },
+  "dependencies": {
+    "maplibre-gl": "5.24.0",
+    "three": "0.160.0"
+  }
+}

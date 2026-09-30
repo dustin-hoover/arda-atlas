@@ -1,0 +1,43 @@
+<!doctype html><html><body style="margin:0;background:#222;color:#ddd;font:12px sans-serif">
+<script src="../src/geo.js"></script><script src="../src/gen.js"></script><script src="../src/rasters.js"></script>
+<div id="out" style="display:flex;flex-wrap:wrap;gap:4px"></div>
+<script>
+const t0=performance.now();
+const data = RASTERS.build(GEO);
+const t1=performance.now();
+GEN.init(data);
+function lon2t(lon,z){return (lon+180)/360*Math.pow(2,z);}
+function lat2t(lat,z){const r=lat*Math.PI/180;return (1-Math.log(Math.tan(r)+1/Math.cos(r))/Math.PI)/2*Math.pow(2,z);}
+function tileAt(X,Y,z){const ll=GEN.toLL(X,Y);return [Math.floor(lon2t(ll[0],z)),Math.floor(lat2t(ll[1],z))];}
+const log=[];
+function show(label,z,X,Y,mode=0,span=1){
+  const [tx,ty]=tileAt(X,Y,z);
+  const c=document.createElement('canvas');c.width=256*span;c.height=256*span;const ctx=c.getContext('2d');
+  const s=performance.now();
+  for(let j=0;j<span;j++)for(let i=0;i<span;i++){
+    const r=GEN.imageryTile(z,tx+i,ty+j,256,mode);
+    ctx.putImageData(new ImageData(r.rgba,256,256),i*256,j*256);
+    const zz=Math.pow(2,z);
+    const proj=(X,Y)=>{const ll=GEN.toLL(X,Y);return [(lon2t(ll[0],z)-tx-i)*256,(lat2t(ll[1],z)-ty-j)*256];};
+    ctx.save();ctx.translate(i*256,j*256);ctx.beginPath();ctx.rect(0,0,256,256);ctx.clip();
+    const pix=GEN.EARTH_C*Math.cos(GEN.toLL(X,Y)[1]*Math.PI/180)/(256*zz)/GEN.MI;
+    GEN.drawVectors(ctx,proj,[X-400,Y-400,X+400,Y+400],pix,mode);ctx.restore();
+  }
+  log.push(label+' '+(performance.now()-s).toFixed(0)+'ms');
+  const d=document.createElement('div');d.appendChild(c);d.appendChild(document.createTextNode(label));document.getElementById('out').appendChild(d);
+}
+show('z2 world',2,600,-500,0,2);
+show('z4 ME',4,500,-300,0,2);
+show('z6 Gondor',6,700,-600,0,2);
+show('z7 Shire',7,0,-10);
+show('z8 Misty',8,430,-150);
+show('z9 Rohan',9,480,-440);
+show('z11 Mordor',11,860,-560);
+show('z13 Shire',13,0,0);
+show('z15 Hobbiton',15,-1,0);
+show('z14 MT',14,720,-600);
+show('z16 Mirkwood',16,650,100);
+show('z6 parchment',6,300,-200,1,2);
+show('z5 hypso',5,500,-300,2);
+document.title='done '+(t1-t0).toFixed(0)+' '+log.join(' | ');
+</script></body></html>

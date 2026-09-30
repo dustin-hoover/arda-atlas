@@ -1,0 +1,5 @@
+node_modules/
+dist/preview.html
+tools/shots/
+__pycache__/
+site/

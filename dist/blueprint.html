@@ -1,0 +1,208 @@
+<title>Arda Atlas Blueprint</title>
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+<link rel="stylesheet" href="https://fonts.googleapis.com/css2?family=Alegreya+Sans:ital,wght@0,400;0,500;0,700;1,400&family=IBM+Plex+Mono:wght@400;500&family=IM+Fell+English:ital@0;1&family=IM+Fell+English+SC&display=swap">
+<style>
+:root {
+  /* Layout: a single reading column of ~68ch with wide figures and tables allowed to breathe to 980px. */
+  --bg: #f4efe4; --paper: #fbf8f1; --fg: #231e17; --muted: #6e6557; --rule: #ddd2bd; --accent: #8a5a12; --ithil: #2f6f82; --ember: #a8432c; --code: #efe7d6;
+  --font-display: 'IM Fell English', 'Iowan Old Style', Georgia, serif;
+  --font-sc: 'IM Fell English SC', 'IM Fell English', Georgia, serif;
+  --font-ui: 'Alegreya Sans', 'Gill Sans', 'Segoe UI', system-ui, sans-serif;
+  --font-data: 'IBM Plex Mono', ui-monospace, Menlo, monospace;
+}
+@media (prefers-color-scheme: dark) { :root:not([data-theme="light"]) { --bg: #12151b; --paper: #171b22; --fg: #ebe5d6; --muted: #a39b8c; --rule: #2e333d; --accent: #deb062; --ithil: #8ec5d6; --ember: #e2785c; --code: #1f242d; color-scheme: dark; } }
+:root[data-theme="dark"] { --bg: #12151b; --paper: #171b22; --fg: #ebe5d6; --muted: #a39b8c; --rule: #2e333d; --accent: #deb062; --ithil: #8ec5d6; --ember: #e2785c; --code: #1f242d; color-scheme: dark; }
+body { background: var(--bg); color: var(--fg); font: 17px/1.6 var(--font-ui); margin: 0; }
+.wrap { max-width: 980px; margin: 0 auto; padding-inline: 20px; padding-block: 48px 80px; }
+.col { max-width: 68ch; }
+header { border-bottom: 1px solid var(--rule); padding-bottom: 28px; margin-bottom: 36px; }
+.eyebrow { font: 500 12px/1 var(--font-data); letter-spacing: 0.14em; text-transform: uppercase; color: var(--accent); }
+h1 { font: 400 clamp(38px, 6vw, 58px)/1.02 var(--font-display); margin: 14px 0 12px; text-wrap: balance; }
+.lede { font: italic 21px/1.45 var(--font-display); color: var(--muted); margin: 0; max-width: 60ch; }
+h2 { font: 400 30px/1.15 var(--font-display); margin: 56px 0 10px; text-wrap: balance; }
+h2 small { display: block; font: 500 12px/1 var(--font-data); letter-spacing: 0.14em; text-transform: uppercase; color: var(--muted); margin-bottom: 10px; }
+h3 { font: 700 17px/1.3 var(--font-ui); margin: 28px 0 6px; }
+p, li { max-width: 68ch; }
+ul { padding-left: 1.2em; } li { margin: 4px 0; }
+.mono, code { font-family: var(--font-data); font-size: 0.86em; }
+code { background: var(--code); padding: 1px 5px; border-radius: 4px; }
+.tbl { overflow-x: auto; margin: 18px 0; border: 1px solid var(--rule); border-radius: 8px; background: var(--paper); }
+table { border-collapse: collapse; width: 100%; font-size: 15px; font-variant-numeric: tabular-nums; }
+th, td { text-align: left; padding: 9px 12px; border-bottom: 1px solid var(--rule); vertical-align: top; }
+th { font: 500 11.5px var(--font-data); letter-spacing: 0.08em; text-transform: uppercase; color: var(--muted); background: var(--code); }
+tr:last-child td { border-bottom: 0; }
+td.n { text-align: right; font-family: var(--font-data); font-size: 13.5px; white-space: nowrap; }
+.note { font-size: 14.5px; color: var(--muted); }
+.callout { border-left: 3px solid var(--ember); background: var(--paper); padding: 14px 18px; margin: 22px 0; border-radius: 0 8px 8px 0; max-width: 68ch; }
+.callout b { color: var(--ember); }
+.grid { display: grid; grid-template-columns: repeat(auto-fit, minmax(260px, 1fr)); gap: 14px; margin: 18px 0; }
+.card { background: var(--paper); border: 1px solid var(--rule); border-radius: 8px; padding: 14px 16px; min-width: 0; }
+.card h4 { font: 400 20px/1.2 var(--font-display); margin: 0 0 4px; }
+.card p { font-size: 15px; margin: 6px 0 0; }
+.tag { display: inline-block; font: 500 11px var(--font-data); letter-spacing: 0.06em; text-transform: uppercase; padding: 2px 7px; border-radius: 4px; border: 1px solid var(--rule); color: var(--muted); }
+.tag.done { color: var(--ithil); border-color: currentColor; }
+.fig { margin: 22px 0; overflow-x: auto; background: var(--paper); border: 1px solid var(--rule); border-radius: 8px; padding: 14px; }
+.fig svg { display: block; min-width: 760px; width: 100%; height: auto; }
+.phase { display: grid; grid-template-columns: 110px 1fr; gap: 6px 18px; padding: 16px 0; border-top: 1px solid var(--rule); }
+.phase .when { font: 500 12px/1.4 var(--font-data); color: var(--accent); letter-spacing: 0.06em; text-transform: uppercase; }
+.phase h3 { margin: 0 0 4px; }
+.phase p { margin: 4px 0; }
+@media (max-width: 600px) { .phase { grid-template-columns: 1fr; } body { font-size: 16px; } }
+</style>
+
+<div class="wrap">
+<header>
+  <div class="eyebrow">Arda Atlas · engineering blueprint</div>
+  <h1>From a procedural globe to street level in Middle-earth</h1>
+  <p class="lede">What the working prototype does today, how big the full world really is, and the pipeline that gets it to Street View fidelity without storing petabytes.</p>
+</header>
+
+<div class="col">
+<h2><small>01 · Where it stands</small>The prototype is a complete, if small, version of the system</h2>
+<p>The atlas already runs every layer of the eventual stack, end to end, in one browser page:</p>
+<ul>
+  <li><b>Canon layer.</b> Hand-authored vectors on a miles-from-Hobbiton grid: 112 places, 17 mountain ranges, 44 rivers (about 11,100 miles), 5,300 miles of roads, 19 forests, realms for three eras, 24 farthings/fiefs/folds and 27 peoples. Anchored on Tolkien's own statements of scale (Hobbiton at Oxford's latitude, Minas Tirith roughly 600 miles south).</li>
+  <li><b>Physical synthesis.</b> The vectors are rasterised into 16 field layers, then Web Workers generate terrain (Terrarium DEM) and imagery tiles on demand with fractal noise, domain warping, a carved drainage network, forest canopies, field patchworks and rooftops. Detail continues to roughly 2 m per pixel.</li>
+  <li><b>Presentation.</b> MapLibre GL JS globe with 3D terrain, extruded buildings, Tolkien-style labels, three basemaps, a GIS identify tool, measuring in miles and leagues, and guided flights.</li>
+  <li><b>Time.</b> A Shire-Reckoning timeline drives journeys (Frodo, Aragorn, Merry and Pippin, Gandalf, Bilbo), the sun, and a deterministic weather model with fronts, isobars, radar, temperature, wind and the recorded storms of the War of the Ring.</li>
+  <li><b>Ground.</b> A three.js walkable view: streamed terrain patches, a 120 km horizon with Earth curvature, instanced trees and grass, culture-specific buildings, sky and weather.</li>
+</ul>
+<div class="callout"><b>Honest scope.</b> No generative AI model produced the pixels in this prototype. Everything is deterministic procedural generation running on your device, which is why it loads instantly and costs nothing to host. Generative models belong in the pipeline below, at the stages where they add realism that noise cannot.</div>
+
+<h2><small>02 · The size of the problem</small>Street-level Middle-earth is a petabyte-class dataset if you store it naively</h2>
+<p>The mapped heart of Middle-earth, from the Blue Mountains to Mordor and from Angmar to Harondor, is about 6 million km² of land. At a mean latitude of 45° a web-map tile covers 28,337 / 2<sup>z</sup> km on a side.</p>
+</div>
+<div class="tbl"><table>
+  <thead><tr><th>Zoom</th><th>Ground pixel</th><th>What you can see</th><th>Tiles over 6M km²</th><th>Imagery at ~30 KB/tile</th><th>GPU time at 0.2 s/tile</th></tr></thead>
+  <tbody>
+    <tr><td class="n">z12</td><td class="n">27 m</td><td>Forests, lakes, large fields</td><td class="n">125 k</td><td class="n">3.8 GB</td><td class="n">7 hours</td></tr>
+    <tr><td class="n">z14</td><td class="n">6.8 m</td><td>Villages, roads, hedgerows</td><td class="n">2.0 M</td><td class="n">60 GB</td><td class="n">4.6 days</td></tr>
+    <tr><td class="n">z16</td><td class="n">1.7 m</td><td>Individual trees and houses</td><td class="n">32 M</td><td class="n">0.96 TB</td><td class="n">74 days</td></tr>
+    <tr><td class="n">z18</td><td class="n">0.42 m</td><td>Doors, carts, garden rows</td><td class="n">513 M</td><td class="n">15 TB</td><td class="n">3.3 years</td></tr>
+    <tr><td>Street</td><td class="n">—</td><td>360° panoramas every 20 m along 8,600 km of road</td><td class="n">430 k panos</td><td class="n">0.4–1.3 TB</td><td class="n">depends on model</td></tr>
+  </tbody>
+</table></div>
+<div class="col">
+<p class="note">Storage and GPU figures are planning estimates. They assume WebP tiles and a batched image model that emits one 256-pixel tile in 0.2 seconds on a data-centre GPU; halve or double them freely, the conclusion does not change.</p>
+<p>The conclusion: <b>generate, don't store.</b> The canon database is a few megabytes. Everything below it is a deterministic function of the canon plus fixed model weights and seeds, so it can be regenerated identically at any time. Pre-build the pyramid to about z14, generate deeper tiles on first request, and let a CDN keep whatever people actually look at. Middle-earth is mostly empty wilderness; demand will cluster around the Shire, Rohan, Gondor and the journeys.</p>
+
+<h2><small>03 · Architecture</small>Five layers, each regenerable from the one above</h2>
+</div>
+<div class="fig" role="img" aria-label="Pipeline diagram: canon vectors feed physical synthesis, which feeds appearance synthesis and 3D content, which are served as tiles to web and ground clients">
+<svg viewBox="0 0 940 300" xmlns="http://www.w3.org/2000/svg" font-family="Alegreya Sans, sans-serif">
+  <defs><marker id="ar" viewBox="0 0 10 10" refX="9" refY="5" markerWidth="7" markerHeight="7" orient="auto"><path d="M0 0 10 5 0 10z" fill="var(--muted)"/></marker></defs>
+  <g font-size="14">
+    <rect x="10" y="40" width="160" height="220" rx="8" fill="var(--code)" stroke="var(--rule)"/>
+    <text x="90" y="66" text-anchor="middle" font-family="IM Fell English, serif" font-size="19" fill="var(--fg)">Canon</text>
+    <text x="90" y="92" text-anchor="middle" fill="var(--muted)">PostGIS + Kart</text>
+    <text x="90" y="126" text-anchor="middle" fill="var(--fg)">coasts · ranges</text>
+    <text x="90" y="148" text-anchor="middle" fill="var(--fg)">rivers · roads</text>
+    <text x="90" y="170" text-anchor="middle" fill="var(--fg)">places · realms</text>
+    <text x="90" y="192" text-anchor="middle" fill="var(--fg)">journeys · events</text>
+    <text x="90" y="232" text-anchor="middle" fill="var(--accent)" font-size="12.5">provenance on every row</text>
+
+    <rect x="210" y="40" width="170" height="220" rx="8" fill="var(--code)" stroke="var(--rule)"/>
+    <text x="295" y="66" text-anchor="middle" font-family="IM Fell English, serif" font-size="19" fill="var(--fg)">Physical</text>
+    <text x="295" y="92" text-anchor="middle" fill="var(--muted)">GPU simulation</text>
+    <text x="295" y="126" text-anchor="middle" fill="var(--fg)">uplift + erosion DEM</text>
+    <text x="295" y="148" text-anchor="middle" fill="var(--fg)">flow accumulation</text>
+    <text x="295" y="170" text-anchor="middle" fill="var(--fg)">climate + biomes</text>
+    <text x="295" y="192" text-anchor="middle" fill="var(--fg)">land-cover classes</text>
+    <text x="295" y="232" text-anchor="middle" fill="var(--accent)" font-size="12.5">deterministic, seeded</text>
+
+    <rect x="420" y="20" width="190" height="120" rx="8" fill="var(--code)" stroke="var(--rule)"/>
+    <text x="515" y="46" text-anchor="middle" font-family="IM Fell English, serif" font-size="19" fill="var(--fg)">Appearance</text>
+    <text x="515" y="72" text-anchor="middle" fill="var(--muted)">conditioned diffusion</text>
+    <text x="515" y="96" text-anchor="middle" fill="var(--fg)">DEM + classes → imagery</text>
+    <text x="515" y="118" text-anchor="middle" fill="var(--fg)">10 m → 0.5 m super-res</text>
+
+    <rect x="420" y="160" width="190" height="120" rx="8" fill="var(--code)" stroke="var(--rule)"/>
+    <text x="515" y="186" text-anchor="middle" font-family="IM Fell English, serif" font-size="19" fill="var(--fg)">3D content</text>
+    <text x="515" y="212" text-anchor="middle" fill="var(--muted)">grammars + hero models</text>
+    <text x="515" y="236" text-anchor="middle" fill="var(--fg)">buildings · walls · trees</text>
+    <text x="515" y="258" text-anchor="middle" fill="var(--fg)">glTF in 3D Tiles</text>
+
+    <rect x="650" y="40" width="130" height="220" rx="8" fill="var(--code)" stroke="var(--rule)"/>
+    <text x="715" y="66" text-anchor="middle" font-family="IM Fell English, serif" font-size="19" fill="var(--fg)">Serve</text>
+    <text x="715" y="100" text-anchor="middle" fill="var(--fg)">PMTiles</text>
+    <text x="715" y="124" text-anchor="middle" fill="var(--fg)">Martin</text>
+    <text x="715" y="148" text-anchor="middle" fill="var(--fg)">TiTiler · COG</text>
+    <text x="715" y="172" text-anchor="middle" fill="var(--fg)">3D Tiles / I3S</text>
+    <text x="715" y="196" text-anchor="middle" fill="var(--fg)">Zarr (weather)</text>
+    <text x="715" y="232" text-anchor="middle" fill="var(--accent)" font-size="12.5">CDN cache</text>
+
+    <rect x="820" y="40" width="110" height="100" rx="8" fill="var(--code)" stroke="var(--rule)"/>
+    <text x="875" y="70" text-anchor="middle" font-family="IM Fell English, serif" font-size="18" fill="var(--fg)">Globe</text>
+    <text x="875" y="96" text-anchor="middle" fill="var(--muted)">MapLibre</text>
+    <text x="875" y="118" text-anchor="middle" fill="var(--muted)">ArcGIS Pro</text>
+    <rect x="820" y="160" width="110" height="100" rx="8" fill="var(--code)" stroke="var(--rule)"/>
+    <text x="875" y="190" text-anchor="middle" font-family="IM Fell English, serif" font-size="18" fill="var(--fg)">Ground</text>
+    <text x="875" y="216" text-anchor="middle" fill="var(--muted)">CesiumJS</text>
+    <text x="875" y="238" text-anchor="middle" fill="var(--muted)">panoramas</text>
+  </g>
+  <g stroke="var(--muted)" stroke-width="1.6" fill="none" marker-end="url(#ar)">
+    <path d="M170 150h36"/><path d="M380 120l36-40"/><path d="M380 180l36 40"/>
+    <path d="M610 80l36 40"/><path d="M610 220l36-40"/><path d="M780 110h36"/><path d="M780 190h36"/>
+  </g>
+</svg>
+</div>
+<div class="col">
+<h3>1 · Canon: the only hand-made layer</h3>
+<p>Move the authored vectors from the prototype's JavaScript into PostGIS, versioned with Kart (git for geodata), and edit them in QGIS or ArcGIS Pro. Every feature carries a provenance field: <span class="mono">stated</span> (a text passage says so), <span class="mono">mapped</span> (read off Tolkien's or Christopher Tolkien's maps), <span class="mono">inferred</span> (scholarship such as Karen Wynn Fonstad's atlas) or <span class="mono">invented</span> (filled in for the simulation). The UI can then shade anything that is not canon, which matters for an audience that will argue about the Brandywine's course.</p>
+<p>Realms, provinces and peoples become temporal tables with <span class="mono">valid_from</span> and <span class="mono">valid_to</span> in Shire Reckoning, so one query can draw Arnor in T.A. 1300 or the Reunited Kingdom in F.A. 1. Publish a custom projected CRS (the sinusoidal mapping used here, centred on Hobbiton at 52°N) as WKT so desktop GIS measures true miles.</p>
+
+<h3>2 · Physical synthesis: from noise to erosion</h3>
+<p>The prototype's fractal noise gives believable texture but not believable landforms: valleys don't reliably drain and ridges don't branch. The upgrade is a GPU simulation at a 30 m base grid:</p>
+<ul>
+  <li>Build a tectonic uplift map from the authored ranges, then run hydraulic and thermal erosion so valleys, fans and ridgelines emerge the way they do on Earth.</li>
+  <li>Burn the canon rivers into the surface, then derive the rest of the stream network by flow accumulation (WhiteboxTools or GRASS <span class="mono">r.watershed</span>), so every generated brook actually reaches the Anduin.</li>
+  <li>Drive land cover from a climate model (temperature, moisture, rain shadow of the Misty Mountains) with the authored forests and farmland as hard constraints.</li>
+</ul>
+<p>Output: a 30 m DEM and a land-cover class raster for the whole continent, a few tens of gigabytes as Cloud-Optimized GeoTIFFs. Fine detail below 30 m stays procedural, as it is now.</p>
+
+<h3>3 · Appearance synthesis: where generative AI earns its place</h3>
+<p>Train a conditional diffusion model on real Earth: inputs are a DEM tile, a land-cover map and a climate vector; the target is the matching satellite image. Sentinel-2 (10 m, global), the Copernicus 30 m DEM and ESA WorldCover (10 m classes) give paired training data for the whole planet; NAIP (0.6 m, United States) supplies the high-resolution pairs for a super-resolution stage. At inference the model receives Arda's DEM and classes instead, and paints Middle-earth as if a satellite had photographed it.</p>
+<ul>
+  <li><b>Seams.</b> Generate with overlapping windows that share latents (the MultiDiffusion approach) and seed each tile from its coordinates, so a tile is identical every time it is regenerated.</li>
+  <li><b>Canon control.</b> Condition on class masks, so the model can't grow a forest where the Brown Lands must be bare, and let artists paint prompt masks for special places: the golden mallorn canopy of Lórien, the slag of Gorgoroth, the white stone of the Pelennor.</li>
+  <li><b>Cost.</b> Build to z14 once (about 2 million tiles, under a week on one GPU at the rate in the table), then generate deeper tiles on demand behind the cache.</li>
+</ul>
+
+<h3>4 · 3D content</h3>
+<p>Buildings come from per-culture procedural grammars, extended from the prototype's rules: hobbit smials cut into hillsides, Rohirric long halls with thatch, Gondorian stone in tiers. The handful of places everyone will visit get hand-built hero models: Minas Tirith's seven walls, Orthanc, Meduseld, the Hornburg, Barad-dûr, the Argonath. Text-to-3D models can rough these out, but expect an artist to finish them. Package everything as glTF inside OGC 3D Tiles, or I3S scene layers for the ArcGIS side. Vegetation is instanced from species libraries keyed to biome and elevation.</p>
+
+<h3>5 · Street level</h3>
+<p>There are two complementary routes, and the second depends on the first:</p>
+<ul>
+  <li><b>Real-time 3D.</b> Stream the DEM, imagery and 3D Tiles into CesiumJS (or Cesium for Unreal on desktop) for a free-roaming ground view like the prototype's, at much higher fidelity.</li>
+  <li><b>Photoreal panoramas.</b> Render 360° frames along the road network every 20 m from that 3D scene, then pass each through an image-to-image diffusion model conditioned on the rendered depth and segmentation. The geometry pins the model to the world, so the Great West Road looks the same whichever direction you arrive from. About 430,000 panoramas cover every road in the canon layer. Gaussian splatting fitted to clusters of generated views can then give smooth movement between them.</li>
+</ul>
+
+<h3>Weather</h3>
+<p>The prototype's weather is an analytic model: pressure systems placed by a seeded schedule, winds from the pressure gradient, clouds from fronts and orographic lift. The next step is a coarse physical simulation (a primitive-equation or shallow-water model on a 25 km grid) nudged towards the recorded events: the Caradhras blizzard, the storm over Helm's Deep, the Dawnless Day. Publish it as a time-indexed Zarr cube and a WMS-T service, so any GIS client can scrub through the War of the Ring hour by hour.</p>
+
+<h2><small>04 · Open-source serving stack</small>No proprietary lock-in, and ArcGIS Pro can still read all of it</h2>
+</div>
+<div class="grid">
+  <div class="card"><h4>Database</h4><p>PostGIS for canon and temporal tables. Kart for versioning and review. GeoPackage exports for desktop users.</p></div>
+  <div class="card"><h4>Vector tiles</h4><p>Martin serving PostGIS live during editing. Static PMTiles on object storage for production, one file per layer.</p></div>
+  <div class="card"><h4>Rasters</h4><p>Cloud-Optimized GeoTIFFs for the DEM and land cover, served by TiTiler. Generated imagery cached as PMTiles behind a CDN.</p></div>
+  <div class="card"><h4>3D</h4><p>OGC 3D Tiles for CesiumJS and MapLibre. I3S scene layers for ArcGIS Pro and ArcGIS Online.</p></div>
+  <div class="card"><h4>Compute</h4><p>The prototype's generator ported to Rust or WebGPU compute for server tiles. The diffusion model on a GPU queue that fills cache misses.</p></div>
+  <div class="card"><h4>Clients</h4><p>MapLibre GL JS for the globe, CesiumJS for ground level, and the same services consumed directly in ArcGIS Pro for analysis.</p></div>
+</div>
+
+<div class="col">
+<h2><small>05 · Roadmap</small>Four phases, each shippable on its own</h2>
+<div class="phase"><div class="when"><span class="tag done">Done</span><br>Phase 0</div><div><h3>Procedural prototype</h3><p>The Arda Atlas: canon vectors, client-side terrain and imagery, GIS layers, timeline, weather and the ground explorer.</p></div></div>
+<div class="phase"><div class="when">Phase 1<br>~6–8 weeks</div><div><h3>Canon database and server tiles</h3><p>PostGIS schema with provenance and temporal validity, a much denser gazetteer (every named place in the books and appendices), the generator running server-side, and PMTiles on a CDN. The web client stops generating on the device, so phones load as fast as desktops.</p></div></div>
+<div class="phase"><div class="when">Phase 2<br>~3 months</div><div><h3>Eroded terrain and generative imagery</h3><p>30 m eroded DEM, drained river networks, the conditioned diffusion model trained on Sentinel-2 and NAIP pairs, and the pyramid pre-built to z14 with on-demand generation deeper down.</p></div></div>
+<div class="phase"><div class="when">Phase 3<br>~3–4 months</div><div><h3>Cities, forests and ground level</h3><p>Culture grammars and hero models delivered as 3D Tiles, instanced vegetation, and a CesiumJS ground explorer that streams everything above.</p></div></div>
+<div class="phase"><div class="when">Phase 4<br>open-ended</div><div><h3>Street View of Middle-earth</h3><p>Depth-conditioned panoramas along every canon road, splat-based movement between them, and the physical weather cube so every panorama can be seen in the right season, hour and storm.</p></div></div>
+<p class="note">Durations assume a small team (a GIS developer, a graphics engineer and an ML engineer) and are rough planning figures.</p>
+
+<h2><small>06 · Before going public</small>Rights</h2>
+<p>Middle-earth's names, text and maps belong to the Tolkien Estate, with film and merchandise rights held separately. A free, non-commercial fan atlas that uses place names and original descriptions is common practice; anything sold, sponsored, or trained on reproduced maps and artwork needs a licence and a lawyer's review. Keep the canon layer to facts (names, relative positions, stated distances) and write every description in your own words, as the prototype does.</p>
+</div>
+</div>
