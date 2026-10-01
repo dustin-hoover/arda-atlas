@@ -137,6 +137,9 @@ button { cursor: pointer; }
 #status { position: fixed; left: 12px; bottom: calc(12px + env(safe-area-inset-bottom, 0px)); z-index: 9; font: 11.5px/1.5 var(--font-data); color: var(--muted); padding: 7px 10px; font-variant-numeric: tabular-nums; min-width: 230px; }
 #status b { color: var(--fg); font-weight: 400; }
 #ctrl { position: fixed; right: 12px; bottom: calc(12px + env(safe-area-inset-bottom, 0px)); z-index: 10; display: flex; flex-direction: column; gap: 6px; align-items: flex-end; }
+#cgrps { display: flex; flex-direction: column; gap: 6px; align-items: flex-end; transition: transform .25s ease, opacity .2s ease, visibility 0s; }
+#ctrl #ctog { display: none; }
+#ctog svg { transition: transform .25s ease; }
 #ctrl .grp { display: flex; flex-direction: column; padding: 3px; gap: 2px; }
 #ctrl button { width: 38px; height: 38px; border: 0; background: none; border-radius: 7px; display: grid; place-items: center; color: var(--muted); font: 600 12px var(--font-data); }
 #ctrl button:hover { background: var(--raise); color: var(--fg); }
@@ -193,7 +196,11 @@ body.pick #map canvas { cursor: crosshair !important; }
   #tdate { font-size: 16px; }
   #tmeta select { max-width: 110px; }
   #status { display: none; }
-  #ctrl { bottom: auto; top: calc(116px + env(safe-area-inset-top, 0px)); }
+  #ctrl { bottom: auto; top: calc(116px + env(safe-area-inset-top, 0px)); right: 8px; }
+  /* On phones the controls dock behind one handle; pinch and drag cover most of them anyway. */
+  #ctrl #ctog { display: grid; color: var(--fg); }
+  #ctrl:not(.docked) #ctog svg { transform: rotate(180deg); }
+  #ctrl.docked #cgrps { transform: translateX(calc(100% + 16px)); opacity: 0; visibility: hidden; pointer-events: none; transition: transform .25s ease, opacity .2s ease, visibility 0s .25s; }
   #scale { display: none; }
   #caption { bottom: calc(160px + env(safe-area-inset-bottom, 0px)); }
   #gpad { display: grid; }

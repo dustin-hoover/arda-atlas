@@ -1037,6 +1037,22 @@ $('#bglobe').onclick = () => { const g = !$('#bglobe').classList.contains('on');
 $('#bwx').onclick = () => setWxMaster(!S.wxMaster);
 $('#bhome').onclick = () => map.flyTo({ center: ll(560, -300), zoom: 4.1, pitch: 28, bearing: 0, duration: 4500 });
 
+// Phone layout: the right-hand controls dock behind one handle. They start docked, slide out on a tap,
+// and dock again when the map is dragged or pinched, or after a few idle seconds.
+const ctrlEl = $('#ctrl'), phone = matchMedia('(max-width: 760px)');
+let ctrlTimer = 0;
+function dockCtrl(docked) {
+  clearTimeout(ctrlTimer);
+  ctrlEl.classList.toggle('docked', docked);
+  $('#ctog').setAttribute('aria-expanded', docked ? 'false' : 'true');
+  if (!docked && phone.matches) ctrlTimer = setTimeout(() => dockCtrl(true), 6000);
+}
+dockCtrl(phone.matches);
+phone.addEventListener('change', e => dockCtrl(e.matches));
+$('#ctog').onclick = () => dockCtrl(!ctrlEl.classList.contains('docked'));
+$('#cgrps').addEventListener('click', () => { if (phone.matches) dockCtrl(false); });
+map.on('movestart', e => { if (phone.matches && e.originalEvent && !ctrlEl.classList.contains('docked')) dockCtrl(true); });
+
 /* ---------------- tours ---------------- */
 const TOURS = [
   { name: 'The Road Goes Ever On', blurb: 'The Ring\'s journey from Bag End to the Cracks of Doom.', stops: [['Hobbiton', 14.6, 62, 40, 'The Hill and Bag End, where the road begins.'], ['Bree', 13.4, 60, 90, 'The crossroads town and The Prancing Pony.'], ['Amon Sûl', 12.5, 66, 20, 'Weathertop, the ruined watch-tower of Arnor.'], ['Rivendell', 12.6, 70, 120, 'Elrond\'s house in its hidden valley.'], ['Caradhras', 11, 72, 200, 'The cruel Redhorn, where the snow turned the Company back.'], ['Caras Galadhon', 12.6, 64, 30, 'The golden wood of Lórien in the season of fading.'], ['Argonath', 13.4, 72, 180, 'The Pillars of the Kings at the gates of Gondor.'], ['Orodruin', 11.3, 70, 250, 'Mount Doom, above the ash of Gorgoroth.']] },

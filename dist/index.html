@@ -143,6 +143,9 @@ button { cursor: pointer; }
 #status { position: fixed; left: 12px; bottom: calc(12px + env(safe-area-inset-bottom, 0px)); z-index: 9; font: 11.5px/1.5 var(--font-data); color: var(--muted); padding: 7px 10px; font-variant-numeric: tabular-nums; min-width: 230px; }
 #status b { color: var(--fg); font-weight: 400; }
 #ctrl { position: fixed; right: 12px; bottom: calc(12px + env(safe-area-inset-bottom, 0px)); z-index: 10; display: flex; flex-direction: column; gap: 6px; align-items: flex-end; }
+#cgrps { display: flex; flex-direction: column; gap: 6px; align-items: flex-end; transition: transform .25s ease, opacity .2s ease, visibility 0s; }
+#ctrl #ctog { display: none; }
+#ctog svg { transition: transform .25s ease; }
 #ctrl .grp { display: flex; flex-direction: column; padding: 3px; gap: 2px; }
 #ctrl button { width: 38px; height: 38px; border: 0; background: none; border-radius: 7px; display: grid; place-items: center; color: var(--muted); font: 600 12px var(--font-data); }
 #ctrl button:hover { background: var(--raise); color: var(--fg); }
@@ -199,7 +202,11 @@ body.pick #map canvas { cursor: crosshair !important; }
   #tdate { font-size: 16px; }
   #tmeta select { max-width: 110px; }
   #status { display: none; }
-  #ctrl { bottom: auto; top: calc(116px + env(safe-area-inset-top, 0px)); }
+  #ctrl { bottom: auto; top: calc(116px + env(safe-area-inset-top, 0px)); right: 8px; }
+  /* On phones the controls dock behind one handle; pinch and drag cover most of them anyway. */
+  #ctrl #ctog { display: grid; color: var(--fg); }
+  #ctrl:not(.docked) #ctog svg { transform: rotate(180deg); }
+  #ctrl.docked #cgrps { transform: translateX(calc(100% + 16px)); opacity: 0; visibility: hidden; pointer-events: none; transition: transform .25s ease, opacity .2s ease, visibility 0s .25s; }
   #scale { display: none; }
   #caption { bottom: calc(160px + env(safe-area-inset-bottom, 0px)); }
   #gpad { display: grid; }
@@ -260,6 +267,8 @@ input[type=range] { accent-color: var(--gold); }
 <div id="status" class="glass"><div id="s1">—</div><div id="s2">&nbsp;</div></div>
 <div id="scale"></div>
 <div id="ctrl">
+  <button id="ctog" class="glass" aria-controls="cgrps" aria-expanded="true" aria-label="Show or hide map controls"><svg viewBox="0 0 24 24"><path d="m14 6-6 6 6 6"/></svg></button>
+  <div id="cgrps">
   <div class="grp glass">
     <button id="zin" aria-label="Zoom in"><svg viewBox="0 0 24 24"><path d="M12 5v14M5 12h14"/></svg></button>
     <button id="zout" aria-label="Zoom out"><svg viewBox="0 0 24 24"><path d="M5 12h14"/></svg></button>
@@ -270,6 +279,7 @@ input[type=range] { accent-color: var(--gold); }
     <button id="bglobe" class="on" aria-label="Toggle globe"><svg viewBox="0 0 24 24"><circle cx="12" cy="12" r="9"/><path d="M3 12h18M12 3c3 3 3 15 0 18M12 3c-3 3-3 15 0 18"/></svg></button>
     <button id="bwx" class="on" aria-pressed="true" aria-label="Show or hide weather" title="Weather on/off"><svg viewBox="0 0 24 24"><path d="M7 17h10a4 4 0 0 0 .5-7.97A6 6 0 0 0 6 10a3.5 3.5 0 0 0 1 7Z"/></svg></button>
     <button id="bhome" aria-label="Fly to Middle-earth"><svg viewBox="0 0 24 24"><path d="M4 11 12 4l8 7v9H4z"/><path d="M10 20v-5h4v5"/></svg></button>
+  </div>
   </div>
 </div>
 
@@ -3797,6 +3807,22 @@ $('#b3d').onclick = () => { S.terrain = S.terrain === false; map.setTerrain(S.te
 $('#bglobe').onclick = () => { const g = !$('#bglobe').classList.contains('on'); map.setProjection({ type: g ? 'globe' : 'mercator' }); $('#bglobe').classList.toggle('on', g); };
 $('#bwx').onclick = () => setWxMaster(!S.wxMaster);
 $('#bhome').onclick = () => map.flyTo({ center: ll(560, -300), zoom: 4.1, pitch: 28, bearing: 0, duration: 4500 });
+
+// Phone layout: the right-hand controls dock behind one handle. They start docked, slide out on a tap,
+// and dock again when the map is dragged or pinched, or after a few idle seconds.
+const ctrlEl = $('#ctrl'), phone = matchMedia('(max-width: 760px)');
+let ctrlTimer = 0;
+function dockCtrl(docked) {
+  clearTimeout(ctrlTimer);
+  ctrlEl.classList.toggle('docked', docked);
+  $('#ctog').setAttribute('aria-expanded', docked ? 'false' : 'true');
+  if (!docked && phone.matches) ctrlTimer = setTimeout(() => dockCtrl(true), 6000);
+}
+dockCtrl(phone.matches);
+phone.addEventListener('change', e => dockCtrl(e.matches));
+$('#ctog').onclick = () => dockCtrl(!ctrlEl.classList.contains('docked'));
+$('#cgrps').addEventListener('click', () => { if (phone.matches) dockCtrl(false); });
+map.on('movestart', e => { if (phone.matches && e.originalEvent && !ctrlEl.classList.contains('docked')) dockCtrl(true); });
 
 /* ---------------- tours ---------------- */
 const TOURS = [

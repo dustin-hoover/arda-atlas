@@ -4,7 +4,7 @@ import os
 ROOT=os.path.abspath(os.path.join(os.path.dirname(__file__),'..'))+'/'
 async def main(steps, w=1440, h=900):
     async with async_playwright() as p:
-        b = await p.chromium.launch(args=['--use-gl=angle','--use-angle=swiftshader','--enable-unsafe-swiftshader','--ignore-gpu-blocklist','--enable-webgl'])
+        b = await p.chromium.launch(executable_path=os.environ.get('PW_CHROME') or None, args=['--use-gl=angle','--use-angle=swiftshader','--enable-unsafe-swiftshader','--ignore-gpu-blocklist','--enable-webgl'])
         pg = await b.new_page(viewport={'width':w,'height':h})
         msgs=[]
         pg.on('console', lambda m: msgs.append(f'{m.type}: {m.text[:300]}'))
