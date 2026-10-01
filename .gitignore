@@ -9,4 +9,5 @@ tools/refit/*.png
 tools/refit/*.npy
 tools/refit/*.json
 !tools/refit/anchors.json
+!tools/refit/fanchors.json
 tools/refit/geo.orig.js

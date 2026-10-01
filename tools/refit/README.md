@@ -24,5 +24,13 @@ Pipeline (run from this folder, Python 3 with numpy, scipy, scikit-image, Pillow
    (export `geo.json` from `src/geo.js` first; see the node one-liner in the commit history).
 `crop.py ct.png x0 y0 x1 y1 out.png [grid]` crops the map with a pixel grid for reading anchors.
 
+## Fonstad detail layer
+
+`fonstad.py` (with `fwarp.py` and `fanchors.json`) samples Karen Wynn Fonstad's Third Age map
+into the Tolkien-fitted frame: her hachured hill country becomes `GEO.RELIEF` (drawn into the hills
+channel), and her woodland outlines replaced Mirkwood, Fangorn, Lothlórien, Eryn Vorn, the Old
+Forest, Trollshaws, Chetwood, Drúadan Forest and the Woods of Lindon, the Swanfleet and Ethir
+Anduin marshes, and added the Woods of Rhûn. Coastline and positions are untouched.
+
 Next passes: river courses (Anduin above the Gladden, Hoarwell, Greyflood), Mirkwood's outline, and
 the Ered Mithrin; add anchors where the overlay disagrees and re-run.

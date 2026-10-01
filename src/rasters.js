@@ -50,7 +50,7 @@ function build(GEO) {
   ch[0] = boxBlur(landRaw, W, H, 1, 2);
   ch[1] = boxBlur(landRaw, W, H, 18, 3);
   begin(); lines(GEO.RANGES, f => f.w / RES, f => f.h / 5200); ch[2] = boxBlur(grab(), W, H, 2, 2);
-  begin(); lines(GEO.HILLS, f => f.w / RES, f => f.h / 1200); ch[3] = boxBlur(grab(), W, H, 2, 2);
+  begin(); lines(GEO.HILLS, f => f.w / RES, f => f.h / 1200); polys(GEO.RELIEF || [], f => f.v); ch[3] = boxBlur(grab(), W, H, 2, 2);
   { const foot = boxBlur(ch[2], W, H, 7, 3); for (let i = 0; i < foot.length; i++) ch[3][i] = Math.max(ch[3][i], Math.min(255, foot[i] * 1.6)); }
   begin(); polys(GEO.FORESTS, f => f.dens); ch[4] = boxBlur(grab(), W, H, 1, 2);
   begin(); polys(GEO.FORESTS.filter(f => f.gold), f => f.gold); ch[5] = boxBlur(grab(), W, H, 1, 2);

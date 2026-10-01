@@ -14,6 +14,8 @@ concatenates `src/` into a single HTML page. Read README.md for the file map.
 - Canon data is in **miles**: X east, Y north of Hobbiton. `GEN.toLL(X,Y)` / `GEN.toXY(lon,lat)` convert
   with a sinusoidal mapping anchored at Hobbiton = (0°, 52°N), so ground miles are preserved.
 - Key anchors: Rivendell (421,17), Minas Tirith (725,-599), Orodruin (840,-554), Edoras (438,-479).
+- Hill country (`RELIEF`) and most forest outlines come from Karen Wynn Fonstad's atlas, sampled onto
+  the same frame (`tools/refit/fonstad.py`).
 - Positions are fitted to Christopher Tolkien's general map: `COAST` is traced from it and everything
   else was moved onto it with a thin-plate-spline warp fitted to ~45 matching places.
 - Shire Reckoning time `t` = days since 2 Yule T.A. 3018; `WX.parse('3019 3 25')` → t. Months 1–12 are
