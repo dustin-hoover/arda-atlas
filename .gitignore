@@ -3,3 +3,10 @@ dist/preview.html
 tools/shots/
 __pycache__/
 site/
+
+# tools/refit: reference map images are copyrighted; keep them local
+tools/refit/*.png
+tools/refit/*.npy
+tools/refit/*.json
+!tools/refit/anchors.json
+tools/refit/geo.orig.js

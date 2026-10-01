@@ -58,7 +58,7 @@ dist/blueprint.html  scaling blueprint (data volumes, generative pipeline, roadm
 ```bash
 pip install playwright && python -m playwright install chromium
 npm run serve &
-python tools/app_test.py '[["waitready"],["eval","ARDA.map.jumpTo({center:GEN.toLL(720,-600),zoom:14.5,pitch:62,bearing:270}); null"],["idle",120000],["shot","mt.png"]]'
+python tools/app_test.py '[["waitready"],["eval","ARDA.map.jumpTo({center:GEN.toLL(725,-599),zoom:14.5,pitch:62,bearing:270}); null"],["idle",120000],["shot","mt.png"]]'
 ```
 
 Screenshots land in `tools/shots/`. The runner routes the CDN scripts to `node_modules`, so it works

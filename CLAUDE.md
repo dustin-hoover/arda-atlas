@@ -13,7 +13,9 @@ concatenates `src/` into a single HTML page. Read README.md for the file map.
 ## Coordinates
 - Canon data is in **miles**: X east, Y north of Hobbiton. `GEN.toLL(X,Y)` / `GEN.toXY(lon,lat)` convert
   with a sinusoidal mapping anchored at Hobbiton = (0°, 52°N), so ground miles are preserved.
-- Key anchors: Rivendell (362,14), Minas Tirith (720,-600), Orodruin (860,-565), Edoras (480,-440).
+- Key anchors: Rivendell (421,17), Minas Tirith (725,-599), Orodruin (840,-554), Edoras (438,-479).
+- Positions are fitted to Christopher Tolkien's general map: `COAST` is traced from it and everything
+  else was moved onto it with a thin-plate-spline warp fitted to ~45 matching places.
 - Shire Reckoning time `t` = days since 2 Yule T.A. 3018; `WX.parse('3019 3 25')` → t. Months 1–12 are
   Afteryule…Foreyule, 30 days each, with 3 Lithe days after month 6.
 

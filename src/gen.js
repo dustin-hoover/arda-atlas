@@ -480,9 +480,9 @@ function colorAt(X, Y, h, slope, pix, mode, dsea) {
     const an = fbm(X * 0.08, Y * 0.08, 4);
     const af = sstep(0.25, 0.55, ash + 0.3 * fbmA(X, Y, 6, Math.max(pix, 0.003), 0.8, 44));
     blend(62 + 12 * an, 57 + 10 * an, 54 + 8 * an, af * 0.94);
-    const dO = Math.hypot(X - 860, Y + 565);
+    const dO = Math.hypot(X - 840, Y + 554);
     if (dO < 30) {
-      const flows = Math.abs(noise(Math.atan2(Y + 565, X - 860) * 6, dO * 0.25));
+      const flows = Math.abs(noise(Math.atan2(Y + 554, X - 840) * 6, dO * 0.25));
       if (flows < 0.07) blend(98, 34, 16, (1 - flows / 0.07) * sat(1 - dO / 30) * 0.9);
       blend(40, 36, 36, sat(1 - dO / 12) * 0.6);
     }

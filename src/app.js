@@ -497,8 +497,8 @@ function weatherAt(X, Y, t, st) {
 
 /* ---------------- time & journeys ---------------- */
 const EVENTS = {
-  war: [['3018 9 18', 'Gandalf escapes from Orthanc on the Eagle Gwaihir', 400, -325], ['3018 9 22', 'Frodo\'s fiftieth birthday at Bag End', -0.7, 0.6], ['3018 9 23', 'Frodo, Sam and Pippin leave Bag End by night', -0.7, 0.6], ['3018 9 24', 'Gildor\'s Elves shelter the hobbits in the Woody End', 32, -12], ['3018 9 25', 'Across the Brandywine to Crickhollow', 63, -10], ['3018 9 26', 'Through the Old Forest to the house of Tom Bombadil', 78, -30], ['3018 9 28', 'Captured by a Barrow-wight', 88, -12], ['3018 9 29', 'The Prancing Pony at Bree; Strider', 104, 1], ['3018 10 6', 'Frodo is stabbed by the Witch-king on Weathertop', 205, -4], ['3018 10 20', 'Flight to the Ford of Bruinen', 345, 8], ['3018 10 25', 'The Council of Elrond', 362, 14], ['3018 12 25', 'The Fellowship sets out from Rivendell', 362, 14], ['3019 1 11', 'Snowstorm on Caradhras turns the Company back', 430, -148], ['3019 1 13', 'Wolves in Hollin; the Company enters Moria', 402, -162], ['3019 1 15', 'The Bridge of Khazad-dûm; Gandalf falls', 447, -166], ['3019 1 17', 'The Company comes to Caras Galadhon', 505, -205], ['3019 2 16', 'Farewell to Lórien', 552, -232], ['3019 2 26', 'Breaking of the Fellowship; death of Boromir', 706, -421], ['3019 3 1', 'Aragorn meets Gandalf the White in Fangorn', 505, -322], ['3019 3 3', 'Battle of the Hornburg', 410, -420], ['3019 3 3', 'The Ents destroy Isengard', 400, -325], ['3019 3 7', 'Faramir takes Frodo to Henneth Annûn', 765, -540], ['3019 3 8', 'The Beacons of Gondor are lit', 694, -578], ['3019 3 10', 'The Dawnless Day; the Rohirrim muster', 860, -565], ['3019 3 13', 'Frodo captured at Cirith Ungol; Aragorn takes Pelargir', 800, -579], ['3019 3 15', 'Battle of the Pelennor Fields', 728, -598], ['3019 3 25', 'The Ring is destroyed; Sauron is overthrown', 860, -564]],
-  hobbit: [['2941 4 28', 'The Company sets out from Bag End (dates approximate)', -0.7, 0.6], ['2941 5 20', 'Captured by trolls in the Trollshaws', 318, 16], ['2941 6 30', 'Rivendell on Midsummer\'s Eve', 362, 14], ['2941 7 6', 'Goblin-town; Bilbo finds the Ring', 442, 34], ['2941 7 9', 'Beorn\'s hall', 540, 150], ['2941 8 12', 'Taken by the Wood-elves', 700, 252], ['2941 9 22', 'Barrels out of bond', 722, 262], ['2941 10 10', 'The Lonely Mountain; Smaug slain at Lake-town', 765, 332], ['2941 11 23', 'Battle of Five Armies', 764, 318], ['2942 6 22', 'Bilbo returns to Bag End', -0.7, 0.6]],
+  war: [['3018 9 18', 'Gandalf escapes from Orthanc on the Eagle Gwaihir', 334, -379.1], ['3018 9 22', 'Frodo\'s fiftieth birthday at Bag End', 0.3, 0.5], ['3018 9 23', 'Frodo, Sam and Pippin leave Bag End by night', 0.3, 0.5], ['3018 9 24', 'Gildor\'s Elves shelter the hobbits in the Woody End', 44.9, -11.2], ['3018 9 25', 'Across the Brandywine to Crickhollow', 84, -7.4], ['3018 9 26', 'Through the Old Forest to the house of Tom Bombadil', 104.2, -24.2], ['3018 9 28', 'Captured by a Barrow-wight', 112.8, -6.6], ['3018 9 29', 'The Prancing Pony at Bree; Strider', 127.9, 7.4], ['3018 10 6', 'Frodo is stabbed by the Witch-king on Weathertop', 208, 11], ['3018 10 20', 'Flight to the Ford of Bruinen', 400.3, 3.7], ['3018 10 25', 'The Council of Elrond', 420.5, 17.5], ['3018 12 25', 'The Fellowship sets out from Rivendell', 420.5, 17.5], ['3019 1 11', 'Snowstorm on Caradhras turns the Company back', 414.8, -157.6], ['3019 1 13', 'Wolves in Hollin; the Company enters Moria', 380, -159.2], ['3019 1 15', 'The Bridge of Khazad-dûm; Gandalf falls', 420.3, -184.9], ['3019 1 17', 'The Company comes to Caras Galadhon', 454.7, -254.7], ['3019 2 16', 'Farewell to Lórien', 489.1, -297.6], ['3019 2 26', 'Breaking of the Fellowship; death of Boromir', 611.7, -462.2], ['3019 3 1', 'Aragorn meets Gandalf the White in Fangorn', 431.7, -377.3], ['3019 3 3', 'Battle of the Hornburg', 377.3, -451.8], ['3019 3 3', 'The Ents destroy Isengard', 334, -379.1], ['3019 3 7', 'Faramir takes Frodo to Henneth Annûn', 744.5, -565.6], ['3019 3 8', 'The Beacons of Gondor are lit', 694, -582.9], ['3019 3 10', 'The Dawnless Day; the Rohirrim muster', 840.1, -554], ['3019 3 13', 'Frodo captured at Cirith Ungol; Aragorn takes Pelargir', 781.2, -583.9], ['3019 3 15', 'Battle of the Pelennor Fields', 731.5, -602.2], ['3019 3 25', 'The Ring is destroyed; Sauron is overthrown', 840.3, -553.1]],
+  hobbit: [['2941 4 28', 'The Company sets out from Bag End (dates approximate)', 0.3, 0.5], ['2941 5 20', 'Captured by trolls in the Trollshaws', 362, 17.3], ['2941 6 30', 'Rivendell on Midsummer\'s Eve', 420.5, 17.5], ['2941 7 6', 'Goblin-town; Bilbo finds the Ring', 493.1, 7.2], ['2941 7 9', 'Beorn\'s hall', 565.6, 48.2], ['2941 8 12', 'Taken by the Wood-elves', 713.8, 81.2], ['2941 9 22', 'Barrels out of bond', 735.5, 87.4], ['2941 10 10', 'The Lonely Mountain; Smaug slain at Lake-town', 768.4, 138], ['2941 11 23', 'Battle of Five Armies', 769, 128.5], ['2942 6 22', 'Bilbo returns to Bag End', 0.3, 0.5]],
 };
 const JOURNEYS = {};
 for (const k in GEO.JOURNEYS) JOURNEYS[k] = GEO.JOURNEYS[k].map(j => ({ ...j, wp: j.pts.map(p => ({ X: p[0], Y: p[1], t: WX.parse(p[2]) })) }));
@@ -766,12 +766,12 @@ const PANEL_INIT = {
 function moodAt(X, Y, zoom) {
   if (zoom < 3.2) return 'world';
   GEN.evaluate(X, Y, 1);
-  if (GEN.R.s <= 0) return zoom < 6 && Math.hypot(X - 400, Y + 300) < 900 ? 'wild' : 'sea';
+  if (GEN.R.s <= 0) return zoom < 6 && Math.hypot(X - 329, Y + 342) < 900 ? 'wild' : 'sea';
   const mtn = GEN.F[2];
   const inR = n => { const r = GEO.REALMS.TA3018.find(r => r.name === n); return r && inPoly(X, Y, r); };
-  if (inR('Mordor') || inR('Dol Guldur') || inR('Isengard') || Math.hypot(X - 392, Y - 322) < 70) return 'mordor';
+  if (inR('Mordor') || inR('Dol Guldur') || inR('Isengard') || Math.hypot(X - 266, Y - 268) < 70) return 'mordor';
   if (['Lindon', 'Imladris', 'Lothlórien', 'Woodland Realm'].some(inR)) return 'elven';
-  if (Math.hypot(X - 426, Y + 164) < 30 || inR('Erebor & Dale') || inR('Iron Hills') || mtn > 0.35) return 'dwarf';
+  if (Math.hypot(X - 402, Y + 172) < 30 || inR('Erebor & Dale') || inR('Iron Hills') || mtn > 0.35) return 'dwarf';
   if (inR('The Shire') || inR('Buckland') || inR('Bree-land')) return 'shire';
   if (inR('Rohan')) return 'rohan';
   if (inR('Gondor')) return 'gondor';
@@ -1035,7 +1035,7 @@ map.on('rotate', () => { $('#compass svg').style.transform = `rotate(${-map.getB
 $('#b3d').onclick = () => { S.terrain = S.terrain === false; map.setTerrain(S.terrain === false ? null : { source: 'dem', exaggeration: S.exag || 1.35 }); $('#b3d').classList.toggle('on', S.terrain !== false); };
 $('#bglobe').onclick = () => { const g = !$('#bglobe').classList.contains('on'); map.setProjection({ type: g ? 'globe' : 'mercator' }); $('#bglobe').classList.toggle('on', g); };
 $('#bwx').onclick = () => setWxMaster(!S.wxMaster);
-$('#bhome').onclick = () => map.flyTo({ center: ll(560, -300), zoom: 4.1, pitch: 28, bearing: 0, duration: 4500 });
+$('#bhome').onclick = () => map.flyTo({ center: ll(483, -361), zoom: 4.1, pitch: 28, bearing: 0, duration: 4500 });
 
 // Phone layout: the right-hand controls dock behind one handle. They start docked, slide out on a tap,
 // and dock again when the map is dragged or pinched, or after a few idle seconds.
@@ -1099,7 +1099,7 @@ await sleep(250);
 $('#loader').classList.add('gone');
 setTimeout(() => $('#loader').remove(), 1200);
 await sleep(1600);
-if (map.getZoom() < 2) map.flyTo({ center: ll(520, -260), zoom: 4.0, pitch: 25, bearing: 0, duration: 6500, curve: 1.3, essential: true });
+if (map.getZoom() < 2) map.flyTo({ center: ll(451, -315), zoom: 4.0, pitch: 25, bearing: 0, duration: 6500, curve: 1.3, essential: true });
 
 window.ARDA = { map, S, setTime, GEO, showPlace, openGround, PL, PLN, flyToXY, setWx, setGroup, setBase, openPanel, playTour, TOURS };
 document.title = document.title;
