@@ -63,3 +63,13 @@ jsDelivr all work. On a normal static host (`site/`) none of these limits apply.
 See `dist/blueprint.html`: canon in PostGIS with provenance, eroded 30 m terrain, a conditioned
 diffusion model for imagery, 3D Tiles for cities, and street-level panoramas along the road network.
 Phase 1 is porting `gen.js` to run server-side and caching tiles as PMTiles.
+
+## Ground view content (src/world3d.js)
+- `world3d.js` is appended to `ground.js` at build time and shares its scope (THREE, MI, G, groundAt).
+- `W3town` models named landmarks (`special.kind`: orthanc, baraddur, morgul, ecthelion; `gate`, `mallorn`,
+  `prow`) and per-house detail (elven halls and towers, smial gardens, doors, windows, chimneys).
+- `W3people` places instanced townsfolk by settlement culture (`FOLK` → `KIN`); arms and legs swing in
+  the vertex shader, walking is a tiny agent loop in `userData.update`.
+- `W3hall('erebor' | 'moria')` builds the walkable interiors; `floorAt(x, z)` is the collision/height
+  model (null = wall or chasm). `ARDA.openHalls(kind, placeName)` opens one.
+- Orchards are a share of farm parcels (`GEN.orchardAt`); the worker emits them as tree kind 4.

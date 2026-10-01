@@ -901,9 +901,20 @@ function openCard(html, state) {
 const ACTIONS = {
   fly: s => flyToXY(s.X, s.Y, s.zoom || 13, 65, map.getBearing() + 30, 4500),
   ground: s => openGround(s.X, s.Y, s.name),
+  halls: s => openHalls(HALLS[s.name], s.name),
   measure: s => { if (!S.measure) toggleMeasure(); S.measure.push([s.X, s.Y]); drawMeasure(); },
 };
 const PKM = ['Hobbiton'];
+// places with a walkable interior under the mountain
+const HALLS = { 'Erebor': 'erebor', 'Front Gate of Erebor': 'erebor', 'Khazad-dûm': 'moria', 'West-gate of Moria': 'moria', 'Dimrill Gate': 'moria' };
+const HALL_TITLE = { erebor: 'The Halls of Erebor', moria: 'Khazad-dûm' };
+const hallBtn = name => HALLS[name] ? `<button class="btn" data-act="halls"><svg viewBox="0 0 24 24"><path d="M3 21V11a9 9 0 0 1 18 0v10"/><path d="M9 21v-6a3 3 0 0 1 6 0v6"/></svg>Enter the halls</button>` : '';
+function openHalls(kind, name) {
+  if (!window.GROUND) { toast('The ground view is still loading. Try again in a moment.'); return; }
+  togglePlay(false);
+  const p = PLN[name] || { X: 0, Y: 0 };
+  window.GROUND.open({ interior: kind, X: p.X, Y: p.Y, t: S.t, title: HALL_TITLE[kind], sub: '', run, weatherAt, staticAt, places: PL, peaks: GEO.PEAKS, onExit: () => {} });
+}
 function distLine(X, Y) {
   const d = Math.hypot(X, Y);
   return `${d.toFixed(0)} mi (${(d / 3).toFixed(0)} leagues) from Hobbiton`;
@@ -918,7 +929,7 @@ function showPlace(p) {
     <dt>Ground</dt><dd>${esc(b.name)}</dd><dt>Elevation</dt><dd>${Math.round(Math.max(0, b.h))} m · ${Math.round(Math.max(0, b.h) * 3.281).toLocaleString()} ft</dd>
     <dt>Position</dt><dd class="mono">${fmtLL(lon, lat)}<br>${fmtXY(p.X, p.Y)}</dd><dt>Distance</dt><dd>${distLine(p.X, p.Y)}</dd></dl>
     <div class="eyebrow">Weather · ${esc(WX.parts(S.t).name)} ${WX.fmtTime(WX.parts(S.t).hour)}</div><div class="wxwrap">${wxBlock(p.X, p.Y)}</div>
-    <div class="btns" style="margin-top:12px"><button class="btn primary" data-act="ground"><svg viewBox="0 0 24 24"><circle cx="12" cy="5" r="2.2"/><path d="M12 8v7M8.5 11h7M12 15l-3 6M12 15l3 6"/></svg>Ground view</button><button class="btn" data-act="fly">Fly over</button><button class="btn" data-act="measure">Measure from here</button></div>`,
+    <div class="btns" style="margin-top:12px"><button class="btn primary" data-act="ground"><svg viewBox="0 0 24 24"><circle cx="12" cy="5" r="2.2"/><path d="M12 8v7M8.5 11h7M12 15l-3 6M12 15l3 6"/></svg>Ground view</button>${hallBtn(p.name)}<button class="btn" data-act="fly">Fly over</button><button class="btn" data-act="measure">Measure from here</button></div>`,
     { kind: 'place', X: p.X, Y: p.Y, name: p.name, zoom: ZOOM_FOR[p.type] });
 }
 function showPoint(X, Y, o = {}) {
@@ -932,7 +943,7 @@ function showPoint(X, Y, o = {}) {
     <dt>Nearest</dt><dd>${esc(np.p.name)}, ${np.d.toFixed(np.d < 10 ? 1 : 0)} mi</dd>
     <dt>Position</dt><dd class="mono">${fmtLL(lon, lat)}<br>${fmtXY(X, Y)}</dd><dt>Distance</dt><dd>${distLine(X, Y)}</dd></dl>
     <div class="eyebrow">Weather · ${esc(WX.parts(S.t).name)} ${WX.fmtTime(WX.parts(S.t).hour)}</div><div class="wxwrap">${wxBlock(X, Y)}</div>
-    <div class="btns" style="margin-top:12px">${b.h > 0 ? `<button class="btn primary" data-act="ground"><svg viewBox="0 0 24 24"><circle cx="12" cy="5" r="2.2"/><path d="M12 8v7M8.5 11h7M12 15l-3 6M12 15l3 6"/></svg>Ground view</button>` : ''}<button class="btn" data-act="measure">Measure from here</button></div>`,
+    <div class="btns" style="margin-top:12px">${b.h > 0 ? `<button class="btn primary" data-act="ground"><svg viewBox="0 0 24 24"><circle cx="12" cy="5" r="2.2"/><path d="M12 8v7M8.5 11h7M12 15l-3 6M12 15l3 6"/></svg>Ground view</button>` : ''}${hallBtn(o.name)}<button class="btn" data-act="measure">Measure from here</button></div>`,
     { kind: 'point', X, Y, name: title, zoom: ZOOM_FOR[o.kind] || 12 });
 }
 
@@ -1101,7 +1112,7 @@ setTimeout(() => $('#loader').remove(), 1200);
 await sleep(1600);
 if (map.getZoom() < 2) map.flyTo({ center: ll(451, -315), zoom: 4.0, pitch: 25, bearing: 0, duration: 6500, curve: 1.3, essential: true });
 
-window.ARDA = { map, S, setTime, GEO, showPlace, openGround, PL, PLN, flyToXY, setWx, setGroup, setBase, openPanel, playTour, TOURS };
+window.ARDA = { map, S, setTime, GEO, showPlace, openGround, openHalls, PL, PLN, flyToXY, setWx, setGroup, setBase, openPanel, playTour, TOURS };
 document.title = document.title;
 })().catch(e => {
   console.error(e);

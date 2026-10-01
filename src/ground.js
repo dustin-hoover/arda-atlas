@@ -98,7 +98,7 @@ function bindInput() {
     if (!G.active) return;
     keys[e.key.toLowerCase()] = true;
     if (e.key === 'Escape') close();
-    if (e.key.toLowerCase() === 't') { G.t += 1 / 24; updateAtmos(true); }
+    if (e.key.toLowerCase() === 't' && !G.hall) { G.t += 1 / 24; updateAtmos(true); }
     if (['w', 'a', 's', 'd', ' ', 'arrowup', 'arrowdown', 'arrowleft', 'arrowright'].includes(e.key.toLowerCase())) e.preventDefault();
   });
   addEventListener('keyup', e => { keys[e.key.toLowerCase()] = false; });
@@ -120,6 +120,7 @@ function heightFn(grid, n, half) {
   };
 }
 function groundAt(x, z) {
+  if (G.hall) return G.hall.floorAt(x, z) ?? G.hallY ?? 0;
   let h = G.nearH ? G.nearH(x - G.nearOff.x, z - G.nearOff.z) : null;
   if (h === null && G.farH) h = G.farH(x, z);
   return Math.max(h ?? 0, G.seaLevel);
@@ -183,7 +184,7 @@ async function textureFor(run, X, Y, half, size, strips) {
 /* ---------------- vegetation & buildings ---------------- */
 function buildTrees(arr, hAt) {
   const group = new THREE.Group();
-  const kinds = [[], [], [], []];
+  const kinds = [[], [], [], [], []];
   for (let i = 0; i < arr.length; i += 4) kinds[arr[i + 2]].push([arr[i], arr[i + 1], arr[i + 3]]);
   const trunkMat = new THREE.MeshStandardMaterial({ color: 0x4a3a2a, roughness: 1 });
   const crownMat = new THREE.MeshStandardMaterial({ color: 0xffffff, roughness: 0.95 });
@@ -191,6 +192,16 @@ function buildTrees(arr, hAt) {
     sh.vertexShader = sh.vertexShader.replace('#include <common>', '#include <common>\nvarying vec3 vLP;').replace('#include <begin_vertex>', '#include <begin_vertex>\nvLP = position;');
     sh.fragmentShader = sh.fragmentShader.replace('#include <common>', '#include <common>\nvarying vec3 vLP;\nfloat lh(vec3 p){ return fract(sin(dot(p, vec3(12.9898,78.233,37.719)))*43758.5453); }')
       .replace('#include <map_fragment>', '#include <map_fragment>\nfloat lf = lh(floor(vLP * 2.2)); diffuseColor.rgb *= 0.72 + 0.5 * lf * (0.6 + 0.4 * smoothstep(-1.0, 3.0, vLP.y - 5.0));');
+  };
+  // orchard crowns: the same leaf shading plus apples, pears and plums dotted through the foliage
+  const fruitMat = crownMat.clone();
+  fruitMat.onBeforeCompile = sh => {
+    crownMat.onBeforeCompile(sh);
+    // after the per-tree tint, so the fruit keeps its own colour
+    sh.fragmentShader = sh.fragmentShader.replace('#include <color_fragment>', `#include <color_fragment>
+      #ifdef USE_COLOR
+      if (lh(floor(vLP * 9.0) + 3.1) > 0.955) { float k = fract(vColor.g * 977.0); diffuseColor.rgb = k > 0.5 ? vec3(0.5, 0.06, 0.04) : k > 0.2 ? vec3(0.55, 0.52, 0.12) : vec3(0.26, 0.06, 0.2); }
+      #endif`);
   };
   const blob = (rx, ry, cx, cy, cz, seed) => {
     const b = new THREE.IcosahedronGeometry(1, 2), p = b.attributes.position;
@@ -209,12 +220,13 @@ function buildTrees(arr, hAt) {
     { crown: () => { const a = new THREE.ConeGeometry(2.6, 6, 9).translate(0, 5.5, 0), b = new THREE.ConeGeometry(2.0, 5.5, 9).translate(0, 8.6, 0), c = new THREE.ConeGeometry(1.3, 4.5, 9).translate(0, 11.6, 0); const pos = [], idx = []; let o = 0; for (const q of [a, b, c]) { const qq = q.toNonIndexed(); pos.push(...qq.attributes.position.array); o += qq.attributes.position.count; } const out = new THREE.BufferGeometry(); out.setAttribute('position', new THREE.Float32BufferAttribute(pos, 3)); out.computeVertexNormals(); return out; }, trunk: new THREE.CylinderGeometry(0.2, 0.3, 4, 5).translate(0, 2, 0), col: [[0.1, 0.18, 0.1], [0.13, 0.2, 0.12], [0.09, 0.15, 0.09]] },
     { crown: () => cluster(10, 8, 36), trunk: new THREE.CylinderGeometry(1.1, 1.7, 34, 8).translate(0, 17, 0), col: [[0.72, 0.58, 0.16], [0.8, 0.66, 0.2], [0.66, 0.55, 0.18]], trunkCol: 0xb8b8b0 },
     { crown: () => cluster(4.4, 3.8, 9.6), trunk: new THREE.CylinderGeometry(0.4, 0.6, 8, 6).translate(0, 4, 0), col: [[0.07, 0.12, 0.07], [0.09, 0.13, 0.08], [0.1, 0.11, 0.08]] },
+    { crown: () => cluster(1.7, 1.4, 2.9), trunk: new THREE.CylinderGeometry(0.1, 0.16, 2.2, 5).translate(0, 1.1, 0), col: [[0.22, 0.36, 0.14], [0.26, 0.38, 0.15], [0.2, 0.33, 0.13]], fruit: 1 },
   ];
   const m4 = new THREE.Matrix4(), q = new THREE.Quaternion(), s3 = new THREE.Vector3(), p3 = new THREE.Vector3(), up = new THREE.Vector3(0, 1, 0), c = new THREE.Color();
   kinds.forEach((list, k) => {
     if (!list.length) return;
     const sp = specs[k];
-    const crowns = new THREE.InstancedMesh(sp.crown(), crownMat, list.length);
+    const crowns = new THREE.InstancedMesh(sp.crown(), sp.fruit ? fruitMat : crownMat, list.length);
     const trunks = new THREE.InstancedMesh(sp.trunk, sp.trunkCol ? new THREE.MeshStandardMaterial({ color: sp.trunkCol, roughness: 0.8 }) : trunkMat, list.length);
     list.forEach(([x, nz, sc], i) => {
       const z = -nz;
@@ -236,7 +248,7 @@ function buildTrees(arr, hAt) {
   return group;
 }
 
-const WALLC = { hobbit: [0.55, 0.62, 0.3], bree: [0.62, 0.55, 0.45], rohan: [0.5, 0.36, 0.22], gondor: [0.86, 0.84, 0.8], minastirith: [0.92, 0.91, 0.88], osgiliath: [0.66, 0.64, 0.6], elf: [0.86, 0.85, 0.8], lorien: [0.9, 0.9, 0.86], lake: [0.42, 0.32, 0.24], dale: [0.62, 0.56, 0.5], harad: [0.84, 0.76, 0.6], isengard: [0.2, 0.2, 0.22], mordor: [0.14, 0.13, 0.14], morgul: [0.58, 0.66, 0.62], east: [0.7, 0.6, 0.45], beorning: [0.45, 0.33, 0.2] };
+const WALLC = { hobbit: [0.55, 0.62, 0.3], bree: [0.62, 0.55, 0.45], rohan: [0.5, 0.36, 0.22], gondor: [0.86, 0.84, 0.8], minastirith: [0.92, 0.91, 0.88], osgiliath: [0.66, 0.64, 0.6], elf: [0.86, 0.85, 0.8], lorien: [0.9, 0.9, 0.86], lake: [0.42, 0.32, 0.24], dale: [0.62, 0.56, 0.5], harad: [0.84, 0.76, 0.6], isengard: [0.2, 0.2, 0.22], mordor: [0.14, 0.13, 0.14], morgul: [0.58, 0.66, 0.62], east: [0.7, 0.6, 0.45], beorning: [0.45, 0.33, 0.2], dwarf: [0.5, 0.48, 0.44], dunland: [0.42, 0.34, 0.24], woodmen: [0.45, 0.33, 0.22], ruin: [0.62, 0.6, 0.56] };
 function buildBuildings(B, X0, Y0, hAt) {
   const pos = [], col = [], idx = [];
   let vi = 0;
@@ -278,13 +290,14 @@ function buildBuildings(B, X0, Y0, hAt) {
     vi += 14;
   };
   for (const b of B.list) {
+    if (b.culture === 'lorien' || b.culture === 'elf') continue;
     const x = (b.x - X0) * MI, z = -(b.y - Y0) * MI;
     const y0 = hAt(x, z) - 0.5;
     const roof = b.c.map(v => Math.pow(v / 255, 2.2));
     const wall = (WALLC[b.culture] || [0.6, 0.55, 0.5]).map(v => Math.pow(v, 1.5));
     if (b.culture === 'hobbit' && b.round) { const doors = [[0.1, 0.25, 0.1], [0.6, 0.45, 0.1], [0.15, 0.25, 0.45], [0.5, 0.12, 0.08]]; mound(x, z, b.w * 0.8, y0, doors[Math.floor(Math.abs(b.x * 1e5)) % 4]); continue; }
     if (b.round) { box(x, z, b.w * 0.8, b.w * 0.8, b.a, y0, b.h * 0.6, roof, roof, true); continue; }
-    const gable = !['harad', 'minastirith', 'gondor', 'osgiliath', 'mordor', 'isengard'].includes(b.culture) || (b.culture === 'gondor' && b.w < 13);
+    const gable = !['harad', 'minastirith', 'gondor', 'osgiliath', 'mordor', 'isengard', 'dwarf', 'ruin'].includes(b.culture) || (b.culture === 'gondor' && b.w < 13);
     box(x, z, b.w, b.d, b.a, y0, b.h * (b.ruin ? 0.4 : 1), wall, roof, gable, b.ruin);
   }
   for (const s of B.special) {
@@ -299,7 +312,7 @@ function buildBuildings(B, X0, Y0, hAt) {
         const len = r * (a1 - a0) + 0.5;
         box(x, z, s.w, len, -am + Math.PI, hAt(x, z) - 2, s.h, colr, colr.map(v => v * 0.9), false);
       }
-    } else if (s.type === 'tower') {
+    } else if (s.type === 'tower' && !s.kind) {
       if (Math.hypot(cx - G.px, cz - G.pz) > 20000) continue;
       const y0 = hAt(cx, cz) - 1;
       if (s.square) box(cx, cz, s.r * 2, s.r * 2, 0.3, y0, s.h, colr, colr.map(v => v * 0.7), false);
@@ -340,6 +353,12 @@ function placeGrass() {
   if (!G.grass || !G.nearCanvas) return;
   const ctx = G.nearCtx || (G.nearCtx = G.nearCanvas.getContext('2d', { willReadFrequently: true }));
   const R = 38, half = G.nearHalf, W = G.nearCanvas.width;
+  let gl = 0, flow = 0;
+  try {
+    window.GEN.evaluate(G.X0 + G.px / MI, G.Y0 - G.pz / MI, 0.01);
+    const F = window.GEN.F; gl = F[13]; flow = 0.05 * (1 - F[9]) * (1 - F[8]) * (1 - F[4]);
+  } catch (e) { /* the page GEN is always initialised; keep plain grass if not */ }
+  const tall = 1 + 1.7 * gl, FLW = [[0.75, 0.12, 0.1], [0.92, 0.82, 0.25], [0.55, 0.35, 0.8], [0.95, 0.95, 0.92], [0.35, 0.45, 0.85]];
   const img = ctx.getImageData(0, 0, W, W).data;
   const m4 = new THREE.Matrix4(), q = new THREE.Quaternion(), s = new THREE.Vector3(), p = new THREE.Vector3(), up = new THREE.Vector3(0, 1, 0), c = new THREE.Color();
   let k = 0;
@@ -352,9 +371,11 @@ function placeGrass() {
     if (gg < rr * 0.85 || bb > gg * 1.1 || gg < 40) continue;      // skip water, rock, bare earth, dark forest floor
     p.set(x, groundAt(x, z) - 0.02, z);
     q.setFromAxisAngle(up, Math.random() * 6.28);
-    const sc = 0.7 + Math.random() * 0.8; s.set(sc, sc * (0.8 + Math.random() * 0.6), sc);
+    const fl = Math.random() < flow, sc = 0.7 + Math.random() * 0.8; s.set(sc, sc * (0.8 + Math.random() * 0.6) * (fl ? 0.8 : tall * (0.75 + Math.random() * 0.5)), sc);
     m4.compose(p, q, s); G.grass.setMatrixAt(k, m4);
-    c.setRGB(rr / 255 * 1.05, gg / 255 * 1.1, bb / 255 * 0.9, THREE.SRGBColorSpace); G.grass.setColorAt(k, c);
+    if (fl) { const f = FLW[Math.floor(Math.random() * FLW.length)]; c.setRGB(f[0], f[1], f[2], THREE.SRGBColorSpace); }
+    else c.setRGB((rr / 255 * 1.05) * (1 - gl * 0.35) + 0.8 * gl * 0.35, (gg / 255 * 1.1) * (1 - gl * 0.35) + 0.7 * gl * 0.35, (bb / 255 * 0.9) * (1 - gl * 0.35) + 0.3 * gl * 0.35, THREE.SRGBColorSpace);
+    G.grass.setColorAt(k, c);
     k++;
   }
   G.grass.count = k; G.grass.instanceMatrix.needsUpdate = true; if (G.grass.instanceColor) G.grass.instanceColor.needsUpdate = true;
@@ -476,6 +497,9 @@ async function loadNear(Xc, Yc, offX, offZ) {
   G.px0 = G.px; G.pz0 = G.pz;
   const pxSave = G.px, pzSave = G.pz; G.px -= offX; G.pz -= offZ;
   grp.add(buildBuildings(tr.buildings, Xc, Yc, hAt));
+  const town = W3town(tr.buildings, Xc, Yc, hAt), folk = W3people(tr.buildings, Xc, Yc, hAt);
+  grp.add(town, folk);
+  grp.userData.update = (dt, t) => { town.userData.update(dt, t); folk.userData.update(dt, t); };
   G.px = pxSave; G.pz = pzSave;
   G.scene.add(grp);
   G.nearGroup = grp;
@@ -498,6 +522,40 @@ async function loadFar(X, Y) {
 }
 
 /* ---------------- lifecycle ---------------- */
+/* Underground: a lit hall instead of terrain, sky and weather. */
+function openHall(o) {
+  G.helpHTML = G.helpHTML || $('#ghelp').innerHTML;
+  const H = W3hall(o.interior);
+  G.hall = H; G.hallY = 0;
+  G.scene.add(H.group);
+  G.sky.visible = false; G.grass.visible = false; G.rain.visible = false;
+  G.sun.intensity = 0; G.sun.castShadow = false;
+  G.hemi.intensity = o.interior === 'erebor' ? 2.2 : 1.3; G.hemi.color.set(0x8a7a66); G.hemi.groundColor.set(0x1a1410);
+  G.scene.fog.color.set(o.interior === 'erebor' ? 0x120c08 : 0x05070a); G.scene.fog.near = 20; G.scene.fog.far = o.interior === 'erebor' ? 520 : 300;
+  G.renderer.setClearColor(0x000000); G.renderer.toneMappingExposure = 1.15;
+  G.px = H.spawn.x; G.pz = H.spawn.z; G.yaw = H.spawn.yaw; G.pitch = 0.08;
+  if (H.dwarves) {
+    // Dáin's folk about their halls
+    const pts = [];
+    for (let i = 0; i < 70; i++) { const x = (Math.random() - 0.5) * 60, z = 40 - Math.random() * 450; if (H.floorAt(x, z) !== null) pts.push({ x, y: 0, z }); }
+    for (let i = 0; i < 20; i++) { const x = -140 + Math.random() * 90, z = -100 + Math.random() * 100; if (H.floorAt(x, z) !== null) pts.push({ x, y: 0, z }); }
+    const B = { list: pts.map(p => ({ x: p.x / MI, y: -p.z / MI, w: 0, d: 0, a: 0, culture: 'dwarf' })) };
+    const folk = W3people(B, 0, 0, null, { floorAt: H.floorAt, max: 90 });
+    H.group.add(folk); const u = H.update; H.update = (dt, t) => { u(dt, t); folk.userData.update(dt); };
+  }
+  $('#gplace').textContent = o.title; $('#gsub').textContent = H.info;
+  $('#gmini').hidden = true; $('#glabels').innerHTML = ''; G.labels = null;
+  $('#ghelp').innerHTML = '<kbd>W</kbd><kbd>A</kbd><kbd>S</kbd><kbd>D</kbd> walk · drag to look · <kbd>Shift</kbd> run · <kbd>Space</kbd>/<kbd>C</kbd> climb & descend';
+}
+function closeHall() {
+  if (!G.hall) return;
+  G.scene.remove(G.hall.group);
+  G.hall.group.traverse(m => { if (m.geometry) m.geometry.dispose(); if (m.material) [].concat(m.material).forEach(x => { if (x.map) x.map.dispose(); x.dispose(); }); });
+  G.hall = null;
+  G.sky.visible = true; G.grass.visible = true; G.sun.castShadow = true; $('#gmini').hidden = false;
+  G.hemi.groundColor.set(0x5a5040); $('#ghelp').innerHTML = G.helpHTML;
+}
+
 async function open(o) {
   const root = $('#ground');
   root.classList.add('open');
@@ -508,7 +566,9 @@ async function open(o) {
   G.o = o; G.t = o.t; G.X0 = o.X; G.Y0 = o.Y; G.px = 0; G.pz = 0; G.yaw = (o.heading || 0) * Math.PI / 180; G.pitch = 0.02; G.fly = 0;
   G.seaLevel = 0; G.nearH = null; G.farH = null; G.wx = null; G.grassAt = null; G.nearCanvas = null; if (G.grass) G.grass.count = 0; G.spawnX = 0; G.spawnZ = 0; G.camera.position.set(0, 0, 0);
   for (const k of ['far', 'sea', 'nearGroup']) if (G[k]) { G.scene.remove(G[k]); G[k] = null; }
+  closeHall(); G.nearOff = null;
   G.active = true;
+  if (o.interior) { openHall(o); $('#gload').hidden = true; loop(); return; }
   loop();
   $('#gload').textContent = 'Surveying the horizon…';
   await loadFar(o.X, o.Y);
@@ -534,13 +594,19 @@ function loop(ts = 0) {
   if (keys.arrowleft && !keys.a) { G.yaw -= dt * 1.2; s += 1; }
   if (keys.arrowright && !keys.d) { G.yaw += dt * 1.2; s -= 1; }
   const fx = Math.sin(G.yaw), fz = -Math.cos(G.yaw);
-  G.px += (fx * f + Math.cos(G.yaw) * s) * run * dt * (1 + G.fly / 40);
-  G.pz += (fz * f + Math.sin(G.yaw) * s) * run * dt * (1 + G.fly / 40);
+  const mx = (fx * f + Math.cos(G.yaw) * s) * run * dt * (1 + G.fly / 40), mz = (fz * f + Math.sin(G.yaw) * s) * run * dt * (1 + G.fly / 40);
+  if (G.hall) {
+    // slide along walls; never step into a chasm or up a sheer face
+    const fl = G.hall.floorAt, y0 = fl(G.px, G.pz) ?? G.hallY, ok = (x, z) => { const y = fl(x, z); return y !== null && y - y0 < 1.2; };
+    if (ok(G.px + mx, G.pz + mz)) { G.px += mx; G.pz += mz; } else if (ok(G.px + mx, G.pz)) G.px += mx; else if (ok(G.px, G.pz + mz)) G.pz += mz;
+    G.hallY = fl(G.px, G.pz) ?? G.hallY;
+  } else { G.px += mx; G.pz += mz; }
   if (keys[' ']) G.fly = Math.min(3000, G.fly + dt * (20 + G.fly));
   if (keys.c) G.fly = Math.max(0, G.fly - dt * (20 + G.fly));
+  if (G.hall) G.fly = Math.min(G.fly, G.hall.ceiling - G.hallY - 2);
   const lim = 55000; G.px = Math.max(-lim, Math.min(lim, G.px)); G.pz = Math.max(-lim, Math.min(lim, G.pz));
   const gy = groundAt(G.px, G.pz);
-  const eye = gy + 1.7 + G.fly;
+  const eye = gy + (G.hall ? 1.45 : 1.7) + G.fly;
   G.camera.position.set(G.px, G.camera.position.y ? G.camera.position.y + (eye - G.camera.position.y) * Math.min(1, dt * 12) : eye, G.pz);
   const cp = Math.cos(G.pitch);
   G.camera.lookAt(G.px + Math.sin(G.yaw) * cp, G.camera.position.y + Math.sin(G.pitch), G.pz - Math.cos(G.yaw) * cp);
@@ -550,9 +616,11 @@ function loop(ts = 0) {
     G.sun.target.position.set(G.px, G.camera.position.y, G.pz); G.sun.target.updateMatrixWorld();
   }
   G.skyMat.uniforms.time.value += dt;
+  if (G.nearGroup && G.nearGroup.userData.update) G.nearGroup.userData.update(dt, ts / 1000);
+  if (G.hall) G.hall.update(dt, ts / 1000);
   G.grassTime.value += dt;
-  if (G.grassAt && Math.hypot(G.px - G.grassAt.x, G.pz - G.grassAt.z) > 12) placeGrass();
-  if (G.rain.visible) {
+  if (!G.hall && G.grassAt && Math.hypot(G.px - G.grassAt.x, G.pz - G.grassAt.z) > 12) placeGrass();
+  if (G.rain.visible && !G.hall) {
     const a = G.rain.geometry.attributes.position, sp = G.wx.snow > 0.5 ? 2.2 : 14;
     for (let i = 0; i < a.count; i++) { let y = a.getY(i) - sp * dt; if (y < 0) y += 60; a.setY(i, y); }
     a.needsUpdate = true; G.rain.position.set(G.px, G.camera.position.y - 20, G.pz);
@@ -564,8 +632,8 @@ function loop(ts = 0) {
     loadNear(G.X0 + ox / MI, G.Y0 - oz / MI, ox, oz).then(() => { streaming = false; }).catch(() => { streaming = false; });
   }
   if (G.labels) updateLabels();
-  drawMini();
-  if (G.wx && Math.floor(ts / 1000) !== G.lastSec) { G.lastSec = Math.floor(ts / 1000); updateAtmos(G.lastSec % 10 === 0); }
+  if (!G.hall) drawMini();
+  if (!G.hall && G.wx && Math.floor(ts / 1000) !== G.lastSec) { G.lastSec = Math.floor(ts / 1000); updateAtmos(G.lastSec % 10 === 0); }
   G.renderer.render(G.scene, G.camera);
 }
 

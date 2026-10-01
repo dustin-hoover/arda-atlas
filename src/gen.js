@@ -327,7 +327,22 @@ function fields(X, Y, cell, pix, hobbit) {
   if (es < 0.0015 + pix * 0.5 && pid >= 0.3 && pix < 0.006) hedge = Math.max(hedge, 0.2 * sat(1 - (es - 0.0015) / (pix + 1e-6)));
   const tram = (pix < cell * 0.03) ? 0.05 * Math.sin((vert ? fv : fu) * cell / 0.004) : 0;
   const trees = hedge > 0.5 && hash2(Math.floor(X / 0.007), Math.floor(Y / 0.007), 21) < 0.3 ? 1 : 0;
-  return [col[0] * (1 + tram), col[1] * (1 + tram), col[2] * (1 + tram), hedge, trees];
+  const orch = pid >= 0.3 && pid < 0.42 && edge > 0.008 ? 1 : 0;      // orchard parcel
+  return [col[0] * (1 + tram), col[1] * (1 + tram), col[2] * (1 + tram), hedge, trees, orch, th];
+}
+/* Orchard rows: trees on a 7 m lattice aligned with the parcel grid. Uses F from the last evaluate().
+   Returns null outside orchards, else { d: distance to the nearest tree in miles, tx, ty: that tree }. */
+const ORCH_SP = 0.0044;
+function orchardAt(X, Y, farm = F[9]) {
+  if (farm <= 0.2) return null;
+  const hob = farm > 0.85 && Math.abs(Y) < 120 && X > -80 && X < 70;
+  const f = fields(X, Y, hob ? 0.2 : 0.34, 0.0005, hob);
+  if (!f[5] || f[3] > 0.05) return null;
+  const c = Math.cos(f[6]), s = Math.sin(f[6]);
+  const a = X * c + Y * s, b = -X * s + Y * c;
+  const ia = Math.round(a / ORCH_SP), ib = Math.round(b / ORCH_SP);
+  const ta = ia * ORCH_SP, tb = ib * ORCH_SP;
+  return { d: Math.hypot(a - ta, b - tb), tx: ta * c - tb * s, ty: ta * s + tb * c, ia, ib };
 }
 
 // tree crowns at high zoom: returns light factor (−1 gap … +1 sunlit crown)
@@ -432,6 +447,12 @@ function colorAt(X, Y, h, slope, pix, mode, dsea) {
       const k = 0.4 + 0.6 * sat((cell * 0.08 - pix) / (cell * 0.05));
       blend(118 + (f[0] - 118) * k, 128 + (f[1] - 128) * k, 76 + (f[2] - 76) * k, t * 0.85);
       if (f[3] > 0) blend(f[4] ? 44 : 70, f[4] ? 62 : 86, f[4] ? 34 : 48, f[3] * t * 0.85 * sat((0.012 - pix) / 0.006));
+      if (f[5] && pix < 0.006) {
+        // orchard: grassy alleys between rows of round crowns
+        const o = orchardAt(X, Y), r = ORCH_SP * 0.36;
+        blend(96, 122, 62, t * 0.8);
+        if (o) { const cr = sat((r - o.d) / Math.max(pix, 0.0003) + 0.5); blend(54, 86, 38, cr * t * sat((0.006 - pix) / 0.003)); }
+      }
     } else {
       blend(118, 128, 76, favg);
       const fn = fbm(X / cell * 0.8, Y / cell * 0.8, 3);
@@ -758,6 +779,10 @@ const STYLE = {
   morgul: { roof: [[150, 168, 158], [120, 134, 128]], w: [8, 14], d: [8, 12], dens: 700, grid: 0, h: 10 },
   east: { roof: [[180, 150, 110], [160, 120, 90], [190, 170, 130]], w: [6, 9], d: [6, 9], dens: 500, grid: 0, h: 3, round: 1 },
   beorning: { roof: [[150, 118, 70]], w: [26, 34], d: [9, 12], dens: 20, grid: 0, h: 9 },
+  dwarf: { roof: [[112, 110, 106], [96, 94, 92], [128, 120, 110]], w: [8, 14], d: [8, 12], dens: 900, grid: 1, h: 7 },
+  dunland: { roof: [[120, 100, 70], [102, 88, 62], [92, 80, 58]], w: [7, 11], d: [5, 7], dens: 160, grid: 0, h: 5 },
+  woodmen: { roof: [[110, 90, 60], [96, 80, 56]], w: [8, 13], d: [6, 8], dens: 200, grid: 0, h: 6 },
+  ruin: { roof: [[150, 146, 138], [130, 126, 120]], w: [8, 18], d: [8, 14], dens: 260, grid: 1, h: 5, ruin: 1 },
 };
 function buildings(si) {
   if (BCACHE.has(si)) return BCACHE.get(si);
@@ -786,18 +811,21 @@ function buildings(si) {
   const sp = [];
   if (s.culture === 'minastirith') {
     for (let k = 0; k < 7; k++) sp.push({ type: 'arc', x: s.x, y: s.y, r: (60 + k * 95) / MI, a0: -Math.PI * 0.62, a1: Math.PI * 0.62, w: 5 + (7 - k) * 1.2, h: 14 + k * 2, c: [236, 236, 230] });
-    sp.push({ type: 'tower', x: s.x - 0.01, y: s.y, r: 9, h: 90, c: [246, 246, 244] });
+    sp.push({ type: 'tower', kind: 'ecthelion', x: s.x - 0.01, y: s.y, r: 9, h: 90, c: [246, 246, 244] });
+    sp.push({ type: 'prow', x: s.x, y: s.y, len: 620, c: [230, 230, 224] });
   }
   if (s.culture === 'isengard') {
     sp.push({ type: 'arc', x: s.x, y: s.y, r: 0.5, a0: -Math.PI, a1: Math.PI, w: 30, h: 30, c: [52, 52, 56] });
-    sp.push({ type: 'tower', x: s.x, y: s.y, r: 22, h: 150, c: [26, 26, 30], square: 1 });
+    sp.push({ type: 'tower', kind: 'orthanc', x: s.x, y: s.y, r: 22, h: 150, c: [26, 26, 30], square: 1 });
   }
   if (s.culture === 'rohan') {
     sp.push({ type: 'arc', x: s.x, y: s.y, r: s.r * 0.9, a0: -Math.PI, a1: Math.PI, w: 3, h: 5, c: [120, 96, 64] });
     if (s.name === 'Edoras') out.push({ x: s.x + 0.001, y: s.y + 0.002, w: 48, d: 18, a: 0.2, c: [214, 176, 64], h: 16, round: 0 });
   }
-  if (s.culture === 'mordor' && s.name === 'Barad-dûr') sp.push({ type: 'tower', x: s.x, y: s.y, r: 60, h: 420, c: [18, 16, 18], square: 1 });
-  if (s.culture === 'morgul') sp.push({ type: 'tower', x: s.x, y: s.y, r: 14, h: 110, c: [170, 196, 184] });
+  if (s.culture === 'mordor' && s.name === 'Barad-dûr') sp.push({ type: 'tower', kind: 'baraddur', x: s.x, y: s.y, r: 60, h: 420, c: [18, 16, 18], square: 1 });
+  if (s.culture === 'morgul') sp.push({ type: 'tower', kind: 'morgul', x: s.x, y: s.y, r: 14, h: 110, c: [170, 196, 184] });
+  if (s.gate) sp.push({ type: 'gate', x: s.x, y: s.y, face: s.gate, c: [120, 116, 110] });
+  if (s.culture === 'lorien') sp.push({ type: 'mallorn', x: s.x, y: s.y, r: 18, h: 75, c: [190, 190, 180] });
   const res = { list: out, special: sp };
   BCACHE.set(si, res);
   return res;
@@ -919,6 +947,6 @@ function buildingsNear(X, Y, rad) {
 }
 
 return { D2R, MI, EARTH_C, toLL, toXY, noise, fbm, fbmA, hash2, sat, sstep, mix, clamp, init, evaluate, F, R, CH, tempAt, moistAt,
-  demTile, imageryTile, renderGrid, tileLL, drawVectors, buildingsNear, numenorField };
+  demTile, imageryTile, renderGrid, tileLL, drawVectors, buildingsNear, numenorField, orchardAt };
 })();
 if (typeof self !== 'undefined') self.GEN = GEN;

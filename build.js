@@ -9,7 +9,7 @@ const put = (k, v) => { const i = html.indexOf(k); if (i < 0) throw new Error('t
 put('/*MAPLIBRE_CSS*/', rd('node_modules/maplibre-gl/dist/maplibre-gl.css'));
 put('/*APP_CSS*/', rd('src/app.css'));
 for (const [k, f] of [['GEN_JS', 'gen.js'], ['WX_JS', 'wx.js'], ['WORKER_JS', 'worker.js'], ['GEO_JS', 'geo.js'], ['RASTERS_JS', 'rasters.js'], ['AUDIO_JS', 'audio.js'], ['APP_JS', 'app.js'], ['GROUND_JS', 'ground.js']])
-  put('/*' + k + '*/', guard(f, rd('src/' + f)));
+  put('/*' + k + '*/', guard(f, rd('src/' + f) + (f === 'ground.js' ? '\n' + rd('src/world3d.js') : '')));
 fs.mkdirSync(path.join(__dirname, 'dist'), { recursive: true });
 fs.writeFileSync(path.join(__dirname, 'dist/index.html'), html);
 fs.writeFileSync(path.join(__dirname, 'dist/preview.html'), '<!doctype html><html><head><meta charset="utf-8"><meta name="viewport" content="width=device-width,initial-scale=1,viewport-fit=cover"></head><body>' + html + '</body></html>');

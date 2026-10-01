@@ -69,7 +69,7 @@ async function patchTexture(m) {
 function patchTrees(m) {
   // forest density on a coarse lattice, trees on a fine jittered lattice
   const half = m.half, cs = m.cell, nC = Math.ceil(2 * half / cs) + 1;
-  const dens = new Float32Array(nC * nC), kind = new Uint8Array(nC * nC);
+  const dens = new Float32Array(nC * nC), kind = new Uint8Array(nC * nC), farm = new Float32Array(nC * nC);
   const pixMi = cs / GEN.MI;
   for (let j = 0; j < nC; j++) for (let i = 0; i < nC; i++) {
     const X = m.X + (-half + i * cs) / GEN.MI, Y = m.Y + (half - j * cs) / GEN.MI;
@@ -77,6 +77,7 @@ function patchTrees(m) {
     if (GEN.R.s <= 0 || GEN.F[15] > 0.5) continue;
     GEN.colorAt ? 0 : 0;
     const F = GEN.F;
+    farm[j * nC + i] = F[9];
     const T = GEN.tempAt(GEN.R.lat, h);
     let fd = F[4];
     const Mst = GEN.moistAt(X, Y, GEN.R.lat, GEN.R.wm);
@@ -103,6 +104,21 @@ function patchTrees(m) {
     const d = dens[jj * nC + ii] * (1 - fx) * (1 - fy) + dens[jj * nC + ii + 1] * fx * (1 - fy) + dens[(jj + 1) * nC + ii] * (1 - fx) * fy + dens[(jj + 1) * nC + ii + 1] * fx * fy;
     if (GEN.hash2(i + m.seed, j, 7) > d) continue;
     trees.push(ex, ny, kind[jj * nC + ii], 0.7 + 0.6 * GEN.hash2(i, j + m.seed, 9));
+  }
+  // orchards: one fruit tree per lattice point of the orchard parcels (the same rows the imagery draws)
+  const seen = new Set(), step = 3.2, oh = Math.min(m.treeHalf, 700);
+  for (let ny = oh; ny > -oh; ny -= step) for (let ex = -oh; ex < oh; ex += step) {
+    const ci = (ex + half) / cs, cj = (half - ny) / cs, ii = Math.floor(ci), jj = Math.floor(cj);
+    if (ii < 0 || jj < 0 || ii >= nC - 1 || jj >= nC - 1) continue;
+    const f = Math.max(farm[jj * nC + ii], farm[jj * nC + ii + 1], farm[(jj + 1) * nC + ii], farm[(jj + 1) * nC + ii + 1]);
+    if (f <= 0.2) continue;
+    const X = m.X + ex / GEN.MI, Y = m.Y + ny / GEN.MI;
+    const o = GEN.orchardAt(X, Y, f);
+    if (!o) continue;
+    const key = o.ia + ',' + o.ib;
+    if (seen.has(key)) continue;
+    seen.add(key);
+    trees.push((o.tx - m.X) * GEN.MI, (o.ty - m.Y) * GEN.MI, 4, 0.8 + 0.35 * GEN.hash2(o.ia, o.ib, 13));
   }
   return new Float32Array(trees);
 }
