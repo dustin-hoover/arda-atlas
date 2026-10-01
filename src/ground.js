@@ -120,7 +120,7 @@ function heightFn(grid, n, half) {
   };
 }
 function groundAt(x, z) {
-  if (G.hall) return G.hall.floorAt(x, z) ?? G.hallY ?? 0;
+  if (G.hall) return G.hall.floorAt(x, z, G.hallY) ?? G.hallY ?? 0;
   let h = G.nearH ? G.nearH(x - G.nearOff.x, z - G.nearOff.z) : null;
   if (h === null && G.farH) h = G.farH(x, z);
   return Math.max(h ?? 0, G.seaLevel);
@@ -533,11 +533,12 @@ function openHall(o) {
   G.hemi.intensity = o.interior === 'erebor' ? 2.2 : 1.3; G.hemi.color.set(0x8a7a66); G.hemi.groundColor.set(0x1a1410);
   G.scene.fog.color.set(o.interior === 'erebor' ? 0x120c08 : 0x05070a); G.scene.fog.near = 20; G.scene.fog.far = o.interior === 'erebor' ? 520 : 300;
   G.renderer.setClearColor(0x000000); G.renderer.toneMappingExposure = 1.15;
-  G.px = H.spawn.x; G.pz = H.spawn.z; G.yaw = H.spawn.yaw; G.pitch = 0.08;
+  const sp = H.spawns[o.spawn] || H.spawn;
+  G.px = sp.x; G.pz = sp.z; G.yaw = sp.yaw; G.pitch = 0.08; G.hallY = H.floorAt(sp.x, sp.z) ?? 0; G.fly = 0;
   if (H.dwarves) {
     // Dáin's folk about their halls
     const pts = [];
-    for (let i = 0; i < 70; i++) { const x = (Math.random() - 0.5) * 60, z = 40 - Math.random() * 450; if (H.floorAt(x, z) !== null) pts.push({ x, y: 0, z }); }
+    for (let i = 0; i < 70; i++) { const x = (Math.random() - 0.5) * 44, z = 40 - Math.random() * 450; if (H.floorAt(x, z) !== null) pts.push({ x, y: 0, z }); }
     for (let i = 0; i < 20; i++) { const x = -140 + Math.random() * 90, z = -100 + Math.random() * 100; if (H.floorAt(x, z) !== null) pts.push({ x, y: 0, z }); }
     const B = { list: pts.map(p => ({ x: p.x / MI, y: -p.z / MI, w: 0, d: 0, a: 0, culture: 'dwarf' })) };
     const folk = W3people(B, 0, 0, null, { floorAt: H.floorAt, max: 90 });
@@ -597,13 +598,13 @@ function loop(ts = 0) {
   const mx = (fx * f + Math.cos(G.yaw) * s) * run * dt * (1 + G.fly / 40), mz = (fz * f + Math.sin(G.yaw) * s) * run * dt * (1 + G.fly / 40);
   if (G.hall) {
     // slide along walls; never step into a chasm or up a sheer face
-    const fl = G.hall.floorAt, y0 = fl(G.px, G.pz) ?? G.hallY, ok = (x, z) => { const y = fl(x, z); return y !== null && y - y0 < 1.2; };
+    const fl = G.hall.floorAt, y0 = fl(G.px, G.pz, G.hallY) ?? G.hallY, ok = (x, z) => { const y = fl(x, z, y0); return y !== null && y - y0 < 1.3; };
     if (ok(G.px + mx, G.pz + mz)) { G.px += mx; G.pz += mz; } else if (ok(G.px + mx, G.pz)) G.px += mx; else if (ok(G.px, G.pz + mz)) G.pz += mz;
-    G.hallY = fl(G.px, G.pz) ?? G.hallY;
+    G.hallY = fl(G.px, G.pz, G.hallY) ?? G.hallY;
   } else { G.px += mx; G.pz += mz; }
   if (keys[' ']) G.fly = Math.min(3000, G.fly + dt * (20 + G.fly));
   if (keys.c) G.fly = Math.max(0, G.fly - dt * (20 + G.fly));
-  if (G.hall) G.fly = Math.min(G.fly, G.hall.ceiling - G.hallY - 2);
+  if (G.hall) G.fly = Math.max(0, Math.min(G.fly, G.hall.ceilingAt(G.px, G.pz) - G.hallY - 2));
   const lim = 55000; G.px = Math.max(-lim, Math.min(lim, G.px)); G.pz = Math.max(-lim, Math.min(lim, G.pz));
   const gy = groundAt(G.px, G.pz);
   const eye = gy + (G.hall ? 1.45 : 1.7) + G.fly;

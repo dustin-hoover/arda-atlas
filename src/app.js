@@ -906,14 +906,14 @@ const ACTIONS = {
 };
 const PKM = ['Hobbiton'];
 // places with a walkable interior under the mountain
-const HALLS = { 'Erebor': 'erebor', 'Front Gate of Erebor': 'erebor', 'Khazad-dûm': 'moria', 'West-gate of Moria': 'moria', 'Dimrill Gate': 'moria' };
+const HALLS = { 'Erebor': 'erebor', 'Front Gate of Erebor': 'erebor', 'Side Door of Erebor': 'erebor', 'Khazad-dûm': 'moria', 'West-gate of Moria': 'moria', 'Dimrill Gate': 'moria' };
 const HALL_TITLE = { erebor: 'The Halls of Erebor', moria: 'Khazad-dûm' };
 const hallBtn = name => HALLS[name] ? `<button class="btn" data-act="halls"><svg viewBox="0 0 24 24"><path d="M3 21V11a9 9 0 0 1 18 0v10"/><path d="M9 21v-6a3 3 0 0 1 6 0v6"/></svg>Enter the halls</button>` : '';
 function openHalls(kind, name) {
   if (!window.GROUND) { toast('The ground view is still loading. Try again in a moment.'); return; }
   togglePlay(false);
   const p = PLN[name] || { X: 0, Y: 0 };
-  window.GROUND.open({ interior: kind, X: p.X, Y: p.Y, t: S.t, title: HALL_TITLE[kind], sub: '', run, weatherAt, staticAt, places: PL, peaks: GEO.PEAKS, onExit: () => {} });
+  window.GROUND.open({ interior: kind, spawn: name === 'Side Door of Erebor' ? 'door' : 'gate', X: p.X, Y: p.Y, t: S.t, title: HALL_TITLE[kind], sub: '', run, weatherAt, staticAt, places: PL, peaks: GEO.PEAKS, onExit: () => {} });
 }
 function distLine(X, Y) {
   const d = Math.hypot(X, Y);

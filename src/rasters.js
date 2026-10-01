@@ -121,7 +121,7 @@ function build(GEO) {
   return {
     main: { W, H, x0: X0, y1: Y1, res: RES, ch },
     glob: { W: GW, H: GH, ch: [boxBlur(G0, GW, GH, 1, 1), G1, boxBlur(G2, GW, GH, 1, 1), boxBlur(G3, GW, GH, 1, 1)] },
-    peaks: GEO.PEAKS.map(p => ({ x: p.x, y: p.y, h: p.h, r: p.r, kind: p.kind })),
+    peaks: GEO.PEAKS.map(p => ({ x: p.x, y: p.y, h: p.h, r: p.r, kind: p.kind, gate: p.gate })),
     flats: GEO.PLACES.filter(p => p[7] && p[7].r >= 0.3 && p[7].culture !== 'minastirith').map(p => ({ x: p[2], y: p[3], r: p[7].r * 1.6 + 0.3, lift: p[7].culture === 'hobbit' ? 30 : 20 })),
     numenor: GEO.NUMENOR,
     vectors: {
@@ -129,7 +129,7 @@ function build(GEO) {
       roads: GEO.ROADS.map(r => ({ name: r.name, pts: r.pts, cls: r.cls })),
       lakes: GEO.LAKES.map(l => ({ pts: l.pts })),
       walls: GEO.WALLS.map(w => ({ name: w.name, pts: w.pts, circle: w.circle })),
-      settlements: GEO.PLACES.filter(p => p[7] && p[7].culture && p[7].r).map(p => ({ name: p[0], x: p[2], y: p[3], r: p[7].r, culture: p[7].culture, gate: p[7].gate })),
+      settlements: GEO.PLACES.filter(p => p[7] && p[7].culture && p[7].r).map(p => ({ name: p[0], x: p[2], y: p[3], r: p[7].r, culture: p[7].culture, gate: p[7].gate, feature: p[7].feature })),
     },
   };
 }

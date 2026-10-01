@@ -163,6 +163,17 @@ function peakAt(X, Y, pix) {
       prof = Math.pow(1 - d, 1.35);
       if (d < 0.09) prof -= (0.09 - d) * 2.2;
       prof *= 1 + 0.08 * noise(X * 3, Y * 3);
+    } else if (p.kind === 'lonely') {
+      // the Lonely Mountain: a steep central massif and six great spurs; the River Running leaves the
+      // Front Gate down the valley between the two southern spurs
+      const ang = Math.atan2(dy, dx), dr = d * p.r;
+      const adiff = a => Math.abs(((ang - a) % 6.2832 + 9.4248) % 6.2832 - 3.1416);
+      let spur = 0;
+      for (let k = 0; k < 6; k++) { const da = adiff(p.gate + (k + 0.5) * Math.PI / 3); spur = Math.max(spur, Math.exp(-Math.pow(da * dr / (0.9 + 0.12 * dr), 2))); }
+      const core = Math.pow(Math.max(0, 1 - d / 0.34), 1.1);
+      prof = Math.max(core, spur * Math.pow(Math.max(0, 1 - d / 0.85), 1.4) * 0.5);
+      prof *= 1 - 0.75 * Math.exp(-Math.pow(adiff(p.gate) * dr / 0.7, 2)) * sstep(0.22, 0.4, d);
+      if (pix < 0.2) prof *= 1 + 0.18 * ridgedA(X, Y, 0.9, Math.max(pix, 0.004)) * sat(d * 3);
     } else if (p.kind === 'hill') {
       prof = 0.5 + 0.5 * Math.cos(Math.PI * d);
       prof *= prof;
@@ -790,7 +801,7 @@ function buildings(si) {
   const st = STYLE[s.culture] || STYLE.bree;
   const out = [];
   const rM = s.r * MI;
-  const n = Math.round(st.dens * s.r * s.r * Math.PI);
+  const n = s.feature ? 0 : Math.round(st.dens * s.r * s.r * Math.PI);
   const orient = hash2(si, 1, 5) * Math.PI;
   let tries = 0;
   while (out.length < n && tries < n * 4) {
@@ -824,7 +835,8 @@ function buildings(si) {
   }
   if (s.culture === 'mordor' && s.name === 'Barad-dûr') sp.push({ type: 'tower', kind: 'baraddur', x: s.x, y: s.y, r: 60, h: 420, c: [18, 16, 18], square: 1 });
   if (s.culture === 'morgul') sp.push({ type: 'tower', kind: 'morgul', x: s.x, y: s.y, r: 14, h: 110, c: [170, 196, 184] });
-  if (s.gate) sp.push({ type: 'gate', x: s.x, y: s.y, face: s.gate, c: [120, 116, 110] });
+  if (s.feature) sp.push({ type: 'feature', kind: s.feature, x: s.x, y: s.y, face: s.gate || 0, c: [120, 116, 110] });
+  else if (s.gate) sp.push({ type: 'gate', x: s.x, y: s.y, face: s.gate, c: [120, 116, 110] });
   if (s.culture === 'lorien') sp.push({ type: 'mallorn', x: s.x, y: s.y, r: 18, h: 75, c: [190, 190, 180] });
   const res = { list: out, special: sp };
   BCACHE.set(si, res);

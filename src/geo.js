@@ -208,7 +208,8 @@ const HILLS = [
 
 /* Solitary peaks (analytic cones). r = radius (mi), h = height above surroundings (m). */
 const PEAKS = [
-  { name:'Erebor', alt:'The Lonely Mountain', x:768.4, y:138, h:2600, r:14, kind:'mountain' },
+  { name:'Erebor', alt:'The Lonely Mountain', x:768.4, y:138, h:3000, r:14, kind:'lonely', gate:-1.333 },
+  { name:'Ravenhill', alt:'', x:766.2, y:130.4, h:240, r:1.3, kind:'hill' },
   { name:'Orodruin', alt:'Mount Doom', x:840.1, y:-554, h:1400, r:9, kind:'volcano' },
   { name:'Caradhras', alt:'Barazinbar, the Redhorn', x:415, y:-157.5, h:1600, r:8, kind:'mountain' },
   { name:'Celebdil', alt:'Zirakzigil, the Silvertine', x:423.1, y:-178, h:1400, r:7, kind:'mountain' },
@@ -533,7 +534,8 @@ const PLACES = [
   ['Esgaroth','town',766.5,97.5,'men','Long Lake','Lake-town, built on piles upon the Long Lake.',{pop:3000,rank:2,culture:'lake',r:0.5}],
   ['Dale','city',769,128.4,'men','Dale','City of the Bardings in the valley before the Lonely Mountain, rebuilt by King Bard.',{pop:6000,rank:1,culture:'dale',r:0.8}],
   ['Erebor','dwarven',768.4,138,'dwarves','Erebor','The Kingdom under the Mountain, restored by Dáin Ironfoot.',{pop:5000,rank:1}],
-  ['Ravenhill','landmark',769.1,143.3,'dwarves','Erebor','Dwarf guard-post on a southern spur of the Lonely Mountain.',{rank:5}],
+  ['Ravenhill','landmark',766.2,130.4,'dwarves','Erebor','Dwarf guard-post on a southern spur of the Lonely Mountain, above the bend of the River Running; ravens of old lived there.',{rank:4,culture:'dwarf',r:0.05,feature:'ravenhill'}],
+  ['Side Door of Erebor','landmark',763.4,136.7,'dwarves','Erebor','The hidden door in a little bay high on the western spur, found by its keyhole when the last light of Durin\'s Day fell upon the grey stone.',{rank:4,culture:'dwarf',r:0.05,feature:'sidedoor',gate:-2.8}],
   ['Iron Hills','dwarven',1033.5,171,'dwarves','Iron Hills','Dáin\'s dwarf-realm, rich in iron.',{culture:'dwarf',r:0.4,pop:4000,rank:2}],
   ['Front Gate of Erebor','dwarven',770,131.4,'dwarves','Erebor','The great gate in the southern face of the Lonely Mountain, where the River Running issues out; Dáin\'s folk keep it again.',{rank:3,culture:'dwarf',r:0.14,gate:-1.333}],
   ['Woodmen-town','village',590,0,'men','Mirkwood','Clearing-town of the Woodmen on the western eaves of Mirkwood.',{pop:800,rank:4,culture:'woodmen',r:0.35}],

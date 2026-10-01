@@ -135,6 +135,33 @@ function ereborGate() {
   const lamp = glow('rgba(255,190,110,0.9)', 'rgba(255,120,40,0)', 16); lamp.position.set(0, 10, -2); g.add(lamp);
   return g;
 }
+// Ravenhill: the dwarves' square guard-room on the southern spur, with its stair and the ravens' ledge.
+function ravenhill() {
+  const st = 0x77716a, st2 = 0x5e5952, P = [[bx(14, 9, 14), st2], [bx(11, 7, 11).translate(0, 9, 0), st], [bx(12, 1, 12).translate(0, 16, 0), st2]];
+  for (const [x, z] of [[-5.4, -5.4], [5.4, -5.4], [-5.4, 5.4], [5.4, 5.4]]) P.push([bx(1.4, 1.6, 1.4).translate(x, 17, z), st]);
+  for (let i = 0; i < 9; i++) P.push([bx(2.2, 0.5 + i * 1, 1.2).translate(8.2, 0, -4 + i * 1.1), st2]);
+  P.push([bx(2, 3, 0.4).translate(0, 9.5, 5.6), 0x141210], [bx(1, 1.4, 0.3).translate(-3, 12, 5.6), 0x141210], [bx(1, 1.4, 0.3).translate(3, 12, 5.6), 0x141210]);
+  const g = new THREE.Group(), m = new THREE.Mesh(merge(P), vcMat({ roughness: 0.95 })); m.castShadow = m.receiveShadow = true; g.add(m);
+  // ravens wheeling over the hill
+  const birds = new THREE.InstancedMesh(new THREE.ConeGeometry(0.25, 1.1, 3).rotateX(Math.PI / 2).scale(1, 0.3, 1).translate(0, 0, 0), new THREE.MeshBasicMaterial({ color: 0x0a0a0c }), 7), m4 = new THREE.Matrix4();
+  g.add(birds);
+  g.userData.update = (dt, t) => { for (let i = 0; i < 7; i++) { const a = t * (0.35 + i * 0.03) + i; m4.makeRotationY(-a).setPosition(Math.cos(a) * (14 + i * 3), 26 + i * 2 + Math.sin(t + i) * 2, Math.sin(a) * (14 + i * 3)); birds.setMatrixAt(i, m4); } birds.instanceMatrix.needsUpdate = true; };
+  return g;
+}
+// The hidden door: a flat bay in the western spur, the smooth grey wall where the door's outline shows
+// only to those who know, and the grey stone where the thrush knocked.
+function sideDoor() {
+  const rock = 0x625d55, st2 = 0x5c5850, P = [[bx(26, 0.8, 18).translate(0, -0.6, 6), 0x6a6458], [bx(30, 34, 6).translate(0, -4, -6), st2], [bx(3.2, 5.2, 0.15).translate(0, 0, -2.9), 0x58534c], [bx(0.4, 0.5, 0.2).translate(1, 2.6, -2.8), 0x101010],
+    [new THREE.IcosahedronGeometry(1.3, 0).scale(1.2, 0.8, 1).translate(-4, 0.6, 4), 0x7a7570]];
+  for (let i = 0; i < 12; i++) {
+    const a = (i / 11 - 0.5) * 2.8, r = 16 + 10 * Math.abs(Math.sin(i * 1.9)), h = 26 + 22 * Math.abs(Math.cos(i * 2.3));
+    P.push([new THREE.IcosahedronGeometry(1, 0).scale(r * 0.6, h, r * 0.5).rotateY(i).translate(Math.sin(a) * 22, h * 0.3, -14 - Math.cos(a) * 10), i % 2 ? rock : st2]);
+  }
+  for (let i = 0; i < 6; i++) P.push([bx(2.4, 0.4, 1.2).translate(-11 + i * 0.4, -1 - i * 0.55, 15 + i * 1.3), 0x6a6458]);   // the stair cut in the cliff
+  const g = new THREE.Group(), m = new THREE.Mesh(merge(P), vcMat({ roughness: 0.92 })); m.castShadow = m.receiveShadow = true; g.add(m);
+  return g;
+}
+
 // One mallorn of Caras Galadhon: silver bole, talans at three heights, a golden crown and lamps.
 function mallorn(r, h, flets, lamps, x, y, z) {
   const P = [[cy(r * 0.7, r, h, 9), 0xc4c4bc]];
@@ -164,6 +191,8 @@ function W3town(B, X0, Y0, hAt) {
     else if (s.kind === 'morgul') m = morgul();
     else if (s.kind === 'ecthelion') m = ecthelion();
     else if (s.type === 'gate') { m = ereborGate(); m.rotation.y = Math.atan2(Math.cos(s.face), -Math.sin(s.face)); }
+    else if (s.kind === 'ravenhill') m = ravenhill();
+    else if (s.kind === 'sidedoor') { m = sideDoor(); m.rotation.y = Math.atan2(Math.cos(s.face), -Math.sin(s.face)); }
     else if (s.type === 'mallorn') { grp.add(new THREE.Mesh(mallorn(4.2, 78, 4, lamps, x, y - 1, z), vcMat({ roughness: 0.8 }))); continue; }
     else if (s.type === 'prow') {
       // the great pier of rock that splits every circle of the City, pointing east
@@ -420,13 +449,24 @@ function W3hall(kind) {
   const stoneMat = vcMat({ roughness: 0.92 });
   const goldMat = new THREE.MeshStandardMaterial({ color: gold, roughness: 0.28, metalness: 1, emissive: 0x3a2400, emissiveIntensity: 0.4 });
   const P = [], fires = [], regions = [];
-  // walkable regions: [x0, x1, z0, z1, y or fn(x,z)]; holes: [x0, x1, z0, z1]
+  // walkable regions: [x0, x1, z0, z1, y or fn(x,z), solid?]; holes: [x0, x1, z0, z1]
+  // Regions may overlap at different heights (a gallery above the hall floor). floorAt(x, z, yRef) picks
+  // the highest floor within a step of yRef; a solid region (stairs, piers) is a wall to anyone below it.
   const holes = [];
-  const floorAt = (x, z) => {
+  const floorAt = (x, z, yRef) => {
     for (const h of holes) if (x > h[0] && x < h[1] && z > h[2] && z < h[3]) return null;
-    for (const r of regions) if (x > r[0] && x < r[1] && z > r[2] && z < r[3]) return typeof r[4] === 'function' ? r[4](x, z) : r[4];
-    return null;
+    let low = null, best = null;
+    for (const r of regions) if (x > r[0] && x < r[1] && z > r[2] && z < r[3]) {
+      const y = typeof r[4] === 'function' ? r[4](x, z) : r[4];
+      if (y === null) continue;
+      if (yRef !== undefined && r[5] && y > yRef + 1.25) return null;
+      if (low === null || y < low) low = y;
+      if (yRef !== undefined && y <= yRef + 1.25 && (best === null || y > best)) best = y;
+    }
+    return yRef === undefined ? low : (best ?? low);
   };
+  const rooms = [];     // [name, x0, x1, z0, z1, yMin, yMax] for the place line
+  const ceilings = [];  // [x0, x1, z0, z1, y]: how high Space may lift the walker
   const slab = (x0, x1, z0, z1, y, mat = floorMat) => {
     const w = x1 - x0, d = z1 - z0, g = new THREE.BoxGeometry(w, 2, d).translate((x0 + x1) / 2, y - 1, (z0 + z1) / 2);
     const uv = g.attributes.uv; for (let i = 0; i < uv.count; i++) uv.setXY(i, uv.getX(i) * w / 24, uv.getY(i) * d / 24);
@@ -443,6 +483,7 @@ function W3hall(kind) {
   const inGap = (gaps, z) => gaps.some(g => z > g[0] - 1 && z < g[1] + 1);
   // nave
   regions.push([-W, W, Z0, Z1, 0]);
+  ceilings.push([-W - 0.5, W + 0.5, Z0 - 60, Z1 + 6, H - 4]);
   for (const [x0, x1, gaps] of [[-W - 6, -W, gapW], [W, W + 6, gapE]]) {
     let z = Z0 - 6;
     for (const g of gaps.slice().sort((a, b) => a[0] - b[0])) { wall(x0, x1, z, g[0], -2, H); wall(x0, x1, g[0], g[1], 26, H); z = g[1]; }
@@ -451,11 +492,12 @@ function W3hall(kind) {
   P.push([bx(2 * W + 12, 4, Z1 - Z0 + 12).translate(0, H, (Z0 + Z1) / 2), stone2]);
   for (let z = Z1 - 10; z > Z0; z -= 15) for (const s of [-1, 1]) if (!inGap(s > 0 ? gapE : gapW, z)) wall(s * W - (s > 0 ? 1.5 : 0), s * W + (s > 0 ? 0 : 1.5), z - 1, z + 1, 0, H, stone2);
   // the gate behind the walker: daylight through the doorway
-  wall(-W, -12, Z1, Z1 + 6, -2, H); wall(12, W, Z1, Z1 + 6, -2, H); wall(-12, 12, Z1, Z1 + 6, 30, H);
+  wall(-W, -12, Z1, Z1 + 6, -2, H); wall(-12, 12, Z1, Z1 + 6, 30, H);
+  if (E) { wall(12, 27, Z1, Z1 + 6, -2, H); wall(27, 33, Z1, Z1 + 6, 5, H); wall(33, W, Z1, Z1 + 6, -2, H); } else wall(12, W, Z1, Z1 + 6, -2, H);
   const day = new THREE.Mesh(new THREE.PlaneGeometry(24, 32), new THREE.MeshBasicMaterial({ color: E ? 0xfff2d8 : 0xdde8f0, fog: false })); day.position.set(0, 15, Z1 + 5.5); day.rotation.y = Math.PI; grp.add(day);
   const dayL = new THREE.SpotLight(E ? 0xfff0d0 : 0xd8e4ff, 5e3, 160, 0.55, 0.7, 1.8); dayL.position.set(0, 18, Z1 + 4); dayL.target.position.set(0, 0, Z1 - 60); grp.add(dayL, dayL.target);
   // pillars and ribs
-  const chasm = E ? [-235, -205] : [-300, -240];
+  const chasm = E ? [1e9, 1e9] : [-300, -240];
   for (let z = Z1 - 20; z > Z0 + 10; z -= (E ? 30 : 26)) {
     if (z > chasm[0] - 8 && z < chasm[1] + 8) continue;
     for (const s of [-1, 1]) {
@@ -471,8 +513,10 @@ function W3hall(kind) {
     P.push([new THREE.TorusGeometry(E ? 22 : 26, 1.6, 6, 18, Math.PI).translate(0, H - (E ? 22 : 26), z), stone2]);
     if (E) { brazier(-14, z); brazier(14, z); } else if (Math.abs(z) % 78 < 26) brazier(0, z);
   }
-  // the chasm and its bridge
-  const bw = E ? 7 : 1.6;
+  // Moria: the chasm and the Bridge of Khazad-dûm
+  if (E) { slab(-W, 26.9, Z0, Z1, 0); slab(33.1, W, Z0, Z1, 0); }     // the River Running's channel lies between
+  else {
+  const bw = 1.6;
   holes.push([-W - 1, -bw / 2, chasm[0], chasm[1]], [bw / 2, W + 1, chasm[0], chasm[1]]);
   regions.unshift([-bw / 2, bw / 2, chasm[0], chasm[1], 0]);
   P.push([bx(bw, 2.5, chasm[1] - chasm[0]).translate(0, -2.5, (chasm[0] + chasm[1]) / 2), stone2]);
@@ -481,15 +525,20 @@ function W3hall(kind) {
   const pitL = E ? new THREE.PointLight(0xff6a20, 6e4, 150, 2) : new THREE.PointLight(0xff3a10, 2.5e5, 320, 2); pitL.position.set(0, E ? -150 : -25, (chasm[0] + chasm[1]) / 2); grp.add(pitL);
   if (!E) for (let i = 0; i < 9; i++) { const f = glow('rgba(255,140,50,0.9)', 'rgba(255,40,0,0)', 40 + Math.random() * 40); f.position.set((Math.random() - 0.5) * 2 * W, -40 - Math.random() * 60, chasm[0] + Math.random() * (chasm[1] - chasm[0])); grp.add(f); fires.push(f); }
   slab(-W, W, chasm[1], Z1, 0); slab(-W, W, Z0, chasm[0], 0); slab(-bw / 2, bw / 2, chasm[0], chasm[1], 0, stoneMat);
+  rooms.push(['The Bridge of Khazad-dûm', -W, W, chasm[0] - 10, chasm[1] + 10, -1e9, 1e9]);
+  }
   let info;
+  const spawns = { gate: { x: 0, z: Z1 - 14, yaw: 0 } };
   if (E) {
     // great stair, dais, throne and the Arkenstone
     const sz0 = Z0, steps = 30, depth = 1.7, rise = 0.8;
-    regions.unshift([-20, 20, sz0 - steps * depth, sz0, (x, z) => Math.min(steps, Math.floor((sz0 - z) / depth) + 1) * rise]);
+    regions.unshift([-20, 20, sz0 - steps * depth, sz0, (x, z) => Math.min(steps, Math.floor((sz0 - z) / depth) + 1) * rise, true]);
     for (let i = 0; i < steps; i++) P.push([bx(40, (i + 1) * rise, depth).translate(0, 0, sz0 - (i + 0.5) * depth), i % 2 ? stone : stone2]);
     const dz0 = sz0 - steps * depth, dy = steps * rise;
     regions.unshift([-30, 30, dz0 - 40, dz0, dy]); slab(-30, 30, dz0 - 40, dz0, dy);
-    wall(-36, 36, dz0 - 46, dz0 - 40, -2, H + 10); wall(-36, -30, dz0 - 40, dz0, dy - 2, H); wall(30, 36, dz0 - 40, dz0, dy - 2, H);
+    wall(-36, 36, dz0 - 46, dz0 - 40, -2, H + 10); wall(30, 36, dz0 - 40, dz0, dy - 2, H);
+    // west wall of the dais opens into the Gallery of the Kings
+    wall(-36, -30, dz0 - 40, dz0 - 35, dy - 2, H); wall(-36, -30, dz0 - 5, dz0, dy - 2, H); wall(-36, -30, dz0 - 35, dz0 - 5, dy + 16, H);
     wall(-W, -20, dz0, sz0, -2, dy, stone2); wall(20, W, dz0, sz0, -2, dy, stone2);
     P.push([bx(6, 2.5, 4).translate(0, dy, dz0 - 30), gold], [bx(6, 9, 1.2).translate(0, dy + 2.5, dz0 - 32), gold], [bx(8, 0.8, 6).translate(0, dy, dz0 - 30), stone2]);
     const stoneG = new THREE.Mesh(new THREE.IcosahedronGeometry(0.9, 1), new THREE.MeshStandardMaterial({ color: 0xffffff, emissive: 0xe8f0ff, emissiveIntensity: 2.5, roughness: 0.1 }));
@@ -503,7 +552,7 @@ function W3hall(kind) {
     regions.push([W - 0.5, 60.5, -100, -60, x => -Math.max(0, Math.min(1, (x - W) / 24)) * 8], [60, 170, tz0, tz1, ty]);
     const ramp = new THREE.Mesh(new THREE.BoxGeometry(24.6, 1, 40).translate(0, -0.5, 0), floorMat); ramp.rotation.z = -Math.atan2(8, 24); ramp.position.set(W + 12, -4, -80); grp.add(ramp);
     slab(W + 24, 60, -100, -60, ty); slab(60, 170, tz0, tz1, ty);
-    wall(60, 170, tz0 - 6, tz0, ty - 2, 30); wall(60, 170, tz1, tz1 + 6, ty - 2, 30); wall(170, 176, tz0, tz1, ty - 2, 30); wall(60, 66, tz0, -100, ty - 2, 30); wall(60, 66, -60, tz1, ty - 2, 30);
+    wall(60, 170, tz0 - 6, tz0, ty - 2, 30); wall(60, 170, tz1, tz1 + 6, ty - 2, 30); wall(170, 176, tz0, -112, ty - 2, 30); wall(170, 176, -108, tz1, ty - 2, 30); wall(170, 176, -112, -108, ty + 4.4, 30); wall(60, 66, tz0, -100, ty - 2, 30); wall(60, 66, -60, tz1, ty - 2, 30);
     P.push([bx(116, 3, 136).translate(118, 30, (tz0 + tz1) / 2), stone2]);
     const hoard = [], coins = [];
     for (let i = 0; i < 26; i++) {
@@ -520,7 +569,7 @@ function W3hall(kind) {
     // forges through the west wall, with a channel of molten gold
     regions.push([-150, -W - 6, -110, 10, (x, z) => (Math.abs(x + 100) < 1.6 ? null : 0)], [-W - 6.5, -W + 0.5, -60, -30, 0]);
     slab(-150, -W - 6, -110, 10, 0); slab(-W - 6, -W, -60, -30, 0);
-    wall(-156, -150, -110, 10, -2, 34); wall(-150, -W - 6, -116, -110, -2, 34); wall(-150, -W - 6, 10, 16, -2, 34); P.push([bx(108, 3, 126).translate(-97, 34, -50), stone2]);
+    wall(-156, -150, -110, 10, -2, 34); wall(-150, -W - 6, 10, 16, -2, 34); P.push([bx(108, 3, 126).translate(-97, 34, -50), stone2]);
     const molten = new THREE.Mesh(new THREE.PlaneGeometry(3, 110).rotateX(-Math.PI / 2), new THREE.MeshStandardMaterial({ color: 0xffb030, emissive: 0xff8a10, emissiveIntensity: 2 })); molten.position.set(-100, 0.05, -50); grp.add(molten);
     for (let i = 0; i < 6; i++) {
       const z = -100 + i * 18;
@@ -529,6 +578,7 @@ function W3hall(kind) {
     }
     const fl = new THREE.PointLight(0xff7a2a, 1.2e4, 200, 2); fl.position.set(-120, 14, -50); grp.add(fl);
     up.push((dt, t) => { molten.material.emissiveIntensity = 1.6 + 0.4 * Math.sin(t * 3.1); });
+    ereborMore({ ceilings, P, grp, up, fires, regions, holes, rooms, spawns, slab, wall, brazier, floorMat, stoneMat, goldMat, stone, stone2, gold, W, H, Z0, Z1, dz0, dy, tz0, tz1, ty });
     info = 'Halls of Thrór · Erebor';
   } else {
     // the far end: light of the East-gate; Balin's tomb off the west side under a shaft of daylight
@@ -542,13 +592,18 @@ function W3hall(kind) {
     tomb.position.set(-75, 0, -85); grp.add(tomb);
     const shaft = new THREE.SpotLight(0xffffff, 1.2e4, 60, 0.2, 0.5, 1.5); shaft.position.set(-75, 29, -85); shaft.target.position.set(-75, 0, -85); grp.add(shaft, shaft.target);
     const beam = new THREE.Mesh(new THREE.CylinderGeometry(1.4, 2.2, 29, 16, 1, true), new THREE.MeshBasicMaterial({ color: 0xffffff, transparent: true, opacity: 0.08, depthWrite: false, blending: THREE.AdditiveBlending })); beam.position.set(-75, 14.5, -85); grp.add(beam);
+    ceilings.push([-110, -W - 6, -110, -60, 28]);
+    rooms.push(["Balin's Tomb · the Chamber of Mazarbul", -110, -W - 6, -110, -60, -1e9, 1e9]);
     info = 'The Dwarrowdelf · Khazad-dûm';
   }
   const m = new THREE.Mesh(merge(P), stoneMat); m.receiveShadow = true; grp.add(m);
   const lights = [];
-  for (let i = 0; i < (E ? 8 : 4); i++) { const l = new THREE.PointLight(0xffa858, E ? 9000 : 5000, 90, 2); grp.add(l); lights.push(l); }
-  let tick = 9;
+  for (let i = 0; i < 4; i++) { const l = new THREE.PointLight(0xffa858, E ? 9000 : 5000, 90, 2); grp.add(l); lights.push(l); }
+  let tick = 9, room = '';
   const update = (dt, t) => {
+    const c = G.camera.position, r = rooms.find(r => c.x > r[1] && c.x < r[2] && c.z > r[3] && c.z < r[4] && G.hallY >= r[5] && G.hallY <= r[6]);
+    const name = r ? r[0] : info;
+    if (name !== room) { room = name; $('#gsub').textContent = name; }
     fires.forEach((f, i) => { const s0 = f.userData.s || (f.userData.s = f.scale.x); f.scale.setScalar(s0 * (0.85 + 0.15 * Math.sin(t * 11 + i * 1.7) * Math.sin(t * 5.3 + i))); });
     if ((tick += dt) > 0.5) {
       // keep the few real lights on the braziers nearest the walker
@@ -558,5 +613,149 @@ function W3hall(kind) {
     }
     up.forEach(f => f(dt, t));
   };
-  return { group: grp, floorAt, spawn: { x: 0, z: Z1 - 14, yaw: 0 }, info, update, ceiling: H - 6, dwarves: E };
+  return { group: grp, floorAt, spawn: spawns.gate, spawns, info, update, ceiling: H - 6, dwarves: E, ceilingAt: (x, z) => { for (const c of ceilings) if (x > c[0] && x < c[1] && z > c[2] && z < c[3]) return c[4]; return G.hallY + 3.2; } };
+}
+
+/* The rest of Thrór's halls: the west gallery, the Gallery of the Kings, the River Running, the deep
+   mine-shaft beyond the forges, and the secret passage up to the hidden door on the western side. */
+function ereborMore(o) {
+  const { ceilings, P, grp, up, fires, regions, holes, rooms, spawns, slab, wall, brazier, floorMat, stoneMat, goldMat, stone, stone2, gold, W, H, Z0, Z1, dz0, dy, tz0, tz1, ty } = o;
+  rooms.push(['The Great Hall of Thrór', -W, W, Z0, Z1, -1, 2], ['The Throne of the King under the Mountain', -36, 36, dz0 - 40, Z0, -1e9, 1e9],
+    ['The Treasury', 60, 176, tz0, tz1, -1e9, 1e9], ['The Forges', -150, -W, -110, 10, -1e9, 1e9]);
+  ceilings.push([60, 170, tz0, tz1, 28], [-150, -W - 6, -110, 10, 32]);
+
+  // ---- the River Running, in a channel down the east side and out under the gate
+  const cx0 = 27.5, cx1 = 32.5, bz0 = -86, bz1 = -74;
+  holes.push([cx0, cx1, Z0 - 1, bz0], [cx0, cx1, bz1, Z1 + 8]);
+  const wtex = (() => {
+    const cv = document.createElement('canvas'); cv.width = 64; cv.height = 256; const g = cv.getContext('2d');
+    g.fillStyle = '#1d4a52'; g.fillRect(0, 0, 64, 256);
+    for (let i = 0; i < 220; i++) { g.fillStyle = `rgba(190,230,235,${Math.random() * 0.22})`; g.fillRect(Math.random() * 64, Math.random() * 256, 2 + Math.random() * 10, 1 + Math.random() * 2); }
+    const t = new THREE.CanvasTexture(cv); t.wrapS = t.wrapT = THREE.RepeatWrapping; t.repeat.set(1, 30); t.colorSpace = THREE.SRGBColorSpace; return t;
+  })();
+  const water = new THREE.Mesh(new THREE.PlaneGeometry(cx1 - cx0, Z1 - Z0 + 8).rotateX(-Math.PI / 2), new THREE.MeshStandardMaterial({ map: wtex, roughness: 0.08, metalness: 0.2, emissive: 0x0a2226 }));
+  water.position.set((cx0 + cx1) / 2, -1.6, (Z0 + Z1 + 8) / 2); grp.add(water);
+  up.push(dt => { wtex.offset.y -= dt * 0.35; });
+  wall(cx0 - 0.6, cx0, Z0, Z1 + 6, -3, 0.5, stone2); wall(cx1, cx1 + 0.6, Z0, Z1 + 6, -3, 0.5, stone2);
+  wall(cx0, cx1, Z0 - 1, Z0, -3, 0, stone2);
+  P.push([bx(cx1 - cx0 + 1.6, 0.6, bz1 - bz0).translate((cx0 + cx1) / 2, -0.6, (bz0 + bz1) / 2), stone]);
+  for (const z of [bz0, bz1]) for (const x of [cx0 - 0.3, cx1 + 0.3]) P.push([bx(0.5, 1.2, 0.5).translate(x, 0, z), gold]);
+  const spout = glow('rgba(160,220,230,0.5)', 'rgba(60,120,140,0)', 6); spout.position.set((cx0 + cx1) / 2, -0.5, Z0 + 1); grp.add(spout);
+
+  // ---- the west gallery, 24 m up, reached by a stair from beside the gate
+  const gy = dy, gx0 = -W, gx1 = -27, sTop = -8, sBot = 40, nSt = 30, sD = (sBot - sTop) / nSt;
+  regions.push([gx0, gx1, sTop, sBot, (x, z) => Math.max(0, Math.min(nSt, Math.floor((sBot - z) / sD) + 1)) * gy / nSt, true]);
+  for (let i = 0; i < nSt; i++) P.push([bx(gx1 - gx0, (i + 1) * gy / nSt, sD).translate((gx0 + gx1) / 2, 0, sBot - (i + 0.5) * sD), i % 2 ? stone : stone2]);
+  regions.push([gx0, gx1, Z0 - 0.5, sTop + 0.5, gy], [-W, -20, dz0, Z0 + 0.5, gy, true]);
+  rooms.push(['The West Gallery', gx0, gx1 + 1, Z0, sTop, gy - 1, gy + 1]);
+  P.push([bx(gx1 - gx0, 1.4, sTop - Z0).translate((gx0 + gx1) / 2, gy - 1.4, (Z0 + sTop) / 2), stone2]);
+  for (let z = sTop - 6; z > Z0; z -= 4) P.push([bx(0.5, 1.1, 0.5).translate(gx1 - 0.3, gy, z), stone]);
+  P.push([bx(0.7, 0.3, sTop - Z0).translate(gx1 - 0.3, gy + 1.1, (Z0 + sTop) / 2), gold]);
+  for (let z = sTop - 12; z > Z0 + 4; z -= 30) {
+    if (z > -64 && z < -26) continue;                       // keep the forge doorway clear
+    regions.push([-35.5, -29.5, z - 1.6, z + 1.6, gy, true]);
+    P.push([bx(5, gy - 1.4, 3).translate(-32.5, 0, z), stone]);
+    P.push([new THREE.TorusGeometry(13, 0.8, 5, 10, Math.PI).rotateY(Math.PI / 2).translate(-27.5, gy - 14.5, z + 15), stone2]);
+  }
+  for (let z = sTop - 30; z > Z0; z -= 60) brazier(-33, z, gy);
+
+  // ---- the Gallery of the Kings: Durin's line in stone, west of the throne
+  const kz0 = dz0 - 35, kz1 = dz0 - 5, kx0 = -250, kx1 = -36, kH = 34;
+  regions.push([kx0, kx1 + 6.5, kz0, kz1, gy]); slab(kx0, kx1 + 6, kz0, kz1, gy);
+  rooms.push(['The Gallery of the Kings', kx0, kx1 + 6, kz0, kz1, -1e9, 1e9]); ceilings.push([kx0, kx1 + 6, kz0, kz1, gy + kH - 2]);
+  wall(kx0 - 6, kx0, kz0 - 6, kz1 + 6, gy - 2, gy + kH); wall(kx0, kx1 + 6, kz0 - 6, kz0, gy - 2, gy + kH); wall(kx0, kx1 + 6, kz1, kz1 + 6, gy - 2, gy + kH);
+  P.push([bx(kx1 - kx0 + 12, 3, kz1 - kz0 + 12).translate((kx0 + kx1) / 2, gy + kH, (kz0 + kz1) / 2), stone2]);
+  const kings = ['DURIN THE DEATHLESS', 'DURIN VI', 'NAIN I', 'THRAIN I', 'THORIN I', 'DAIN I', 'THROR', 'THRAIN II', 'THORIN OAKENSHIELD', 'DAIN IRONFOOT'];
+  const plates = [];
+  kings.forEach((name, i) => {
+    const side = i % 2 ? 1 : -1, x = kx1 - 22 - Math.floor(i / 2) * 36, z = side > 0 ? kz1 - 3.5 : kz0 + 3.5, f = -side;   // f: facing +z or −z
+    regions.push([x - 3, x + 3, z - 3, z + 3, gy + 3, true]);
+    const K = [[bx(6, 3, 6), stone2], [bx(5, 6.5, 3.4).translate(0, 3, 0), stone], [bx(4.6, 3.6, 3).translate(0, 9.5, 0), stone], [bx(6.2, 1.6, 3.4).translate(0, 12.6, 0), stone],
+      [sph(1.3, 8, 6).translate(0, 15.4, 0.2 * f), stone], [bx(2.4, 4.6, 0.8).translate(0, 10.2, 1.6 * f), stone2], [cy(1.25, 1.35, 0.9, 10).translate(0, 16.4, 0.2 * f), gold],
+      [bx(0.5, 10, 0.5).translate(2.6, 3, 1.8 * f), stone2], [bx(2.6, 2.4, 0.4).translate(2.6, 12.6, 1.8 * f), stone2]];
+    for (const [g, c] of K) P.push([g.translate(x, gy, z), c]);
+    plates.push([name, x, z + 3.05 * f, f]);
+    brazier(x + 9, z - 4 * side, gy);
+  });
+  for (const [name, x, z, f] of plates) {
+    const m = new THREE.Mesh(new THREE.PlaneGeometry(5.6, 1.4), new THREE.MeshStandardMaterial({ map: runeTexture(name), roughness: 0.7 }));
+    m.position.set(x, gy + 1.5, z); if (f < 0) m.rotation.y = Math.PI; grp.add(m);
+  }
+  // the end wall: Durin's crown and seven stars, as on the Doors of Moria
+  P.push([bx(1, 22, 22).translate(kx0 + 0.5, gy + 4, (kz0 + kz1) / 2), stone2], [cy(4, 4.4, 2.4, 10).rotateZ(Math.PI / 2).translate(kx0 + 1.2, gy + 21, (kz0 + kz1) / 2), gold]);
+  for (let i = 0; i < 7; i++) { const a = Math.PI * (0.15 + 0.7 * i / 6); const st = glow('rgba(230,240,255,1)', 'rgba(150,180,255,0)', 2.6); st.position.set(kx0 + 1.4, gy + 21 + Math.sin(a) * 9, (kz0 + kz1) / 2 + Math.cos(a) * 9); grp.add(st); }
+
+  // ---- the mines: north of the forges, a deep shaft with a cage-lift, ore-carts and veins of gold and mithril
+  const mx0 = -165, mx1 = -78, mz0 = -215, mz1 = -116, hx0 = -136, hx1 = -106, hz0 = -190, hz1 = -150, depth = 320;
+  wall(-150, -130, -116, -110, -2, 34); wall(-112, -W - 6, -116, -110, -2, 34); wall(-130, -112, -116, -110, 14, 34);
+  regions.push([-130, -112, -116.5, -109.5, 0], [mx0, mx1, mz0, mz1, 0]);
+  slab(mx0, hx0 - 1, mz0, mz1, 0); slab(hx1 + 1, mx1, mz0, mz1, 0); slab(hx0 - 1, hx1 + 1, mz0, hz0 - 1, 0); slab(hx0 - 1, hx1 + 1, hz1 + 1, mz1, 0);
+  holes.push([hx0, hx1, hz0, hz1]);
+  rooms.push(['The Deep Mines', mx0, mx1, mz0, mz1, -1e9, 1e9]); ceilings.push([mx0, mx1, mz0, mz1, 38]);
+  wall(mx0 - 6, mx0, mz0 - 6, mz1 + 6, -2, 40); wall(mx1, mx1 + 6, mz0 - 6, mz1 + 6, -2, 40); wall(mx0, mx1, mz0 - 6, mz0, -2, 40);
+  wall(mx0, -130, mz1, mz1 + 0.01, 0, 0.01); P.push([bx(mx1 - mx0 + 12, 3, mz1 - mz0 + 12).translate((mx0 + mx1) / 2, 40, (mz0 + mz1) / 2), stone2]);
+  // shaft walls, with veins and hanging lamps all the way down
+  wall(hx0 - 1, hx0, hz0, hz1, -depth, 0, 0x3a3530); wall(hx1, hx1 + 1, hz0, hz1, -depth, 0, 0x3a3530);
+  wall(hx0 - 1, hx1 + 1, hz0 - 1, hz0, -depth, 0, 0x3a3530); wall(hx0 - 1, hx1 + 1, hz1, hz1 + 1, -depth, 0, 0x3a3530);
+  const veins = [];
+  for (let i = 0; i < 260; i++) {
+    const side = i % 4, y = -Math.random() * depth, t = Math.random();
+    const x = side < 2 ? (side ? hx1 - 0.1 : hx0 + 0.1) : hx0 + t * (hx1 - hx0), z = side < 2 ? hz0 + t * (hz1 - hz0) : (side === 2 ? hz0 + 0.1 : hz1 - 0.1);
+    veins.push([x, y, z, Math.random() < 0.2]);
+  }
+  const vg = new THREE.InstancedMesh(new THREE.IcosahedronGeometry(0.35, 0), new THREE.MeshStandardMaterial({ color: 0xffffff, emissive: 0xffffff, emissiveIntensity: 0.6, metalness: 0.8, roughness: 0.3 }), veins.length);
+  const m4 = new THREE.Matrix4(), c3 = new THREE.Color();
+  veins.forEach(([x, y, z, mith], i) => { m4.makeScale(1 + Math.random() * 2, 0.6 + Math.random(), 1 + Math.random() * 2).setPosition(x, y, z); vg.setMatrixAt(i, m4); vg.setColorAt(i, c3.set(mith ? 0xb8d8ff : 0xe0b040)); });
+  grp.add(vg);
+  for (let y = -12; y > -depth; y -= 24) for (const [x, z] of [[hx0 + 1, hz0 + 1], [hx1 - 1, hz1 - 1]]) { const l = glow('rgba(255,190,110,0.9)', 'rgba(255,100,30,0)', 3); l.position.set(x, y, z); grp.add(l); }
+  const deepL = new THREE.PointLight(0x9ab8ff, 2e4, 200, 2); deepL.position.set((hx0 + hx1) / 2, -depth + 20, (hz0 + hz1) / 2); grp.add(deepL);
+  // headframe, winding-wheel and the cage
+  const cxm = (hx0 + hx1) / 2, czm = (hz0 + hz1) / 2;
+  for (const s of [-1, 1]) P.push([bx(1.2, 26, 1.2).translate(cxm + s * 8, 0, czm), 0x4a3a2a], [new THREE.BoxGeometry(1, 30, 1).rotateZ(s * 0.35).translate(cxm + s * 13, 13, czm), 0x4a3a2a]);
+  P.push([bx(18, 1.2, 1.4).translate(cxm, 26, czm), 0x4a3a2a]);
+  const wheel = new THREE.Mesh(new THREE.TorusGeometry(4, 0.4, 6, 20), new THREE.MeshStandardMaterial({ color: 0x5a4a3a, metalness: 0.5, roughness: 0.6 })); wheel.position.set(cxm, 27, czm); grp.add(wheel);
+  const cage = new THREE.Group(), cageMat = new THREE.MeshStandardMaterial({ color: 0x6a5232, roughness: 0.8 });
+  cage.add(new THREE.Mesh(new THREE.BoxGeometry(6, 0.4, 6), cageMat), new THREE.Mesh(new THREE.BoxGeometry(6, 0.4, 6).translate(0, 4, 0), cageMat));
+  for (const [a, b] of [[-2.8, -2.8], [2.8, -2.8], [-2.8, 2.8], [2.8, 2.8]]) cage.add(new THREE.Mesh(new THREE.BoxGeometry(0.3, 4, 0.3).translate(a, 2, b), cageMat));
+  const lamp = glow('rgba(255,200,120,1)', 'rgba(255,120,40,0)', 3); lamp.position.y = 3; cage.add(lamp);
+  const chain = new THREE.Mesh(new THREE.CylinderGeometry(0.08, 0.08, 1, 4).translate(0, 0.5, 0), new THREE.MeshStandardMaterial({ color: 0x2a2a2a, metalness: 0.8 }));
+  cage.position.set(cxm, -40, czm); grp.add(cage, chain);
+  up.push((dt, t) => {
+    const y = -depth * 0.5 + (depth * 0.5 - 6) * Math.cos(t * 0.12);
+    wheel.rotation.z = -y * 0.25; cage.position.y = y;
+    chain.position.set(cxm, y + 4, czm); chain.scale.y = Math.max(0.1, 26 - (y + 4));
+  });
+  // rails round the rim, with ore-carts
+  for (const z of [hz0 - 6, hz1 + 6]) { P.push([bx(mx1 - mx0 - 14, 0.15, 0.15).translate((mx0 + mx1) / 2, 0, z - 0.7), 0x5a5a5a], [bx(mx1 - mx0 - 14, 0.15, 0.15).translate((mx0 + mx1) / 2, 0, z + 0.7), 0x5a5a5a]); }
+  for (const [x, z] of [[-150, hz0 - 6], [-95, hz1 + 6], [-120, hz1 + 6]]) {
+    regions.push([x - 1.8, x + 1.8, z - 1.4, z + 1.4, 1.6, true]);
+    P.push([bx(3.2, 1.4, 2).translate(x, 0.3, z), 0x4a4038], [bx(2.8, 0.5, 1.6).translate(x, 1.5, z), Math.random() < 0.5 ? 0x8a7a50 : 0x5a5a62]);
+  }
+  for (const [x, z] of [[mx0 + 8, mz0 + 8], [mx1 - 8, mz0 + 8], [mx0 + 8, mz1 - 8]]) brazier(x, z);
+
+  // ---- the secret passage: from the treasury up to the hidden door on the western spur
+  const pz0 = -112, pz1 = -108, px0 = 170, px1 = 430, y0 = ty, y1 = 30, slope = (y1 - y0) / (px1 - px0);
+  const floorP = x => y0 + Math.max(0, Math.min(px1 - px0, x - px0)) * slope;
+  regions.push([px0 - 6.5, px1, pz0, pz1, floorP]);
+  rooms.push(['The Secret Passage', px0 + 6, px1 + 10, pz0 - 2, pz1 + 2, -1e9, 1e9]);
+  const segs = 26, sl = (px1 - px0) / segs;
+  for (let i = 0; i < segs; i++) {
+    const xa = px0 + i * sl, ym = floorP(xa + sl / 2);
+    P.push([bx(sl + 0.4, 0.6, pz1 - pz0 + 0.6).translate(xa + sl / 2, ym - 0.6, (pz0 + pz1) / 2), 0x4a453e],
+      [bx(sl + 0.4, 4.4, 1).translate(xa + sl / 2, ym - 0.6, pz0 - 0.5), stone2], [bx(sl + 0.4, 4.4, 1).translate(xa + sl / 2, ym - 0.6, pz1 + 0.5), stone2],
+      [bx(sl + 0.4, 1, pz1 - pz0 + 2).translate(xa + sl / 2, ym + 3.4, (pz0 + pz1) / 2), stone2]);
+  }
+  // treasury east wall: a low, plain opening
+  // the door itself, seen from within: a seam of light round its edge, and the keyhole
+  const dx = px1 + 0.5, dyD = floorP(px1);
+  P.push([bx(1, 8, 10).translate(dx + 0.5, dyD - 1, (pz0 + pz1) / 2), stone2], [bx(0.4, 3.4, 0.2).translate(dx, dyD, pz0 + 0.2), 0x2a2622], [bx(0.4, 3.4, 0.2).translate(dx, dyD, pz1 - 0.2), 0x2a2622]);
+  const seamMat = new THREE.MeshBasicMaterial({ color: 0xffe8c0, fog: false });
+  for (const [w, h, y, z] of [[0.05, 3.2, dyD + 1.6, pz0 + 0.45], [0.05, 3.2, dyD + 1.6, pz1 - 0.45], [3.1, 0.05, dyD + 3.2, (pz0 + pz1) / 2]]) {
+    const m = new THREE.Mesh(new THREE.PlaneGeometry(w, h), seamMat); m.position.set(dx - 0.05, y, z); m.rotation.y = -Math.PI / 2; grp.add(m);
+  }
+  const key = glow('rgba(255,236,190,1)', 'rgba(255,200,120,0)', 0.3); key.position.set(dx - 0.1, dyD + 1.3, (pz0 + pz1) / 2 + 0.6); grp.add(key);
+  for (let x = px0 + 30; x < px1; x += 60) brazier(x, (pz0 + pz1) / 2 + 1.2, floorP(x));
+  brazier(px1 - 14, pz1 - 0.6, floorP(px1 - 14));
+  spawns.door = { x: px1 - 4, z: (pz0 + pz1) / 2, yaw: -Math.PI / 2 };
+  return o;
 }
