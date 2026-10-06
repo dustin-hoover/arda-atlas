@@ -162,6 +162,82 @@ function sideDoor() {
   return g;
 }
 
+/* The Grey Havens: white quays along the shore of the Gulf of Lune, three piers, Círdan's tower at the
+   harbour mouth, and the grey ship that bore the Ring-bearers into the West, moored until the evening of
+   29 Halimath 3021, when it sails west down the gulf and is gone. Built against whatever shore the terrain
+   has near the settlement: the sea is found by sampling the near patch for ground at sea level. */
+function greyHavens(cx, cz, hAt) {
+  // find the sea: sample rings around the town; water is ground at sea level
+  let wx = 0, wz = 0, n = 0;
+  for (let r = 150; r <= 2400; r += 150) for (let k = 0; k < 48; k++) {
+    const a = k / 48 * Math.PI * 2, x = cx + Math.cos(a) * r, z = cz + Math.sin(a) * r;
+    if (Math.max(Math.abs(x), Math.abs(z)) > 2450) continue;            // beyond the near patch hAt knows nothing
+    if (hAt(x, z) <= 0.6) { wx += Math.cos(a) / r; wz += Math.sin(a) / r; n++; }
+  }
+  if (!n) return null;
+  const L = Math.hypot(wx, wz) || 1, dx = wx / L, dz = wz / L;          // towards the water
+  let sx = cx, sz = cz;
+  for (let t = 0; t < 4000; t += 10) { const x = cx + dx * t, z = cz + dz * t; if (Math.max(Math.abs(x), Math.abs(z)) > 2450) break; if (hAt(x, z) <= 0.6) { sx = x; sz = z; break; } }
+  const ang = Math.atan2(dx, dz);                                      // local +z points out to sea
+  const grp = new THREE.Group(); grp.name = 'havens'; grp.position.set(sx, 0, sz); grp.rotation.y = ang;
+  const P = [], wh = 0xe6e3dc, wh2 = 0xcfcac0, grey = 0x9a978f, gold = 0xc9a03c;
+  // the quay wall along the shore, a stone apron behind it, and steps down to the water
+  P.push([bx(320, 4.2, 14).translate(0, -1.6, -6), wh2], [bx(320, 0.6, 10).translate(0, 2.6, -4), wh]);
+  for (let i = -150; i <= 150; i += 12) P.push([bx(0.8, 1, 0.8).translate(i, 3.2, 0.4), grey]);       // bollards
+  for (const ox of [-110, 0, 110]) {
+    // piers out into the haven
+    P.push([bx(10, 4.2, 70).translate(ox, -1.6, 35), wh2], [bx(10.6, 0.5, 70).translate(ox, 2.6, 35), wh]);
+    for (let z = 8; z < 70; z += 10) for (const s of [-1, 1]) P.push([cy(0.3, 0.35, 1, 6).translate(ox + s * 4.4, 3.1, z), grey]);
+    for (const s of [-1, 1]) P.push([cy(0.18, 0.2, 5, 6).translate(ox + s * 4.6, 3.1, 66), grey], [sph(0.5, 8, 6).translate(ox + s * 4.6, 8.4, 66), 0xfff6dc]);
+    for (let k = 0; k < 6; k++) P.push([bx(4, 0.5, 1.6).translate(ox + 6.5, 2.2 - k * 0.6, 10 + k * 1.6), wh2]);   // steps to the water
+  }
+  // Círdan's tower at the end of the long mole
+  P.push([bx(12, 4.2, 120).translate(-200, -1.6, 50), wh2], [cy(6, 7, 26, 12).translate(-200, 2, 108), wh], [cy(7.4, 7.4, 1.2, 12).translate(-200, 28, 108), wh2],
+    [cy(4.2, 5, 9, 12).translate(-200, 29, 108), wh], [cn(5.4, 9, 12).translate(-200, 38, 108), 0x8aa0b0]);
+  for (let k = 0; k < 12; k++) { const a = k / 12 * Math.PI * 2; P.push([bx(1.2, 1.8, 1.2).translate(-200 + Math.cos(a) * 7, 29.2, 108 + Math.sin(a) * 7), wh]); }
+  // sheds and halls of the shipwrights behind the quay
+  for (const [ox, w] of [[-60, 30], [55, 24], [150, 34]]) P.push([bx(w, 10, 16).translate(ox, 2, -24), wh], [new THREE.ConeGeometry(Math.hypot(w, 16) * 0.6, 6, 4).rotateY(Math.PI / 4).scale(w / Math.hypot(w, 16) * 1.414, 1, 16 / Math.hypot(w, 16) * 1.414).translate(ox, 15, -24), 0x7e94a6]);
+  const stone = new THREE.Mesh(merge(P), vcMat({ roughness: 0.7 })); stone.castShadow = stone.receiveShadow = true; grp.add(stone);
+  const beacon = glow('rgba(255,244,214,1)', 'rgba(255,220,150,0)', 9); beacon.position.set(-200, 34, 108); grp.add(beacon);
+  // the ship: a long grey-white hull with a swan prow, one mast and a white sail
+  const ship = elvenShip(); ship.position.set(-55, 0, 52); ship.rotation.y = Math.PI / 2; grp.add(ship);
+  const sail0 = { x: ship.position.x, z: ship.position.z };
+  grp.userData.update = (dt, t) => {
+    const T = G.t || 0, leave = window.WX ? window.WX.parse('3021 9 29.75') : 1e9, gone = leave + 0.25;
+    ship.visible = T < gone;
+    let x = sail0.x, z = sail0.z;
+    if (T > leave) { const f = (T - leave) / (gone - leave); z = sail0.z + f * f * 2600; x = sail0.x - f * 400; ship.rotation.y = Math.PI / 2 * (1 - Math.min(1, f * 4)); }
+    ship.position.set(x, 0.2 * Math.sin(t * 0.7), z);
+    ship.rotation.z = 0.025 * Math.sin(t * 0.5); ship.rotation.x = 0.015 * Math.sin(t * 0.63);
+    beacon.material.opacity = 0.75 + 0.25 * Math.sin(t * 1.3);
+  };
+  return grp;
+}
+function elvenShip() {
+  const hullC = 0xdedbd2, trim = 0xc9a03c, P = [];
+  // hull: a box whose width and depth taper toward bow and stern
+  const hull = new THREE.BoxGeometry(9, 4, 46, 1, 1, 16), p = hull.attributes.position;
+  for (let i = 0; i < p.count; i++) {
+    const z = p.getZ(i) / 23, y = p.getY(i), k = 1 - Math.pow(Math.abs(z), 2.2) * 0.85;
+    p.setX(i, p.getX(i) * k * (y < 0 ? 0.75 : 1)); p.setY(i, y + Math.pow(Math.abs(z), 3) * 3);
+  }
+  hull.computeVertexNormals();
+  P.push([hull.translate(0, 1, 0), hullC], [bx(8.6, 0.3, 40).translate(0, 3, 0), 0xa8a299]);
+  // swan prow: a curving neck and head, and a raised stern
+  const neck = new THREE.CatmullRomCurve3([[0, 3.6, 21.5], [0, 5.5, 24.6], [0, 8.6, 25.2], [0, 10.8, 23.4], [0, 11, 21.6]].map(v => new THREE.Vector3(...v)));
+  P.push([new THREE.TubeGeometry(neck, 24, 0.75, 8), hullC], [sph(1.05, 10, 8).scale(1, 0.9, 1.3).translate(0, 11, 21.4), hullC]);
+  P.push([cn(0.42, 2.2, 8).rotateX(-Math.PI / 2).translate(0, 10.8, 19.6), trim], [bx(6, 3.2, 6).translate(0, 3, -20), hullC], [bx(6.4, 0.4, 6.4).translate(0, 6.2, -20), trim]);
+  for (const s of [-1, 1]) P.push([bx(0.25, 0.4, 40).translate(s * 4.5, 3.3, 0), trim]);
+  P.push([cy(0.35, 0.45, 28, 8).translate(0, 3, 2), 0x8a7a62], [bx(16, 0.4, 0.4).translate(0, 26, 2), 0x8a7a62]);
+  const g = new THREE.Group(), m = new THREE.Mesh(merge(P), vcMat({ roughness: 0.55 })); m.castShadow = true; g.add(m);
+  const sail = new THREE.PlaneGeometry(15, 19, 6, 6), sp = sail.attributes.position;
+  for (let i = 0; i < sp.count; i++) sp.setZ(i, 1.6 * (1 - Math.pow(sp.getX(i) / 7.5, 2)) * (0.6 + 0.4 * (sp.getY(i) / 19 + 0.5)));
+  sail.computeVertexNormals();
+  const sm = new THREE.Mesh(sail, new THREE.MeshStandardMaterial({ color: 0xf6f4ee, roughness: 0.8, side: THREE.DoubleSide })); sm.position.set(0, 16, 2.4); sm.castShadow = true; g.add(sm);
+  const lamp = glow('rgba(255,250,230,1)', 'rgba(255,230,180,0)', 3); lamp.position.set(0, 7, -22); g.add(lamp);
+  return g;
+}
+
 // One mallorn of Caras Galadhon: silver bole, talans at three heights, a golden crown and lamps.
 function mallorn(r, h, flets, lamps, x, y, z) {
   const P = [[cy(r * 0.7, r, h, 9), 0xc4c4bc]];
@@ -193,6 +269,7 @@ function W3town(B, X0, Y0, hAt) {
     else if (s.type === 'gate') { m = ereborGate(); m.rotation.y = Math.atan2(Math.cos(s.face), -Math.sin(s.face)); }
     else if (s.kind === 'ravenhill') m = ravenhill();
     else if (s.kind === 'sidedoor') { m = sideDoor(); m.rotation.y = Math.atan2(Math.cos(s.face), -Math.sin(s.face)); }
+    else if (s.type === 'havens') { const h = greyHavens(x, z, hAt); if (h) { grp.add(h); up.push(h.userData.update); } continue; }
     else if (s.type === 'mallorn') { grp.add(new THREE.Mesh(mallorn(4.2, 78, 4, lamps, x, y - 1, z), vcMat({ roughness: 0.8 }))); continue; }
     else if (s.type === 'prow') {
       // the great pier of rock that splits every circle of the City, pointing east

@@ -369,7 +369,8 @@ function placeGrass() {
     if (u < 0 || v < 0 || u >= W || v >= W) continue;
     const o = (v * W + u) * 4, rr = img[o], gg = img[o + 1], bb = img[o + 2];
     if (gg < rr * 0.85 || bb > gg * 1.1 || gg < 40) continue;      // skip water, rock, bare earth, dark forest floor
-    p.set(x, groundAt(x, z) - 0.02, z);
+    const gy = groundAt(x, z); if (gy <= G.seaLevel + 0.4) continue;   // shallows are tinted like meadow; height tells them apart
+    p.set(x, gy - 0.02, z);
     q.setFromAxisAngle(up, Math.random() * 6.28);
     const fl = Math.random() < flow, sc = 0.7 + Math.random() * 0.8; s.set(sc, sc * (0.8 + Math.random() * 0.6) * (fl ? 0.8 : tall * (0.75 + Math.random() * 0.5)), sc);
     m4.compose(p, q, s); G.grass.setMatrixAt(k, m4);

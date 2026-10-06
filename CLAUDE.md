@@ -68,6 +68,9 @@ Phase 1 is porting `gen.js` to run server-side and caching tiles as PMTiles.
 - `world3d.js` is appended to `ground.js` at build time and shares its scope (THREE, MI, G, groundAt).
 - `W3town` models named landmarks (`special.kind`: orthanc, baraddur, morgul, ecthelion; `gate`, `mallorn`,
   `prow`) and per-house detail (elven halls and towers, smial gardens, doors, windows, chimneys).
+- `havens` (a place with `havens:1`) builds the Grey Havens quays against the nearest shore inside the near
+  patch (water = `hAt <= 0.6`; hAt is meaningless outside ±2600 m) and the ship, which sails at dusk on
+  29 Halimath 3021. Such a place must sit within ~2 km of the coast.
 - `W3people` places instanced townsfolk by settlement culture (`FOLK` → `KIN`); arms and legs swing in
   the vertex shader, walking is a tiny agent loop in `userData.update`.
 - `W3hall('erebor' | 'moria')` builds the walkable interiors; `floorAt(x, z)` is the collision/height

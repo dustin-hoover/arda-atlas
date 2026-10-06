@@ -835,6 +835,7 @@ function buildings(si) {
   }
   if (s.culture === 'mordor' && s.name === 'Barad-dûr') sp.push({ type: 'tower', kind: 'baraddur', x: s.x, y: s.y, r: 60, h: 420, c: [18, 16, 18], square: 1 });
   if (s.culture === 'morgul') sp.push({ type: 'tower', kind: 'morgul', x: s.x, y: s.y, r: 14, h: 110, c: [170, 196, 184] });
+  if (s.havens) sp.push({ type: 'havens', x: s.x, y: s.y, c: [226, 223, 214] });
   if (s.feature) sp.push({ type: 'feature', kind: s.feature, x: s.x, y: s.y, face: s.gate || 0, c: [120, 116, 110] });
   else if (s.gate) sp.push({ type: 'gate', x: s.x, y: s.y, face: s.gate, c: [120, 116, 110] });
   if (s.culture === 'lorien') sp.push({ type: 'mallorn', x: s.x, y: s.y, r: 18, h: 75, c: [190, 190, 180] });
