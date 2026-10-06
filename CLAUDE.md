@@ -78,4 +78,6 @@ Phase 1 is porting `gen.js` to run server-side and caching tiles as PMTiles.
   Erebor's extra rooms live in `ereborMore()`; `spawns.gate` / `spawns.door` are the two ways in.
 - Erebor is a `kind: 'lonely'` peak (six spurs, the gate valley); Ravenhill and the Side Door are
   `feature` settlements (no houses, one model each).
+- Journeys: edit waypoints in `geo.js`, then re-run `tools/routing/route.py` (see its README) so
+  `src/routes.js` follows the terrain; journeys missing from routes.js fall back to straight legs.
 - Orchards are a share of farm parcels (`GEN.orchardAt`); the worker emits them as tree kind 4.

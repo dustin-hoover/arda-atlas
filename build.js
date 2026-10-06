@@ -8,7 +8,7 @@ const guard = (name, s) => { if (/<\/script/i.test(s)) throw new Error(name + ' 
 const put = (k, v) => { const i = html.indexOf(k); if (i < 0) throw new Error('template placeholder missing: ' + k); html = html.slice(0, i) + v + html.slice(i + k.length); };
 put('/*MAPLIBRE_CSS*/', rd('node_modules/maplibre-gl/dist/maplibre-gl.css'));
 put('/*APP_CSS*/', rd('src/app.css'));
-for (const [k, f] of [['GEN_JS', 'gen.js'], ['WX_JS', 'wx.js'], ['WORKER_JS', 'worker.js'], ['GEO_JS', 'geo.js'], ['RASTERS_JS', 'rasters.js'], ['AUDIO_JS', 'audio.js'], ['APP_JS', 'app.js'], ['GROUND_JS', 'ground.js']])
+for (const [k, f] of [['GEN_JS', 'gen.js'], ['WX_JS', 'wx.js'], ['WORKER_JS', 'worker.js'], ['GEO_JS', 'geo.js'], ['ROUTES_JS', 'routes.js'], ['RASTERS_JS', 'rasters.js'], ['AUDIO_JS', 'audio.js'], ['APP_JS', 'app.js'], ['GROUND_JS', 'ground.js']])
   put('/*' + k + '*/', guard(f, rd('src/' + f) + (f === 'ground.js' ? '\n' + rd('src/world3d.js') : '')));
 fs.mkdirSync(path.join(__dirname, 'dist'), { recursive: true });
 fs.writeFileSync(path.join(__dirname, 'dist/index.html'), html);

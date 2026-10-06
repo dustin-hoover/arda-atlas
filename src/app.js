@@ -247,8 +247,9 @@ const style = {
     { id: 'beacons-line', type: 'line', source: 'beacons', layout: { visibility: 'none' }, paint: { 'line-color': '#ffb347', 'line-width': 1.6, 'line-dasharray': [1, 2], 'line-opacity': 0.9 } },
     { id: 'palantiri-line', type: 'line', source: 'palantiri', filter: ['==', ['geometry-type'], 'LineString'], layout: { visibility: 'none' }, paint: { 'line-color': '#b9a6ff', 'line-width': 1.6, 'line-dasharray': [2, 2], 'line-opacity': 0.9 } },
     { id: 'isobars', type: 'line', source: 'isobars', layout: { visibility: 'none' }, paint: { 'line-color': '#e6f2f7', 'line-width': ['case', ['==', ['%', ['get', 'p'], 8], 0], 1.3, 0.7], 'line-opacity': 0.75 } },
-    { id: 'journeys-all', type: 'line', source: 'journeys', filter: ['==', ['get', 'part'], 'all'], layout: { 'line-cap': 'round', 'line-join': 'round' }, paint: { 'line-color': ['get', 'color'], 'line-width': 1.6, 'line-opacity': 0.45, 'line-dasharray': [1.5, 2] } },
-    { id: 'journeys-done', type: 'line', source: 'journeys', filter: ['==', ['get', 'part'], 'done'], layout: { 'line-cap': 'round', 'line-join': 'round' }, paint: { 'line-color': ['get', 'color'], 'line-width': ['interpolate', ['linear'], ['zoom'], 3, 2, 10, 4], 'line-opacity': 0.95 } },
+    { id: 'journeys-all', type: 'line', source: 'journeys', filter: ['==', ['get', 'part'], 'all'], layout: { 'line-cap': 'round', 'line-join': 'round' }, paint: { 'line-color': ['get', 'color'], 'line-width': ['interpolate', ['linear'], ['zoom'], 3, 2.2, 8, 3.2, 12, 4.5], 'line-opacity': 0.55, 'line-dasharray': [1.4, 1.6] } },
+    { id: 'journeys-case', type: 'line', source: 'journeys', filter: ['==', ['get', 'part'], 'done'], layout: { 'line-cap': 'round', 'line-join': 'round' }, paint: { 'line-color': '#0d1016', 'line-width': ['interpolate', ['linear'], ['zoom'], 3, 6, 8, 8.5, 12, 12], 'line-opacity': 0.45, 'line-blur': 1.5 } },
+    { id: 'journeys-done', type: 'line', source: 'journeys', filter: ['==', ['get', 'part'], 'done'], layout: { 'line-cap': 'round', 'line-join': 'round' }, paint: { 'line-color': ['get', 'color'], 'line-width': ['interpolate', ['linear'], ['zoom'], 3, 3.6, 8, 5.5, 12, 8], 'line-opacity': 0.95 } },
     { id: 'measure-line', type: 'line', source: 'measure', filter: ['==', ['geometry-type'], 'LineString'], paint: { 'line-color': '#ffd27a', 'line-width': 2.4, 'line-dasharray': [2, 1] } },
     { id: 'measure-pts', type: 'circle', source: 'measure', filter: ['==', ['geometry-type'], 'Point'], paint: { 'circle-radius': 4.5, 'circle-color': '#1a1408', 'circle-stroke-color': '#ffd27a', 'circle-stroke-width': 2 } },
     { id: 'grid-labels', type: 'symbol', source: 'grid-labels', minzoom: 5.5, layout: { visibility: 'none', 'text-field': ['get', 'name'], 'text-font': TXT_UI, 'text-size': 10.5, 'text-anchor': 'bottom-left', 'text-allow-overlap': false }, paint: { 'text-color': '#f3e6c0', 'text-halo-color': HALO, 'text-halo-width': 1, 'text-opacity': 0.8 } },
@@ -502,7 +503,10 @@ const EVENTS = {
   hobbit: [['2941 4 28', 'The Company sets out from Bag End (dates approximate)', 0.3, 0.5], ['2941 5 20', 'Captured by trolls in the Trollshaws', 362, 17.3], ['2941 6 30', 'Rivendell on Midsummer\'s Eve', 420.5, 17.5], ['2941 7 6', 'Goblin-town; Bilbo finds the Ring', 493.1, 7.2], ['2941 7 9', 'Beorn\'s hall', 565.6, 48.2], ['2941 8 12', 'Taken by the Wood-elves', 713.8, 81.2], ['2941 9 22', 'Barrels out of bond', 735.5, 87.4], ['2941 10 10', 'The Lonely Mountain; Smaug slain at Lake-town', 768.4, 138], ['2941 8 25', 'The White Council drives the Necromancer from Dol Guldur', 609.2, -194.2], ['2941 11 23', 'Battle of Five Armies', 769, 128.5], ['2942 6 22', 'Bilbo returns to Bag End', 0.3, 0.5]],
 };
 const JOURNEYS = {};
-for (const k in GEO.JOURNEYS) JOURNEYS[k] = GEO.JOURNEYS[k].map(j => ({ ...j, wp: j.pts.map(p => ({ X: p[0], Y: p[1], t: WX.parse(p[2]) })) }));
+// Routed paths (src/routes.js, from tools/routing) follow roads, valleys and passes; the authored waypoints
+// in geo.js remain the fallback for any journey the router has not seen yet.
+const routeOf = (k, j) => (window.ROUTES && ROUTES[k] && ROUTES[k][j.name]) || j.pts;
+for (const k in GEO.JOURNEYS) JOURNEYS[k] = GEO.JOURNEYS[k].map(j => ({ ...j, wp: routeOf(k, j).map(p => ({ X: p[0], Y: p[1], t: typeof p[2] === 'number' ? p[2] : WX.parse(p[2]) })) }));
 function partyAt(j, t) {
   const w = j.wp;
   if (t < w[0].t) return null;
@@ -611,7 +615,7 @@ const LAYER_GROUPS = {
   palantiri: ['palantiri-line', 'palantiri-pts'],
   grid: ['grid-lines', 'grid-labels'],
   regions: ['regions'],
-  journeys: ['journeys-all', 'journeys-done', 'journeys-pos', 'journeys-pos-label'],
+  journeys: ['journeys-all', 'journeys-case', 'journeys-done', 'journeys-pos', 'journeys-pos-label'],
 };
 const LAYER_ON = { rivers: 1, mountains: 1, forests: 1, seas: 1, places: 1, peoples: 0, realms: 0, admin: 0, roads: 1, infra: 1, beacons: 0, palantiri: 0, grid: 0, regions: 1, journeys: 1 };
 function setGroup(k, on) {

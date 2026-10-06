@@ -11,3 +11,5 @@ tools/refit/*.json
 !tools/refit/anchors.json
 !tools/refit/fanchors.json
 tools/refit/geo.orig.js
+tools/routing/terrain.npz
+tools/routing/geo.json
