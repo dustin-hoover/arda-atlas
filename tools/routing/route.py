@@ -163,8 +163,8 @@ for story, js in geo['JOURNEYS'].items():
             if seg is None: seg = [(xa, ya), (xb, yb)]
             # spread the leg's time along its routed length
             L = np.concatenate([[0], np.cumsum([math.hypot(q[0] - p[0], q[1] - p[1]) for p, q in zip(seg, seg[1:])])])
-            tot = L[-1] or 1.0
-            for (x, y), l in zip(seg[1:], L[1:]): dense.append((x, y, ta + (tb - ta) * l / tot))
+            tot = L[-1]
+            for (x, y), l in zip(seg[1:], L[1:]): dense.append((x, y, ta + (tb - ta) * (l / tot if tot else 1.0)))   # a wait in place ends at tb
         out[story][j['name']] = [[round(x, 1), round(y, 1), round(t, 3)] for x, y, t in dense]
 
 with open(OUT, 'w') as f:

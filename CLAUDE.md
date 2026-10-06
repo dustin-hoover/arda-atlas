@@ -86,3 +86,8 @@ Phase 1 is porting `gen.js` to run server-side and caching tiles as PMTiles.
 - Journeys: edit waypoints in `geo.js`, then re-run `tools/routing/route.py` (see its README) so
   `src/routes.js` follows the terrain; journeys missing from routes.js fall back to straight legs.
 - Orchards are a share of farm parcels (`GEN.orchardAt`); the worker emits them as tree kind 4.
+
+## Source ledger (src/sources.js)
+- Every place needs an entry (grade + references); every textual distance or date worth keeping becomes a
+  `STATEMENTS` test. `npm run audit` measures the map against them and writes docs/SOURCES.md.
+- Facts and references only: no quotations, no copied artwork.

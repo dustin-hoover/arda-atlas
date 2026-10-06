@@ -929,6 +929,12 @@ function distLine(X, Y) {
   const d = Math.hypot(X, Y);
   return `${d.toFixed(0)} mi (${(d / 3).toFixed(0)} leagues) from Hobbiton`;
 }
+const GRADE = { map: 'Measured on Tolkien\'s map', atlas: 'Measured on Fonstad\'s atlas', warp: 'On Tolkien\'s maps, fitted', text: 'Placed from the text', invented: 'The atlas\'s own placement' };
+function sourceRow(name) {
+  const e = window.SOURCES && SOURCES.PLACES[name]; if (!e) return '';
+  const refs = e[1].split(';').map(r => r.trim()).map(r => { const b = SOURCES.BIB[r.split(' ')[0]]; return `<span title="${esc(b ? b.t + (b.a ? ' — ' + b.a : '') + (b.y ? ', ' + b.y : '') : r)}">${esc(r)}</span>`; }).join(' · ');
+  return `<dt>Source</dt><dd>${GRADE[e[0]] || e[0]}<br><small style="color:var(--faint)">${refs}${e[3] ? '' : ' · not yet checked against the text'}</small>${e[2] ? `<br><small style="color:var(--muted)">${esc(e[2])}</small>` : ''}</dd>`;
+}
 function showPlace(p) {
   const [lon, lat] = GEN.toLL(p.X, p.Y);
   const b = biomeAt(p.X, p.Y);
@@ -937,7 +943,7 @@ function showPlace(p) {
     <p>${esc(p.desc)}</p>
     <dl><dt>Realm</dt><dd>${esc(p.realm)}${adm ? ' · ' + esc(adm) : ''}</dd><dt>People</dt><dd>${esc(PEOPLE_LABEL[p.people] || p.people)}</dd>${p.pop ? `<dt>Population</dt><dd>~${p.pop.toLocaleString()} <small style="color:var(--faint)">estimate</small></dd>` : ''}
     <dt>Ground</dt><dd>${esc(b.name)}</dd><dt>Elevation</dt><dd>${Math.round(Math.max(0, b.h))} m · ${Math.round(Math.max(0, b.h) * 3.281).toLocaleString()} ft</dd>
-    <dt>Position</dt><dd class="mono">${fmtLL(lon, lat)}<br>${fmtXY(p.X, p.Y)}</dd><dt>Distance</dt><dd>${distLine(p.X, p.Y)}</dd></dl>
+    <dt>Position</dt><dd class="mono">${fmtLL(lon, lat)}<br>${fmtXY(p.X, p.Y)}</dd><dt>Distance</dt><dd>${distLine(p.X, p.Y)}</dd>${sourceRow(p.name)}</dl>
     <div class="eyebrow">Weather · ${esc(WX.parts(S.t).name)} ${WX.fmtTime(WX.parts(S.t).hour)}</div><div class="wxwrap">${wxBlock(p.X, p.Y)}</div>
     <div class="btns" style="margin-top:12px"><button class="btn primary" data-act="ground"><svg viewBox="0 0 24 24"><circle cx="12" cy="5" r="2.2"/><path d="M12 8v7M8.5 11h7M12 15l-3 6M12 15l3 6"/></svg>Ground view</button>${hallBtn(p.name)}<button class="btn" data-act="fly">Fly over</button><button class="btn" data-act="measure">Measure from here</button></div>`,
     { kind: 'place', X: p.X, Y: p.Y, name: p.name, zoom: ZOOM_FOR[p.type] });

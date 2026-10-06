@@ -7,7 +7,8 @@
     "build": "node build.js",
     "dev": "node build.js && node scripts/serve.js",
     "serve": "node scripts/serve.js",
-    "check": "for f in src/*.js; do node --check $f || exit 1; done && echo syntax ok"
+    "check": "for f in src/*.js; do node --check $f || exit 1; done && echo syntax ok",
+    "audit": "node tools/sources/audit.js --md docs/SOURCES.md"
   },
   "dependencies": {
     "maplibre-gl": "5.24.0",
