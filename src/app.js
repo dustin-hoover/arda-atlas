@@ -85,10 +85,13 @@ function densify(pts, step) {
 }
 const circ = c => { const o = []; for (let i = 0; i <= 64; i++) { const a = i / 64 * Math.PI * 2; o.push([c[0] + Math.cos(a) * c[2], c[1] + Math.sin(a) * c[2]]); } return o; };
 const ring = f => { const pts = f.circle ? circ(f.circle) : f.pts.concat([f.pts[0]]); return densify(pts, 12).map(p => ll(p[0], p[1])); };
+// A polygon feature: its main ring `pts`, plus any detached `parts` (islands, land across a gulf).
+const geom = f => f.parts && f.parts.length ? { type: 'MultiPolygon', coordinates: [[ring(f)]].concat(f.parts.map(q => [ring({ pts: q })])) } : { type: 'Polygon', coordinates: [ring(f)] };
 const lineLL = pts => densify(pts, 8).map(p => ll(p[0], p[1]));
 function centroid(pts) { let x = 0, y = 0; pts.forEach(p => { x += p[0]; y += p[1]; }); return [x / pts.length, y / pts.length]; }
 function inPoly(x, y, f) {
   if (f.circle) return Math.hypot(x - f.circle[0], y - f.circle[1]) < f.circle[2];
+  if (f.parts && f.parts.some(q => inPoly(x, y, { pts: q }))) return true;
   const p = f.pts; let c = false;
   for (let i = 0, j = p.length - 1; i < p.length; j = i++) if ((p[i][1] > y) !== (p[j][1] > y) && x < (p[j][0] - p[i][0]) * (y - p[i][1]) / (p[j][1] - p[i][1]) + p[i][0]) c = !c;
   return c;
@@ -154,11 +157,11 @@ const palPts = GEO.PALANTIRI.stones.map(n => PLN[n] || PLN[n === 'Minas Tirith' 
 const palFeats = palPts.map(p => pt(p.X, p.Y, { name: 'Palantír of ' + p.name }))
   .concat(GEO.PALANTIRI.links.map(([a, b]) => ({ type: 'Feature', geometry: { type: 'LineString', coordinates: lineLL([[PLN[a].X, PLN[a].Y], [PLN[b].X, PLN[b].Y]]) }, properties: { name: a + ' – ' + b } })));
 const beaconLine = { type: 'Feature', geometry: { type: 'LineString', coordinates: lineLL([[PLN['Minas Tirith'].X, PLN['Minas Tirith'].Y]].concat(GEO.BEACONS.map(n => [PLN[n].X, PLN[n].Y])).concat([[PLN.Edoras.X, PLN.Edoras.Y]])) }, properties: {} };
-function realmFeats(era) { return GEO.REALMS[era].map(r => ({ type: 'Feature', geometry: { type: 'Polygon', coordinates: [ring(r)] }, properties: { name: r.name, color: r.color } })); }
+function realmFeats(era) { return GEO.REALMS[era].map(r => ({ type: 'Feature', geometry: geom(r), properties: { name: r.name, color: r.color } })); }
 function realmLabels(era) { return GEO.REALMS[era].map(r => { const c = r.circle ? r.circle : centroid(r.pts); return pt(c[0], c[1], { name: r.name }); }); }
-const adminFeats = GEO.ADMIN.map(a => ({ type: 'Feature', geometry: { type: 'Polygon', coordinates: [ring(a)] }, properties: { name: a.name, parent: a.parent } }));
+const adminFeats = GEO.ADMIN.map(a => ({ type: 'Feature', geometry: geom(a), properties: { name: a.name, parent: a.parent } }));
 const adminLabels = GEO.ADMIN.map(a => { const c = centroid(a.pts); return pt(c[0], c[1], { name: a.name }); });
-const peopleFeats = GEO.PEOPLES.map((p, i) => ({ type: 'Feature', geometry: { type: 'Polygon', coordinates: [ring(p)] }, properties: { name: p.name, lang: p.lang, color: p.color, pat: 'hatch-' + i } }));
+const peopleFeats = GEO.PEOPLES.map((p, i) => ({ type: 'Feature', geometry: geom(p), properties: { name: p.name, lang: p.lang, color: p.color, pat: 'hatch-' + i } }));
 const peopleLabels = GEO.PEOPLES.map(p => { const c = p.circle ? p.circle : centroid(p.pts); return pt(c[0], c[1], { name: p.name, lang: p.lang }); });
 function gridFeats() {
   const f = [];

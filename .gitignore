@@ -13,3 +13,5 @@ tools/refit/*.json
 tools/refit/geo.orig.js
 tools/routing/terrain.npz
 tools/routing/geo.json
+tools/borders/geo.json
+tools/borders/*.png
