@@ -139,6 +139,10 @@ button { cursor: pointer; }
 #ctrl { position: fixed; right: 12px; bottom: calc(12px + env(safe-area-inset-bottom, 0px)); z-index: 10; display: flex; flex-direction: column; gap: 6px; align-items: flex-end; }
 #cgrps { display: flex; flex-direction: column; gap: 6px; align-items: flex-end; transition: transform .25s ease, opacity .2s ease, visibility 0s; }
 #ctrl #ctog { display: none; }
+/* the controls' box spans the docked groups' space too: only the controls themselves take taps */
+#ctrl { pointer-events: none; }
+#ctrl #ctog, #ctrl .grp { pointer-events: auto; }
+#ctrl.docked #cgrps .grp { pointer-events: none; }
 #ctog svg { transition: transform .25s ease; }
 #ctrl .grp { display: flex; flex-direction: column; padding: 3px; gap: 2px; }
 #ctrl button { width: 38px; height: 38px; border: 0; background: none; border-radius: 7px; display: grid; place-items: center; color: var(--muted); font: 600 12px var(--font-data); }
@@ -191,7 +195,7 @@ body.pick #map canvas { cursor: crosshair !important; }
   #rail button { width: 40px; height: 40px; }
   #rail button[data-tip]:hover::after { display: none; }
   #card { z-index: 12; }
-  #panel, #card { left: 8px; right: 8px; width: auto; top: auto; bottom: calc(150px + env(safe-area-inset-bottom, 0px)); max-height: 48vh; }
+  #panel, #card { left: 8px; right: 8px; width: auto; top: auto; bottom: calc(168px + env(safe-area-inset-bottom, 0px)); max-height: 48vh; }
   #timeline { width: calc(100vw - 16px); bottom: calc(66px + env(safe-area-inset-bottom, 0px)); padding: 8px 12px; gap: 2px 10px; }
   #tdate { font-size: 16px; }
   #tmeta select { max-width: 110px; }
@@ -199,6 +203,12 @@ body.pick #map canvas { cursor: crosshair !important; }
   #ctrl { bottom: auto; top: calc(116px + env(safe-area-inset-top, 0px)); right: 8px; }
   /* On phones the controls dock behind one handle; pinch and drag cover most of them anyway. */
   #ctrl #ctog { display: grid; color: var(--fg); }
+  /* finger-sized switches and rows */
+  .tog { width: 46px; height: 28px; border-radius: 14px; }
+  .tog::after { top: 4px; left: 4px; width: 20px; height: 20px; }
+  .tog:checked::after { transform: translateX(18px); }
+  #panel .row { min-height: 44px; }
+  #panel, #card { z-index: 12; }
   #ctrl:not(.docked) #ctog svg { transform: rotate(180deg); }
   #ctrl.docked #cgrps { transform: translateX(calc(100% + 16px)); opacity: 0; visibility: hidden; pointer-events: none; transition: transform .25s ease, opacity .2s ease, visibility 0s .25s; }
   #scale { display: none; }
