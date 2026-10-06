@@ -192,7 +192,7 @@ function peakAt(X, Y, pix) {
 /* Main surface evaluation. X,Y miles; pix = pixel footprint in miles. */
 function evaluate(X, Y, pix) {
   // domain warp for organic outlines
-  const w1x = fbm(X * 0.0062 + 11.3, Y * 0.0062 + 7.1, 3) * 15, w1y = fbm(X * 0.0062 - 5.2, Y * 0.0062 + 19.7, 3) * 15;
+  const w1x = fbm(X * 0.0062 + 11.3, Y * 0.0062 + 7.1, 3) * 4, w1y = fbm(X * 0.0062 - 5.2, Y * 0.0062 + 19.7, 3) * 4;
   const w2x = noise(X * 0.035 + 3.3, Y * 0.035 - 1.1) * 3.2, w2y = noise(X * 0.035 - 8.4, Y * 0.035 + 2.2) * 3.2;
   const WX = X + w1x + w2x, WY = Y + w1y + w2y;
   const ll = toLL(WX, WY);
@@ -261,7 +261,8 @@ function evaluate(X, Y, pix) {
       const dx = X - f.x, dy = Y - f.y;
       if (dx > f.r || dx < -f.r || dy > f.r || dy < -f.r) continue;
       const d = Math.sqrt(dx * dx + dy * dy) / f.r;
-      if (d < 1) { const t = sstep(1, 0.2, d) * 0.85; h = mix(h, Math.min(h, base + f.lift + (h - base) * 0.25), t); str *= 1 - t; R.stream = str; }
+      if (d < 1 && f.sea) { const t = sstep(1, 0.25, d); h = mix(h, Math.min(h, 4 + (h - 4) * 0.03), t); str *= 1 - t; R.stream = str; }   // havens lie on the shore
+      else if (d < 1) { const t = sstep(1, 0.2, d) * 0.85; h = mix(h, Math.min(h, base + f.lift + (h - base) * 0.25), t); str *= 1 - t; R.stream = str; }
     }
     if (PEAKS.length) h += peakAt(X, Y, pix);
     R.base = base;
@@ -814,6 +815,7 @@ function buildings(si) {
     if (hash2(si, tries, 35) > keep) continue;
     let ang = st.grid ? orient + Math.round(hash2(si, tries, 37) * 2) * Math.PI / 2 : hash2(si, tries, 39) * Math.PI;
     if (s.culture === 'minastirith') ang = Math.atan2(ny, ex) + Math.PI / 2;
+    if (s.name !== 'Esgaroth') { evaluate(s.x + ex / MI, s.y + ny / MI, 0.01); if (R.s <= 0.004 || F[15] > 0.5) continue; }   // no houses in the sea or a lake (Lake-town stands on the water)
     const w = mix(st.w[0], st.w[1], hash2(si, tries, 41)), d = mix(st.d[0], st.d[1], hash2(si, tries, 43));
     const col = st.roof[Math.floor(hash2(si, tries, 45) * st.roof.length)];
     out.push({ x: s.x + ex / MI, y: s.y + ny / MI, w, d, a: ang, c: col, h: st.h * (0.8 + 0.5 * hash2(si, tries, 47)), round: st.round || (s.culture === 'hobbit' && hash2(si, tries, 49) < 0.7) ? 1 : 0, ruin: st.ruin || 0 });

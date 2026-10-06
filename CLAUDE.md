@@ -91,3 +91,6 @@ Phase 1 is porting `gen.js` to run server-side and caching tiles as PMTiles.
 - Every place needs an entry (grade + references); every textual distance or date worth keeping becomes a
   `STATEMENTS` test. `npm run audit` measures the map against them and writes docs/SOURCES.md.
 - Facts and references only: no quotations, no copied artwork.
+- The terrain's large-scale domain warp (gen.js evaluate, `w1`) is kept small (4 mi): the coast is traced from
+  Tolkien's map and places, rivers and roads are not warped, so a bigger warp pulls the shore away from them.
+  Places of type `port` get a town flat down to ~4 m so havens sit on the water.
