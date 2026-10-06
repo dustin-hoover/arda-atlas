@@ -24,8 +24,8 @@ def parse(s):
 # Legs not walked: (journey name regex, from date, to date, mode). A leg takes the mode when it starts at
 # or after `from` and ends at or before `to`.
 MODES = [
-    (r'Frodo & Sam|Aragorn|Merry & Pippin|Boromir', '3019 2 16', '3019 2 26', 'boat'),   # Lórien to Parth Galen
-    (r'Aragorn', '3019 3 13', '3019 3 15', 'boat'),                                    # the black ships, Pelargir to the Harlond
+    (r'Frodo & Sam|Aragorn|Legolas|Gimli|Merry & Pippin|Boromir', '3019 2 16', '3019 2 26', 'boat'),   # Lórien to Parth Galen
+    (r'Aragorn|Legolas|Gimli', '3019 3 13', '3019 3 15', 'boat'),                                    # the black ships, Pelargir to the Harlond
     (r'Bilbo & Thorin', '2941 9 21', '2941 9 23', 'boat'),                            # barrels down the Forest River
     (r'Bilbo & Thorin', '2941 7 7', '2941 7 8', 'fly'),                              # the Eagles to the Carrock
     (r'Gandalf the Grey|Gandalf: to Orthanc', '3018 9 17.9', '3018 9 20', 'fly'),     # Gwaihir from Orthanc
@@ -33,8 +33,8 @@ MODES = [
     (r'Gandalf the White', '3019 3 25', '3019 3 26', 'fly'),                         # to Orodruin and Cormallen
     (r'Frodo & Sam', '3019 3 25', '3019 3 26', 'fly'),
     (r'Bilbo, Elrond|Frodo\'s last', '3021 9 29', '3021 10 3', 'sea'),                # the ship from Mithlond
-    (r'Frodo & Sam|Aragorn|Merry & Pippin|Boromir|Gandalf the Grey', '3019 1 13.7', '3019 1 15.6', 'under'),  # through Moria
-    (r'Aragorn', '3019 3 7', '3019 3 8', 'under'),                                    # the Paths of the Dead
+    (r'Frodo & Sam|Aragorn|Legolas|Gimli|Merry & Pippin|Boromir|Gandalf the Grey', '3019 1 13.7', '3019 1 15.6', 'under'),  # through Moria
+    (r'Aragorn|Legolas|Gimli', '3019 3 7', '3019 3 8', 'under'),                                    # the Paths of the Dead
     (r'Bilbo & Thorin', '2941 7 5', '2941 7 7', 'under'),                         # Goblin-town
 ]
 

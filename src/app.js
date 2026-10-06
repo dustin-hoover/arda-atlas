@@ -529,9 +529,11 @@ function updateJourneys() {
     feats.push({ type: 'Feature', geometry: { type: 'LineString', coordinates: lineLL(j.wp.map(w => [w.X, w.Y])) }, properties: { part: 'all', color: j.color } });
     const p = partyAt(j, S.t);
     if (!p) continue;
+    // a party that hands over to another (Merry & Pippin, Gandalf the Grey) or whose story ends leaves no dot behind
+    const gone = p.done && j.hide;
     const done = j.wp.slice(0, p.idx + 1).map(w => [w.X, w.Y]).concat([[p.X, p.Y]]);
     if (done.length > 1) feats.push({ type: 'Feature', geometry: { type: 'LineString', coordinates: lineLL(done) }, properties: { part: 'done', color: j.color } });
-    pos.push(pt(p.X, p.Y, { name: j.name, color: j.color }));
+    if (!gone) pos.push(pt(p.X, p.Y, { name: j.name, color: j.color }));
   }
   if (mapLoaded) { map.getSource('journeys').setData(FC(feats)); map.getSource('journey-pos').setData(FC(pos)); }
 }
