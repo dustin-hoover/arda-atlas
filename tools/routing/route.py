@@ -23,7 +23,7 @@ def parse(s):
 
 # Legs not walked come from GEO.MODES in src/geo.js (exported into geo.json): (journey name regex, from date,
 # to date, mode). A leg takes the mode when it starts at or after `from` and ends at or before `to`.
-ROUTE_AS = {'ride': 'walk', 'barrel': 'boat', 'blackship': 'boat'}
+ROUTE_AS = {'ride': 'walk', 'barrel': 'boat', 'blackship': 'boat', 'fire': 'fly'}
 MODES = [(m[0], m[1], m[2], ROUTE_AS.get(m[3], m[3])) for m in geo['MODES']]
 
 h, s, mtn, hill, forest, dark, marsh, lake = (A[..., i] for i in range(8))

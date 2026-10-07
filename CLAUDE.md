@@ -113,7 +113,10 @@ Phase 1 is porting `gen.js` to run server-side and caching tiles as PMTiles.
 ## Side characters and battles
 - Side characters are ordinary journeys (some stationary: Elrond, Galadriel, Saruman, the Eye of Sauron) with `with`
   windows to travel inside another party (Uglúk's band, Treebeard, Gollum, Faramir). `C[id].special` marks sprites
-  that aren't head-on-body: `ent` (Treebeard, taller) and `eye` (Sauron); the Nine fly on `fellGrid` fell beasts.
+  that aren't head-on-body: `ent` (Treebeard, taller), `eye` (Sauron), `dragon` (Smaug asleep on the hoard; in flight
+  `dragonGrid`, with fire in the `fire` mode) and `spider` (Shelob, on her web); the Nine fly on `fellGrid` fell beasts.
 - `GEO.BATTLES`: name, story, at, from/to, src, two sides with banner and `units` ([kind, how many to draw] — a
   picture of the army's make-up, not a count). AVATARS.battle(b, frame) draws them; the map hangs battles below
   their point and travellers stand above theirs. A 170 ms loop animates battles, flyers and the Eye while paused.
+- Group rows lay figures out by their own widths (`xsOf`), so wide sprites (Shelob, Treebeard) don't overlap.
+- WX.parse('… 16.0') is noon like '… 16': use a fraction such as 15.99 for the night before.

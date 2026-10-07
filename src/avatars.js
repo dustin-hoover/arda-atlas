@@ -34,6 +34,8 @@ const C = {
   gollum:  { name: 'Gollum',    skin: '#b4bc9c', hair: ['#4a4a3a', '#2a2a20'], style: 'sparse', ears: 'gollum', bigEyes: 1 },
   treebeard:{ name: 'Treebeard', special: 'ent' },
   sauron:  { name: 'Sauron',    special: 'eye' },
+  smaug:   { name: 'Smaug',     special: 'dragon' },
+  shelob:  { name: 'Shelob',    special: 'spider' },
 };
 
 // which characters travel in each journey; [id, from, to] limits a companion to part of the journey
@@ -42,7 +44,7 @@ const JOURNEY = {
     'Frodo & Sam': ['frodo', 'sam'], 'Aragorn': ['aragorn'], 'Merry & Pippin': ['merry', 'pippin'], 'Pippin': ['pippin'],
     'Merry with Théoden': ['merry', 'theoden', ['eowyn', '3019 3 10', '3019 3 15.6']], 'Gandalf the Grey': ['gandalf'], 'The Black Riders': ['nazgul'], 'Boromir': ['boromir'],
     'Legolas': ['legolas'], 'Gimli': ['gimli'], 'Gandalf: to Orthanc': ['gandalf'], 'Gandalf the White': ['gandalfW'],
-    'Elrond': ['elrond'], 'Galadriel': ['galadriel'], 'Sauron': ['sauron'], 'Saruman': ['saruman'], 'Gríma Wormtongue': ['grima'],
+    'Elrond': ['elrond'], 'Shelob': ['shelob'], 'Galadriel': ['galadriel'], 'Sauron': ['sauron'], 'Saruman': ['saruman'], 'Gríma Wormtongue': ['grima'],
     'Uglúk and the Uruk-hai': ['ugluk', 'uruk'], 'Treebeard': ['treebeard'], 'Gollum': ['gollum'], 'Faramir': ['faramir'],
   },
   return: {
@@ -51,7 +53,7 @@ const JOURNEY = {
     'Frodo\'s last journey': ['frodo'], 'Sam to the Havens and home': ['sam'], 'Merry & Pippin to the Havens': ['merry', 'pippin'],
     'Treebeard at Isengard': ['treebeard'], 'Faramir & Éowyn': ['faramir', 'eowyn'], 'Saruman and Wormtongue': ['saruman', 'grima'],
   },
-  hobbit: { 'Bilbo & Thorin\'s Company': ['bilbo', 'thorin', ['gandalf', null, '2941 7 14']], 'Gandalf: the White Council at Dol Guldur': ['gandalf'], 'Gollum': ['gollum'] },
+  hobbit: { 'Bilbo & Thorin\'s Company': ['bilbo', ['thorin', null, '2941 11 24'], ['gandalf', null, '2941 7 14'], ['gandalf', '2941 11 24', null]], 'Gandalf: the White Council at Dol Guldur': ['gandalf'], 'Gollum': ['gollum'], 'Smaug': ['smaug'] },
 };
 const P = s => typeof s === 'string' ? WX.parse(s) : s;
 function charsOf(story, name, t) {
@@ -68,6 +70,8 @@ const GROUPS = [
   { name: 'Gandalf and the Three Hunters', frame: '#e8e6de', edge: '#ffffff', emblem: 'star', test: S => S.size === 4 && has(S, 'aragorn', 'legolas', 'gimli', 'gandalfW') },
   { name: 'The Four Hobbits', frame: '#2c3d1c', edge: '#e2c25a', emblem: 'leaf', test: S => S.size === 4 && has(S, ...HOBBITS) },
   { name: 'The Hobbits and Strider', frame: '#2c3d1c', edge: '#c9a14a', emblem: 'leaf', test: S => S.size === 5 && has(S, ...HOBBITS, 'aragorn') },
+  { name: 'In Shelob\'s Lair', frame: '#0c0b10', edge: '#c8c8d0', emblem: 'web', test: S => has(S, 'shelob') && (S.has('frodo') || S.has('sam')), order: ['shelob', 'sam', 'frodo'] },
+  { name: 'There and Back Again', frame: '#2c3d1c', edge: '#e0b84e', emblem: 'key', test: S => S.size === 2 && has(S, 'bilbo', 'gandalf') },
   { name: 'Riddles in the Dark', frame: '#101418', edge: '#b4bc9c', emblem: 'ring', test: S => has(S, 'bilbo', 'gollum') },
   { name: 'Thorin and Company', frame: '#1e2c48', edge: '#e0b84e', emblem: 'key', test: S => has(S, 'bilbo', 'thorin') },
   { name: 'The Nine', frame: '#0c0b10', edge: '#7a1d24', emblem: 'eye', test: S => S.size === 1 && S.has('nazgul'), show: ['nazgul', 'nazgul', 'nazgul'] },
@@ -228,7 +232,71 @@ function eyeGrid(f) {
   rect(11, 6, 12, 13, '#0a0606'); set(11, 5, '#0a0606'); set(12, 14, '#0a0606');
   return g;
 }
+// Smaug asleep on the hoard: coiled, breathing, smoke from a nostril, and now and then a thin slit of eye
+function hoardGrid(f) {
+  const Wd = 50, Ht = 30, g = Array.from({ length: Ht }, () => Array(Wd).fill(null));
+  const set = (x, y, v) => { if (x >= 0 && x < Wd && y >= 0 && y < Ht) g[y][x] = v; };
+  const rect = (x0, y0, x1, y1, v) => { for (let y = y0; y <= y1; y++) for (let x = x0; x <= x1; x++) set(x, y, v); };
+  const sc = '#a8321e', sd = '#6e1c10', gold = '#e0a83a', gl = '#ffe080', gd = '#a87420';
+  for (let y = 19; y <= 29; y++) { const w = Math.round(24 * Math.sqrt(1 - Math.pow((y - 29) / 11, 2))); rect(24 - w, y, 24 + w, y, (y * 3 + w) % 5 ? gold : gd); }
+  for (let i = 0; i < 9; i++) set(6 + i * 5 + (f + i) % 2, 21 + (i * 3) % 6, gl);                  // glinting coins
+  const br = f % 2;                                                                                  // breathing
+  rect(9, 10 - br, 35, 19, sc); rect(11, 9 - br, 33, 9 - br, sc); for (let x = 10; x <= 34; x += 3) set(x, 10 - br, sd);
+  rect(12, 17, 32, 19, '#e0a040'); for (let x = 12; x <= 32; x += 2) set(x, 18, '#ffd070');        // gold-scaled belly
+  for (let i = 0; i < 12; i++) rect(14 + i, 9 - br - Math.round(5 * Math.sin(i / 11 * Math.PI)), 14 + i, 9 - br, i % 3 ? '#7a2418' : '#3a0e08');   // folded wing
+  for (let i = 0; i <= 26; i++) set(36 - i, 20 + Math.round(Math.sin(i / 4) * 1.2), i % 4 ? sc : sd);  // tail curled round the front
+  set(9, 21, sd); set(8, 20, sd);
+  rect(35, 13, 44, 18, sc); rect(45, 15, 47, 18, sc); set(37, 12, '#e8dcc0'); set(36, 11, '#e8dcc0'); set(40, 12, '#e8dcc0');
+  rect(38, 18, 46, 19, sd);                                                                          // head laid on the paws
+  if (f === 3) { set(41, 15, '#ffd040'); set(42, 15, '#ffd040'); } else rect(41, 15, 42, 15, '#3a0e08');
+  set(47, 16, '#16110d'); const puff = ['#9a9a9a', '#b8b8b8']; set(48 + f % 2, 14 - f, puff[f % 2]); set(49, 13 - f, puff[0]);
+  return g;
+}
+// Smaug in flight: wings beating, belly of gold, and over Lake-town a gout of fire
+function dragonGrid(f, fire) {
+  const W2 = fire ? 92 : 66, by = 22, g = blank(W2, 40), sc = '#b8361e', sd = '#6e1c10', mem = '#8a2a18', bone = '#3a0e08';
+  const up = [-20, -6, 12, -6][f];
+  const wing = (rx, tipX, dy, c) => { for (let x = tipX; x <= rx; x++) { const u = (rx - x) / (rx - tipX), y = Math.round(by + dy * u), th = 1 + Math.round(7 * Math.sin(Math.PI * Math.min(1, u * 1.1))); setp(g, x, y - 1, bone); rectp(g, x, y, x, y + th - (x % 6 === 0 ? 2 : 0), c); if (x % 7 === 0) for (let k = 0; k < th; k++) setp(g, x - k / 3, y + k, bone); } };
+  wing(40, 10, up - 4, '#5e1a10');
+  for (let i = 0; i < 20; i++) rectp(g, 1 + i, by + 4 + Math.round(Math.sin(i / 3 + f) * 2), 1 + i, by + 5 + Math.round(Math.sin(i / 3 + f) * 2) + (i > 12 ? 1 : 0), i % 3 ? sc : sd);
+  rectp(g, 0, by + 3 + Math.round(Math.sin(f) * 2), 2, by + 6 + Math.round(Math.sin(f) * 2), sd);     // the tail's spade
+  rectp(g, 20, by, 44, by + 7, sc); rectp(g, 22, by + 6, 42, by + 8, '#e0a040'); for (let x = 22; x <= 42; x += 2) setp(g, x, by + 7, '#ffd070');
+  setp(g, 36, by + 6, sd); setp(g, 37, by + 6, sd);                                                   // the bare patch in the left breast
+  for (let i = 0; i < 10; i++) rectp(g, 43 + i, by + 1 - Math.round(i * 0.9), 45 + i, by + 3 - Math.round(i * 0.9), i % 3 ? sc : sd);
+  const hx = 53, hy = by - 11;
+  rectp(g, hx, hy, hx + 7, hy + 4, sc); rectp(g, hx + 8, hy + 2, hx + 11, hy + 4, sc); setp(g, hx + 5, hy + 1, '#ffd040'); setp(g, hx + 11, hy + 2, '#16110d');
+  setp(g, hx + 1, hy - 1, '#e8dcc0'); setp(g, hx, hy - 2, '#e8dcc0'); setp(g, hx + 3, hy - 1, '#e8dcc0'); rectp(g, hx + 7, hy + 5, hx + 10, hy + 5, sd);
+  for (const x of [26, 38]) { rectp(g, x, by + 9, x + 1, by + 11, sd); setp(g, x + 2, by + 12, '#e8dcc0'); setp(g, x - 1, by + 12, '#e8dcc0'); }
+  if (fire) {
+    const L = 26 + (f % 2) * 4;
+    for (let i = 0; i < L; i++) { const w = 1 + Math.round(i * 0.28), y0 = hy + 4 + Math.round(i * 0.35); for (let k = -w; k <= w; k++) setp(g, hx + 12 + i, y0 + k, Math.abs(k) < w * 0.35 ? '#fff0a0' : Math.abs(k) < w * 0.7 ? '#ffb030' : ((i + k + f) % 3 ? '#ff6a18' : '#c02010')); }
+  }
+  wing(38, 6, up, mem);
+  return g;
+}
+// Shelob: a bloated black body, clustered pale eyes, fangs, and eight jointed legs creeping
+function spiderGrid(f) {
+  const Wd = 58, Ht = 28, g = Array.from({ length: Ht }, () => Array(Wd).fill(null));
+  const set = (x, y, v) => { x = Math.round(x); y = Math.round(y); if (x >= 0 && x < Wd && y >= 0 && y < Ht) g[y][x] = v; };
+  const k = '#16141a', k2 = '#2e2a34', leg = '#4a4456';
+  // legs: four reaching forward, four back, each arching high over the body; they creep in turn
+  for (let i = 0; i < 4; i++) for (const d of [1, -1]) {
+    const bx = 25 + i * 1.5, by = 16, lift = (i + f + (d > 0 ? 0 : 1)) % 2;
+    const kx = bx + d * (5 + i * 3), ky = 2 + i * 1.5 - lift, fx = bx + d * (10 + i * 5), fy = 26 - lift * 2;
+    for (let t = 0; t <= 1; t += 0.06) for (const o of [0, 1]) { set(bx + (kx - bx) * t + o, by + (ky - by) * t, leg); set(kx + (fx - kx) * t + o, ky + (fy - ky) * t, leg); }
+    set(kx, ky - 1, '#7a7288'); set(kx + 1, ky - 1, '#7a7288');
+  }
+  // abdomen and head
+  for (let y = 5; y <= 21; y++) { const w = Math.round(11 * Math.sqrt(Math.max(0, 1 - Math.pow((y - 13) / 8.5, 2)))); for (let x = 13 - w; x <= 13 + w; x++) set(x, y, (x + y) % 5 ? k : k2); }
+  set(11, 9, '#5a5260'); set(12, 9, '#5a5260'); set(10, 10, '#5a5260');                                // a sickly sheen
+  for (let y = 10; y <= 18; y++) for (let x = 24; x <= 33; x++) if (Math.hypot((x - 28.5) / 5, (y - 14) / 4.5) < 1) set(x, y, k);
+  for (const [x, y] of [[31, 11], [33, 12], [32, 13], [30, 12], [34, 14], [32, 15]]) set(x, y, f === 2 && (x + y) % 2 ? '#e8ffc0' : '#b8f090');   // her many eyes
+  set(34, 17, '#e8e0c8'); set(35, 18, '#e8e0c8'); set(32, 18, '#e8e0c8'); set(33, 19, '#e8e0c8');      // fangs
+  return g;
+}
 function figGrid(id, f) {
+  if (C[id].special === 'dragon') return hoardGrid(f);
+  if (C[id].special === 'spider') return spiderGrid(f);
   if (C[id].special === 'ent') return entGrid(f);
   if (C[id].special === 'eye') return eyeGrid(f);
   const g = Array.from({ length: FH }, () => Array(FW).fill(null)), b = B[id] || {}, c = C[id];
@@ -317,6 +385,9 @@ function emblem(g, kind, cx, cy, r, edge) {
     g.strokeStyle = '#7a5a1a'; g.beginPath(); g.ellipse(cx, cy, r * 1.02, r * 0.5, 0, 0, 7); g.stroke();
     g.strokeStyle = '#f3cf5e'; g.lineWidth *= 0.6; g.beginPath(); g.ellipse(cx, cy - 1, r, r * 0.48, 0, 0, 7); g.stroke();
     g.strokeStyle = 'rgba(255,240,190,0.9)'; g.lineWidth = 1.5; g.beginPath(); g.ellipse(cx, cy - 2, r * 0.95, r * 0.45, 0, 3.6, 5.4); g.stroke();
+  } else if (kind === 'web') {
+    g.strokeStyle = edge; g.lineWidth = 1.2; for (let k = 0; k < 6; k++) { const a = k * Math.PI / 3; g.beginPath(); g.moveTo(cx, cy); g.lineTo(cx + Math.cos(a) * r, cy + Math.sin(a) * r * 0.7); g.stroke(); }
+    for (const q of [0.45, 0.85]) { g.beginPath(); g.ellipse(cx, cy, r * q, r * q * 0.7, 0, 0, 7); g.stroke(); }
   } else if (kind === 'hand') {
     g.fillStyle = edge; g.fillRect(cx - r * 0.45, cy - r * 0.2, r * 0.9, r * 0.8); for (let k = 0; k < 4; k++) g.fillRect(cx - r * 0.45 + k * r * 0.24, cy - r * (0.75 - Math.abs(k - 1.5) * 0.12), r * 0.17, r * 0.6); g.fillRect(cx + r * 0.42, cy, r * 0.3, r * 0.17);
   } else if (kind === 'eye') {
@@ -477,7 +548,18 @@ function icon(ids, color, t, f = 0, mode = 'walk', flip = false) {
   if (mode !== 'walk' && mode !== 'under') return ICACHE[key + f] = mounted(ids, S, grp, color, f, mode, flip, key);
   const cv = document.createElement('canvas'), g = cv.getContext('2d'), s = 3, fw = FIGW * s;
   const show = grp && grp.show ? grp.show : grp && grp.order ? grp.order.filter(i => S.has(i)).concat([...S].filter(i => !grp.order.includes(i))) : [...S];
-  const hOf = id => (figGrid(id, 0).length + 2) * s, fh = Math.max(...show.map(hOf));
+  const hOf = id => (figGrid(id, 0).length + 2) * s, fh = Math.max(...show.map(hOf)), wOf = id => (figGrid(id, 0)[0].length + 2) * s;
+  if (show.length === 1 && (C[show[0]].special === 'dragon' || C[show[0]].special === 'spider')) {
+    const id = show[0]; cv.width = wOf(id) + 8; cv.height = hOf(id) + 6;
+    if (C[id].special === 'spider') {        // her web, fine silver strands behind her
+      const cx = cv.width / 2, cy = cv.height * 0.45, rx = cv.width * 0.5, ry = cv.height * 0.5;
+      g.strokeStyle = 'rgba(220,222,232,0.75)'; g.lineWidth = 1;
+      for (let k = 0; k < 10; k++) { const a = k / 10 * Math.PI * 2; g.beginPath(); g.moveTo(cx, cy); g.lineTo(cx + Math.cos(a) * rx, cy + Math.sin(a) * ry); g.stroke(); }
+      for (const q of [0.3, 0.55, 0.8, 1]) { g.beginPath(); for (let k = 0; k <= 10; k++) { const a = k / 10 * Math.PI * 2; g.lineTo(cx + Math.cos(a) * rx * q, cy + Math.sin(a) * ry * q); } g.stroke(); }
+    }
+    drawFigure(g, id, 4, 2, s, f);
+    return ICACHE[key + f] = { canvas: cv, name: C[id].name, key };
+  }
   if (show.length === 1 && C[show[0]].special === 'eye') {
     const gh = hOf('sauron'); cv.width = fw + 30; cv.height = gh + 20;
     const rg = g.createRadialGradient(cv.width / 2, 30, 4, cv.width / 2, 30, cv.width * 0.6); rg.addColorStop(0, 'rgba(255,120,30,0.75)'); rg.addColorStop(1, 'rgba(255,60,10,0)');
@@ -485,8 +567,10 @@ function icon(ids, color, t, f = 0, mode = 'walk', flip = false) {
     return ICACHE[key + f] = { canvas: cv, name: 'The Eye of Sauron', key };
   }
   const two = show.length > 5, back = two ? show.slice(0, Math.floor(show.length / 2)) : [], front = two ? show.slice(back.length) : show;
-  const step = Math.round(fw * (show.length === 1 ? 1 : show.includes('treebeard') ? 0.75 : 0.56)), rowW = n => fw + (n - 1) * step + (show.includes('treebeard') ? 12 : 0);
-  const lift = two ? Math.round(fh * 0.2) : 0, width = Math.max(rowW(front.length), rowW(back.length) + step / 2);
+  // figures overlap their neighbours by a share of their own width (the great ones take more room)
+  const xsOf = row => { const xs = [0]; for (let k = 1; k < row.length; k++) xs.push(xs[k - 1] + Math.round(wOf(row[k - 1]) * (C[row[k - 1]].special ? 0.8 : 0.56))); return xs; };
+  const step = Math.round(fw * 0.56), rowW = row => row.length ? xsOf(row)[row.length - 1] + wOf(row[row.length - 1]) : 0;
+  const lift = two ? Math.round(fh * 0.2) : 0, width = Math.max(rowW(front), rowW(back) + step / 2);
   const padX = show.length === 1 ? 10 : 22, baseH = show.length === 1 ? 22 : 30;
   cv.width = width + padX * 2; cv.height = fh + lift + baseH / 2 + 6;
   const cx = cv.width / 2, by = cv.height - baseH / 2 - 3, rx = cv.width / 2 - 3, ry = baseH / 2;
@@ -502,9 +586,9 @@ function icon(ids, color, t, f = 0, mode = 'walk', flip = false) {
     if (show.length > 1) { g.strokeStyle = edge; g.lineWidth = 2.5; g.beginPath(); g.ellipse(cx, by, rx - 5, ry - 4, 0, 0, 7); g.stroke(); }
     g.fillStyle = 'rgba(255,255,255,0.25)'; g.beginPath(); g.ellipse(cx, by - ry * 0.35, rx * 0.7, ry * 0.3, 0, 0, 7); g.fill();
   }
-  const x0 = (cv.width - rowW(back.length)) / 2, x1 = (cv.width - rowW(front.length)) / 2, foot = by + ry * (two ? 0.35 : 0.15);
-  back.forEach((id, k) => drawFigure(g, id, x0 + k * step, foot - hOf(id) - lift, s, (f + k * 2 + 1) % 4));
-  front.forEach((id, k) => drawFigure(g, id, x1 + k * step, foot - hOf(id), s, (f + k * 2) % 4));
+  const x0 = (cv.width - rowW(back)) / 2, x1 = (cv.width - rowW(front)) / 2, foot = by + ry * (two ? 0.35 : 0.15), xb = xsOf(back), xf = xsOf(front);
+  back.forEach((id, k) => drawFigure(g, id, x0 + xb[k], foot - hOf(id) - lift, s, (f + k * 2 + 1) % 4));
+  front.forEach((id, k) => drawFigure(g, id, x1 + xf[k], foot - hOf(id), s, (f + k * 2) % 4));
   if (ring) {
     g.lineWidth = 9; g.strokeStyle = OUT; g.beginPath(); g.ellipse(cx, by, rx - 4, ry, 0, 0, Math.PI); g.stroke();
     g.lineWidth = 6; g.strokeStyle = '#d9a83a'; g.stroke();
@@ -521,7 +605,8 @@ function mounted(ids, S, grp, color, f, mode, flip, key) {
   if (mode === 'ride') {
     const rest = show.filter(i => i !== 'legolas' && i !== 'gimli'); if (S.has('legolas') && S.has('gimli')) units.push(['legolas', 'gimli']); else { if (S.has('legolas')) rest.push('legolas'); if (S.has('gimli')) rest.push('gimli'); }
     units = units.concat(rest.map(i => [i])).map((u, k) => horseGrid(u, (f + k) % 4, k));
-  } else if (mode === 'fly') { for (let i = 0; i < show.length; i += 2) units.push(eagleGrid(show.slice(i, i + 2), (f + i / 2) % 4)); }
+  } else if (S.has('smaug')) units = [dragonGrid(f, mode === 'fire')];
+  else if (mode === 'fly') { for (let i = 0; i < show.length; i += 2) units.push(eagleGrid(show.slice(i, i + 2), (f + i / 2) % 4)); }
   else if (mode === 'boat') {
     // the three grey boats of Lórien: Aragorn with Frodo and Sam, Boromir with Merry and Pippin, Legolas and Gimli
     const crews = [['aragorn', 'frodo', 'sam'], ['boromir', 'merry', 'pippin'], ['legolas', 'gimli']].map(c => c.filter(i => S.has(i))).filter(c => c.length);
@@ -531,13 +616,13 @@ function mounted(ids, S, grp, color, f, mode, flip, key) {
   const s = 3, ws = units.map(u => (u[0].length + 2) * s), hs = units.map(u => (u.length + 2) * s);
   const step = units.length > 1 ? Math.round(Math.max(...ws) * (mode === 'fly' ? 0.5 : 0.62)) : 0, lift = units.length > 1 ? 10 : 0;
   const cv = document.createElement('canvas'), g = cv.getContext('2d');
-  cv.width = Math.max(...ws) + step * (units.length - 1) + 16; cv.height = Math.max(...hs) + lift * (units.length - 1) + (mode === 'fly' ? 26 : 12);
+  cv.width = Math.max(...ws) + step * (units.length - 1) + 16; cv.height = Math.max(...hs) + lift * (units.length - 1) + (mode === 'fly' || mode === 'fire' ? 26 : 12);
   const cx = cv.width / 2, by = cv.height - 8;
   // ground under a rider: a small token; under a flyer: its shadow far below
   if (mode === 'ride') { g.fillStyle = grp ? grp.frame : color; g.strokeStyle = OUT; g.lineWidth = 3; g.beginPath(); g.ellipse(cx, by, cv.width / 2 - 4, 7, 0, 0, 7); g.fill(); g.stroke(); }
-  if (mode === 'fly') { g.fillStyle = 'rgba(0,0,0,0.28)'; g.beginPath(); g.ellipse(cx, by, cv.width * 0.3, 5, 0, 0, 7); g.fill(); g.fillStyle = color; g.beginPath(); g.arc(cx, by, 4, 0, 7); g.fill(); }
+  if (mode === 'fly' || mode === 'fire') { g.fillStyle = 'rgba(0,0,0,0.28)'; g.beginPath(); g.ellipse(cx, by, cv.width * 0.3, 5, 0, 0, 7); g.fill(); g.fillStyle = color; g.beginPath(); g.arc(cx, by, 4, 0, 7); g.fill(); }
   g.save(); if (flip) { g.translate(cv.width, 0); g.scale(-1, 1); }
-  units.forEach((u, k) => { const j = units.length - 1 - k; drawGrid(g, u, 8 + j * step, by - (mode === 'fly' ? 20 : 4) - hs[j] - (units.length - 1 - j) * lift + (mode === 'fly' ? 0 : 6), s); });
+  units.forEach((u, k) => { const j = units.length - 1 - k; drawGrid(g, u, 8 + j * step, by - (mode === 'fly' || mode === 'fire' ? 20 : 4) - hs[j] - (units.length - 1 - j) * lift + (mode === 'fly' || mode === 'fire' ? 0 : 6), s); });
   g.restore();
   const name = grp ? grp.name : show.length === 1 ? C[show[0]].name : listNames(show);
   return { canvas: cv, name, key };
