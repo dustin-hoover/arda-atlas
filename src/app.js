@@ -526,6 +526,11 @@ for (const k in JOURNEYS) {
   };
   JOURNEYS[k].forEach(resolve);
 }
+const MODE_RX = GEO.MODES.map(([rx, a, b, mode]) => [new RegExp(rx), WX.parse(a), WX.parse(b), mode]);
+function modeAt(story, name, t) {
+  for (const [rx, a, b, mode] of MODE_RX) if (t >= a && t <= b && rx.test(name)) return mode;
+  return story === 'return' ? 'ride' : 'walk';
+}
 function partyAt(j, t) {
   const w = j.wp;
   if (t < w[0].t) return null;
@@ -566,8 +571,15 @@ function updateJourneys() {
     if (!ids.length || !mapLoaded) { m.forEach(l => pos.push(pt(l.p.X, l.p.Y, { name: l.j.name, color: l.j.color }))); continue; }
     // walking while the clock runs and the party is on the move; standing otherwise
     const moving = S.playing && m.some(l => { if (l.p.done) return false; const q = partyAt(l.j, S.t + 0.03); return q && Math.hypot(q.X - l.p.X, q.Y - l.p.Y) > 0.02; });
-    const f = moving ? Math.floor(performance.now() / 150) % 4 : 0;
-    const ic = AVATARS.icon(ids, color, S.t, f), id = 'av:' + ic.key + ':' + f;
+    // on foot, on horseback, on the wing or afloat (GEO.MODES); mounts face the way the party is heading on screen
+    const mode = modeAt(S.story, m[0].j.name, S.t);
+    let flip = false;
+    if (mode !== 'walk' && mode !== 'under') {
+      const q = partyAt(m[0].j, S.t + 0.05) || m[0].p, r = partyAt(m[0].j, S.t - 0.05) || m[0].p;
+      const a = map.project(ll(r.X, r.Y)), b = map.project(ll(q.X, q.Y)); flip = b.x - a.x < -0.5;
+    }
+    const f = moving || mode === 'fly' || (mode !== 'walk' && mode !== 'under' && mode !== 'ride' && S.playing) ? Math.floor(performance.now() / (mode === 'fly' ? 120 : 150)) % 4 : 0;
+    const ic = AVATARS.icon(ids, color, S.t, f, mode, flip), id = 'av:' + ic.key + ':' + f;
     if (!map.hasImage(id)) map.addImage(id, ic.canvas.getContext('2d').getImageData(0, 0, ic.canvas.width, ic.canvas.height), { pixelRatio: 2 });
     pos.push(pt(X, Y, { name: m.length > 1 || ids.length > 1 ? ic.name : m[0].j.name, color, icon: id, n: m.length }));
   }

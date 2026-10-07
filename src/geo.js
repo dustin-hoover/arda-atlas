@@ -832,6 +832,36 @@ const JOURNEYS = {
   ],
 };
 
+// How each journey travels between two dates (journey-name pattern, from, to, mode); the first match wins.
+// walk is the default (ride in the Return story). The router (tools/routing) routes ride like walk, boat,
+// barrel and blackship on rivers and lakes, sea on open water, and keeps fly and under straight.
+const MODES = [
+  ['Frodo & Sam|Aragorn|Legolas|Gimli|Merry & Pippin|Boromir', '3019 2 16', '3019 2 26', 'boat'],     // the grey boats of Lórien to Parth Galen
+  ['Aragorn|Legolas|Gimli', '3019 3 13', '3019 3 15', 'blackship'],                                  // the black ships, Pelargir to the Harlond
+  ['Bilbo & Thorin', '2941 9 21', '2941 9 23', 'barrel'],                                            // barrels down the Forest River
+  ['Bilbo & Thorin', '2941 7 7', '2941 7 8', 'fly'],                                                 // the Eagles to the Carrock
+  ['Gandalf the Grey|Gandalf: to Orthanc', '3018 9 17.9', '3018 9 20', 'fly'],                        // Gwaihir from Orthanc
+  ['Gandalf the White', '3019 2 14', '3019 2 15', 'fly'],                                            // Gwaihir from Zirakzigil
+  ['Gandalf the White', '3019 3 25', '3019 3 26', 'fly'],                                            // to Orodruin and Cormallen
+  ['Frodo & Sam', '3019 3 25', '3019 3 26', 'fly'],
+  ['Bilbo, Elrond|Frodo\'s last', '3021 9 29.75', '3021 10 3', 'sea'],                               // the ship from Mithlond
+  ['Frodo & Sam|Aragorn|Legolas|Gimli|Merry & Pippin|Boromir|Gandalf the Grey', '3019 1 13.7', '3019 1 15.6', 'under'],  // through Moria
+  ['Aragorn|Legolas|Gimli', '3019 3 7', '3019 3 8', 'under'],                                        // the Paths of the Dead
+  ['Bilbo & Thorin', '2941 7 5', '2941 7 7', 'under'],                                               // Goblin-town
+  // on horseback
+  ['Gandalf the Grey', '3018 9 20', '3018 10 18.9', 'ride'],                                         // Shadowfax, from Rohan to Rivendell
+  ['Gandalf the White', '3019 3 2', '3019 3 25', 'ride'],                                            // Shadowfax again
+  ['^Pippin$', '3019 3 5.6', '3019 3 9', 'ride'],                                                    // riding before Gandalf
+  ['Aragorn|Legolas|Gimli', '3019 2 30', '3019 3 13', 'ride'],                                       // Hasufel and Arod, from Éomer
+  ['Aragorn|Legolas|Gimli', '3019 3 17', '3019 3 25', 'ride'],                                       // to the Black Gate
+  ['Merry with Théoden', '3019 3 5.5', '3019 3 15.5', 'ride'],
+  ['The Black Riders', '3018 6 22', '3018 10 20.5', 'ride'],
+  ['The Black Riders', '3018 12 1', '3019 3 16', 'fly'],                                             // on fell beasts after the Ford
+  ['Bilbo & Thorin', '2941 4 28', '2941 7 5', 'ride'],                                               // ponies, lost in Goblin-town
+  ['Bilbo & Thorin', '2941 7 9.5', '2941 7 14', 'ride'],                                             // Beorn's ponies to the forest gate
+  ['Gandalf: the White Council', '2941 7 14', '2941 11 22', 'ride'],
+];
+
 const STORIES = {
   war: { title:'The War of the Ring', start:'3018 6 20', end:'3019 3 30', now:'3018 9 30' },
   return: { title:'The Return of the King & the Grey Havens', start:'3019 3 25', end:'3021 10 6', now:'3021 9 29' },
@@ -845,7 +875,7 @@ const LORE_WEATHER = [
   { name:'Fumes of Orodruin', x:840.1, y:-554, r:40, from:'3018 1 1', to:'3019 3 25', kind:'smoke' },
 ];
 
-return { COAST, ISLANDS, RANGES, HILLS, RELIEF, PEAKS, RIVERS, LAKES, FORESTS, MARSHES, ARID, FARMS, GRASS, ASH, UPLIFT, ICE, NUMENOR,
+return { MODES, COAST, ISLANDS, RANGES, HILLS, RELIEF, PEAKS, RIVERS, LAKES, FORESTS, MARSHES, ARID, FARMS, GRASS, ASH, UPLIFT, ICE, NUMENOR,
   PLACES, REGION_LABELS, SEA_LABELS, REALMS, ADMIN, PEOPLES, ROADS, WALLS, PALANTIRI, BEACONS, JOURNEYS, STORIES, LORE_WEATHER };
 })();
 if (typeof self !== 'undefined') self.GEO = GEO;

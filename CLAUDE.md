@@ -104,5 +104,8 @@ Phase 1 is porting `gen.js` to run server-side and caching tiles as PMTiles.
 - Bodies (`B`): outfit colours and gear (staff, bow, axe, sword, shield, pack); `figGrid(id, frame)` stacks the
   head on a body with a four-frame front-facing walk. Icons are cached per company and frame; the map swaps
   frames (150 ms) only while the clock plays and the party is moving.
+- Travel modes live in `GEO.MODES` (geo.js), shared by the map (`modeAt`) and the router (route.py maps ride→walk,
+  barrel/blackship→boat). Mounted sprites are side views (`horseGrid`, `eagleGrid`, `boatGrid`) facing right; the
+  map mirrors them when the party heads west on screen. A cluster takes its first member's mode.
 - Preview: render a sprite sheet in the page with AVATARS.drawFigure / AVATARS.icon (see tools/shots/avatars.png).
 - Headless screenshots can catch symbol layers mid-fade after jumpTo: pan by a pixel and wait before shooting.

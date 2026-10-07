@@ -236,6 +236,111 @@ function emblem(g, kind, cx, cy, r, edge) {
   g.restore();
 }
 
+/* ---- mounts: side-view sprites facing right (the map mirrors them when a party heads west on screen) ---- */
+const HORSE = { gandalf: ['#eef2f6', '#c4ccd8'], gandalfW: ['#eef2f6', '#c4ccd8'], theoden: ['#f4f4ee', '#cfcfc6'], aragorn: ['#5c5c66', '#3a3a42'],
+  legolas: ['#d8d4cc', '#aaa49a'], gimli: ['#d8d4cc', '#aaa49a'], merry: ['#8a8a90', '#5e5e66'], pippin: ['#eef2f6', '#c4ccd8'], nazgul: ['#141218', '#050407'],
+  elrond: ['#e0dcd4', '#b4aea4'], galadriel: ['#f4f2ea', '#d0ccc0'], arwen: ['#3a3438', '#1e1a1c'], boromir: ['#6a4a32', '#46301f'] };
+const PONY = [['#7a5232', '#50351f'], ['#a0704a', '#6e4a2e'], ['#5a3e2a', '#3a2818'], ['#c8b090', '#9a8466']];
+function blank(w, h) { return Array.from({ length: h }, () => Array(w).fill(null)); }
+function paste(g, src, ox, oy, maxRow = 1e9) { for (let y = 0; y < src.length && y <= maxRow; y++) for (let x = 0; x < src[0].length; x++) if (src[y][x]) { const X = x + ox, Y = y + oy; if (Y >= 0 && Y < g.length && X >= 0 && X < g[0].length) g[Y][X] = src[y][x]; } }
+function setp(g, x, y, v) { x = Math.round(x); y = Math.round(y); if (y >= 0 && y < g.length && x >= 0 && x < g[0].length && v) g[y][x] = v; }
+function rectp(g, x0, y0, x1, y1, v) { for (let y = y0; y <= y1; y++) for (let x = x0; x <= x1; x++) setp(g, x, y, v); }
+// the rider's head and torso (no legs), from the walking figure
+const upper = (id, f) => figGrid(id, f === 1 || f === 3 ? 0 : 0).map((row, y) => y <= BY + 6 ? row : row.map(() => null));
+
+// horse (or pony) and riders: 26 wide; the horse's back is at row BY + 6
+function horseGrid(ids, f, k) {
+  const W2 = 28, top = BY + 6, g = blank(W2, top + 12), hy = top - 1;           // hy: horse body top row
+  const pony = ids.every(i => C[i].ears === 'hobbit') || ids.includes('thorin') || ids.includes('bilbo');
+  const [c0, c1] = HORSE[ids[ids.length - 1]] || PONY[k % PONY.length], s = pony ? 0 : 1;
+  const eye = ids.includes('nazgul') ? '#ff3b2f' : '#16110d';
+  // tail
+  for (let y = 0; y <= 6; y++) setp(g, 4 - (y > 3 ? 1 : 0) + (f % 2 && y > 4 ? 1 : 0), hy + 1 + y, c1); setp(g, 5, hy + 1, c1);
+  // body
+  rectp(g, 6, hy + 1, 19 + s, hy + 6, c0); rectp(g, 7, hy, 18 + s, hy, c0); rectp(g, 7, hy + 7, 18 + s, hy + 7, c1);
+  // neck and head
+  for (let y = 0; y < 6 + s; y++) rectp(g, 17 + s + Math.floor(y / 2), hy - y, 19 + s + Math.floor(y / 2), hy - y, c0);
+  const hx = 20 + s + Math.floor((5 + s) / 2), hy2 = hy - 5 - s;
+  rectp(g, hx - 1, hy2, hx + 2, hy2 + 2, c0); rectp(g, hx + 1, hy2 + 3, hx + 3, hy2 + 4, c0); setp(g, hx + 3, hy2 + 4, c1);
+  setp(g, hx - 1, hy2 - 1, c0); setp(g, hx, hy2 - 1, c1); setp(g, hx + 1, hy2 + 1, eye);
+  for (let y = 0; y < 6 + s; y++) setp(g, 17 + s + Math.floor(y / 2) - 1, hy - y, c1);     // mane
+  // legs: a trot, diagonal pairs swinging
+  const legs = [[7, 1], [9, 3], [16 + s, 3], [18 + s, 1]];
+  for (const [lx, ph] of legs) {
+    const lift = f === ph ? 1 : 0, sw = f === ph ? 1 : f === (ph + 2) % 4 ? -1 : 0;
+    rectp(g, lx + sw, hy + 8, lx + sw, hy + 10 - lift, lx < 12 ? c1 : c0); setp(g, lx + sw, hy + 11 - lift, '#2a2420');
+  }
+  // tack
+  rectp(g, 10, hy, 14, hy + 2, ids.includes('nazgul') ? '#2a0e10' : '#7a2a24'); setp(g, hx + 1, hy2 + 2, '#3a2a1a');
+  // riders: the last is in front (Gimli sits before Legolas on Arod)
+  ids.forEach((id, i) => {
+    const ox = 3 + (ids.length - 1 - i) * -4 + (ids.length > 1 ? 4 : 0), bob = f % 2 ? 0 : 1;
+    paste(g, upper(id, 0), ox, bob - 1);
+    const b = B[id] || {}; const leg = b.legs || b.robe || '#5a4a3a';
+    rectp(g, ox + 9, hy + 2 + bob - 1, ox + 10, hy + 5 + bob - 1, leg); setp(g, ox + 9, hy + 6 + bob - 1, b.boots || (C[id].ears === 'hobbit' ? C[id].skin : '#3a2a1a'));
+  });
+  return g;
+}
+
+// a Great Eagle (or, for the Nine, a fell beast) with riders on its back, wings swept back over them
+function eagleGrid(ids, f) {
+  const fell = ids.includes('nazgul'), W2 = 50, by = BY + 10, g = blank(W2, by + 14);
+  const [b0, b1, hd, bk] = fell ? ['#2c2832', '#18151c', '#3a3540', '#8a8478'] : ['#7a5430', '#4e3418', '#d0a252', '#f0c040'];
+  // a wing from the shoulder (rx, by) back to its tip; dy is the tip's height: up, level, down, level
+  const wing = (rx, tipX, dy, c, edge) => {
+    for (let x = tipX; x <= rx; x++) {
+      const u = (rx - x) / (rx - tipX), y = by + 1 + dy * u, th = 2 + Math.round(3 * Math.sin(Math.PI * Math.min(1, u * 1.2)));
+      rectp(g, x, Math.round(y) - 1, x, Math.round(y) + th, c);
+      if ((x - tipX) % 3 === 0 && u > 0.25) setp(g, x, Math.round(y) + th + 1, edge);          // primaries
+    }
+  };
+  const up = [-14, -4, 9, -4][f];
+  wing(30, 6, up - 3, b1, fell ? '#100e12' : '#3a2412');                                         // far wing
+  // body, tail, neck and head
+  rectp(g, 12, by, 34, by + 6, b0); rectp(g, 14, by + 7, 32, by + 7, b1); rectp(g, 4, by + 3, 12, by + 5, b1); rectp(g, 1, by + 4, 5, by + 7, b1);
+  if (fell) { for (let i = 0; i < 8; i++) rectp(g, 33 + i, by + 1 - i, 35 + i, by + 2 - i, b0); rectp(g, 41, by - 10, 46, by - 6, hd); setp(g, 44, by - 9, '#ff3b2f'); rectp(g, 47, by - 8, 48, by - 7, bk); }
+  else { rectp(g, 32, by - 4, 39, by + 2, hd); rectp(g, 40, by - 3, 42, by - 1, bk); setp(g, 42, by, bk); setp(g, 37, by - 3, '#16110d'); rectp(g, 30, by - 2, 33, by + 3, hd); }
+  rectp(g, 18, by + 8, 19, by + 9, bk); rectp(g, 26, by + 8, 27, by + 9, bk);                      // talons
+  ids.slice(0, 2).forEach((id, i) => paste(g, upper(id, 0), 9 + i * 8, by - (BY + 6) + 1));
+  wing(28, 3, up, fell ? '#3e3946' : '#946a3c', fell ? '#18151c' : '#4e3418');                    // near wing, over the riders' laps
+  return g;
+}
+
+// boats: an Elven boat of Lórien, a black ship of Umbar, the white ship of the Havens, or barrels
+function boatGrid(ids, f, kind) {
+  const n = ids.length, bob = f === 1 ? -1 : f === 3 ? 1 : 0;
+  if (kind === 'barrel') {
+    const W2 = 14 * n + 4, g = blank(W2, BY + 14);
+    ids.forEach((id, i) => {
+      const ox = 2 + i * 14, b = (i + f) % 2 ? 1 : 0;
+      paste(g, figGrid(id, 0).map((row, y) => y <= BY + 1 ? row : row.map(() => null)), ox - 2, b - 1);
+      rectp(g, ox, BY + 2 + b, ox + 13, BY + 10 + b, '#8a5a30'); rectp(g, ox + 1, BY + 2 + b, ox + 12, BY + 2 + b, '#6a4222');
+      for (const y of [BY + 4, BY + 8]) rectp(g, ox, y + b, ox + 13, y + b, '#4a4a50');
+      setp(g, ox + 12, BY + 5 + b, '#a8784a');
+    });
+    rectp(g, 0, BY + 11, W2 - 1, BY + 11, '#9ac4e0'); for (let x = f % 2; x < W2; x += 3) setp(g, x, BY + 12, '#cfe6f4');
+    return g;
+  }
+  const big = kind !== 'boat', W2 = Math.max(30, 9 * n + 18) + (big ? 6 : 0), deck = BY + 6 + (big ? 6 : 0), g = blank(W2, deck + 9);
+  const hull = kind === 'blackship' ? ['#1e1c22', '#0e0d10'] : kind === 'sea' ? ['#e6e3dc', '#bdb8ac'] : ['#b8b4a8', '#8e897c'];
+  if (big) {           // mast and sail
+    const mx = Math.round(W2 / 2), sc = kind === 'blackship' ? '#18161a' : '#f6f4ee';
+    rectp(g, mx, 1, mx, deck, '#6b4a2a'); rectp(g, mx - 9, 3, mx + 9, 3, '#6b4a2a');
+    for (let y = 4; y <= deck - 6; y++) { const w = 8 + (y < 10 ? 1 : 0) - (f % 2 && y > deck - 9 ? 1 : 0); rectp(g, mx - w, y, mx + w, y, sc); }
+    if (kind === 'blackship') { setp(g, mx - 1, 10, '#7a1d24'); setp(g, mx + 1, 10, '#7a1d24'); }
+  }
+  ids.forEach((id, i) => paste(g, upper(id, 0), 4 + i * 9 + (big ? 3 : 0), deck - (BY + 6) + bob + 2));
+  // hull with a swan-necked prow on the elven craft
+  for (let y = 0; y < 4; y++) rectp(g, 2 + y, deck + y + bob, W2 - 3 - y * 2, deck + y + bob, y < 2 ? hull[0] : hull[1]);
+  rectp(g, 1, deck - 1 + bob, W2 - 2, deck - 1 + bob, kind === 'sea' ? '#c9a03c' : hull[1]);
+  if (kind !== 'blackship') { rectp(g, W2 - 3, deck - 5 + bob, W2 - 2, deck + bob, hull[0]); setp(g, W2 - 1, deck - 5 + bob, hull[0]); setp(g, W2, deck - 5 + bob, '#c9a03c'); }
+  else rectp(g, W2 - 3, deck - 3 + bob, W2 - 2, deck + bob, hull[0]);
+  // oars and water
+  if (kind === 'boat') for (let i = 0; i < n; i++) { const x = 8 + i * 9; setp(g, x + (f % 2), deck + 2 + bob, '#8a6234'); setp(g, x + 1 + (f % 2), deck + 3 + bob, '#8a6234'); }
+  rectp(g, 0, deck + 5, W2 - 1, deck + 5, '#9ac4e0'); for (let x = f % 2; x < W2; x += 3) setp(g, x, deck + 6, '#cfe6f4');
+  return g;
+}
+
 /* An icon for one party: a single walker on a coin of the journey's colour, or a company on its own
    token. f is the walk frame (0–3); companions step out of time with each other. Canvas pixels are at 2×
    (addImage with pixelRatio 2). Returns { canvas, name, key }. */
@@ -244,10 +349,11 @@ function groupOf(ids, t) {
   const S = new Set(ids);
   return ids.length > 1 || S.has('nazgul') ? GROUPS.find(G => G.test(S) && (!G.when || (t >= P(G.when[0]) && t <= P(G.when[1])))) : null;
 }
-function icon(ids, color, t, f = 0) {
+function icon(ids, color, t, f = 0, mode = 'walk', flip = false) {
   const S = new Set(ids), grp = groupOf(ids, t);
-  const key = (grp ? grp.name : '') + '|' + [...S].sort().join(',') + '|' + color;
+  const key = (grp ? grp.name : '') + '|' + [...S].sort().join(',') + '|' + color + '|' + mode + (flip ? '|w' : '');
   if (ICACHE[key + f]) return ICACHE[key + f];
+  if (mode !== 'walk' && mode !== 'under') return ICACHE[key + f] = mounted(ids, S, grp, color, f, mode, flip, key);
   const cv = document.createElement('canvas'), g = cv.getContext('2d'), s = 3, fw = FIGW * s, fh = FIGH * s;
   const show = grp && grp.show ? grp.show : grp && grp.order ? grp.order.filter(i => S.has(i)).concat([...S].filter(i => !grp.order.includes(i))) : [...S];
   const two = show.length > 5, back = two ? show.slice(0, Math.floor(show.length / 2)) : [], front = two ? show.slice(back.length) : show;
@@ -278,6 +384,35 @@ function icon(ids, color, t, f = 0) {
   } else if (grp && grp.emblem) emblem(g, grp.emblem, cx, by + ry * 0.35, 8, edge);
   const name = grp ? grp.name : show.length === 1 ? C[show[0]].name : listNames(show);
   return ICACHE[key + f] = { canvas: cv, name, key };
+}
+// riders, flyers and sailors: one mount per rider (Legolas and Gimli share Arod), up to two per Eagle,
+// everyone in one boat; a company's name and colours as on foot
+function mounted(ids, S, grp, color, f, mode, flip, key) {
+  const show = (grp && grp.order ? grp.order.filter(i => S.has(i)).concat([...S].filter(i => !grp.order.includes(i))) : [...S]);
+  let units = [];
+  if (mode === 'ride') {
+    const rest = show.filter(i => i !== 'legolas' && i !== 'gimli'); if (S.has('legolas') && S.has('gimli')) units.push(['legolas', 'gimli']); else { if (S.has('legolas')) rest.push('legolas'); if (S.has('gimli')) rest.push('gimli'); }
+    units = units.concat(rest.map(i => [i])).map((u, k) => horseGrid(u, (f + k) % 4, k));
+  } else if (mode === 'fly') { for (let i = 0; i < show.length; i += 2) units.push(eagleGrid(show.slice(i, i + 2), (f + i / 2) % 4)); }
+  else if (mode === 'boat') {
+    // the three grey boats of Lórien: Aragorn with Frodo and Sam, Boromir with Merry and Pippin, Legolas and Gimli
+    const crews = [['aragorn', 'frodo', 'sam'], ['boromir', 'merry', 'pippin'], ['legolas', 'gimli']].map(c => c.filter(i => S.has(i))).filter(c => c.length);
+    const left = show.filter(i => !crews.flat().includes(i)); for (let i = 0; i < left.length; i += 3) crews.push(left.slice(i, i + 3));
+    units = crews.map((c, k) => boatGrid(c, (f + k) % 4, 'boat'));
+  } else units = [boatGrid(show, f, mode === 'barrel' ? 'barrel' : mode === 'sea' ? 'sea' : 'blackship')];
+  const s = 3, ws = units.map(u => (u[0].length + 2) * s), hs = units.map(u => (u.length + 2) * s);
+  const step = units.length > 1 ? Math.round(Math.max(...ws) * (mode === 'fly' ? 0.5 : 0.62)) : 0, lift = units.length > 1 ? 10 : 0;
+  const cv = document.createElement('canvas'), g = cv.getContext('2d');
+  cv.width = Math.max(...ws) + step * (units.length - 1) + 16; cv.height = Math.max(...hs) + lift * (units.length - 1) + (mode === 'fly' ? 26 : 12);
+  const cx = cv.width / 2, by = cv.height - 8;
+  // ground under a rider: a small token; under a flyer: its shadow far below
+  if (mode === 'ride') { g.fillStyle = grp ? grp.frame : color; g.strokeStyle = OUT; g.lineWidth = 3; g.beginPath(); g.ellipse(cx, by, cv.width / 2 - 4, 7, 0, 0, 7); g.fill(); g.stroke(); }
+  if (mode === 'fly') { g.fillStyle = 'rgba(0,0,0,0.28)'; g.beginPath(); g.ellipse(cx, by, cv.width * 0.3, 5, 0, 0, 7); g.fill(); g.fillStyle = color; g.beginPath(); g.arc(cx, by, 4, 0, 7); g.fill(); }
+  g.save(); if (flip) { g.translate(cv.width, 0); g.scale(-1, 1); }
+  units.forEach((u, k) => { const j = units.length - 1 - k; drawGrid(g, u, 8 + j * step, by - (mode === 'fly' ? 20 : 4) - hs[j] - (units.length - 1 - j) * lift + (mode === 'fly' ? 0 : 6), s); });
+  g.restore();
+  const name = grp ? grp.name : show.length === 1 ? C[show[0]].name : listNames(show);
+  return { canvas: cv, name, key };
 }
 function listNames(ids) {
   const n = [...new Set(ids.map(i => C[i].name))];
