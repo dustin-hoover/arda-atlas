@@ -277,8 +277,10 @@ const style = {
   }))).concat([
     { id: 'places-infra', type: 'symbol', source: 'places', minzoom: 7.5, filter: ['in', ['get', 'type'], ['literal', ['bridge', 'ford']]], layout: { 'icon-image': ['concat', 'i-', ['get', 'type']], 'icon-size': 0.62, 'text-field': ['get', 'name'], 'text-font': TXT_IT, 'text-size': 12.5, 'text-anchor': 'left', 'text-offset': [0.8, 0], 'text-optional': true }, paint: { 'text-color': '#f4ead2', 'text-halo-color': HALO, 'text-halo-width': 1.2 } },
     { id: 'places-beacons', type: 'symbol', source: 'places', filter: ['==', ['get', 'type'], 'beacon'], layout: { visibility: 'none', 'icon-image': 'i-beacon', 'icon-size': 0.7, 'icon-allow-overlap': true, 'text-field': ['get', 'name'], 'text-font': TXT_IT, 'text-size': 12, 'text-offset': [0, 1], 'text-anchor': 'top', 'text-optional': true }, paint: { 'text-color': '#ffd9a0', 'text-halo-color': HALO, 'text-halo-width': 1.2 } },
-    { id: 'journeys-pos', type: 'circle', source: 'journey-pos', paint: { 'circle-radius': ['interpolate', ['linear'], ['zoom'], 3, 4, 10, 7], 'circle-color': ['get', 'color'], 'circle-stroke-color': '#10141a', 'circle-stroke-width': 2 } },
-    { id: 'journeys-pos-label', type: 'symbol', source: 'journey-pos', layout: { 'text-field': ['get', 'name'], 'text-font': TXT_UIB, 'text-size': 12.5, 'text-offset': [0, -1.1], 'text-anchor': 'bottom', 'text-allow-overlap': false, 'text-optional': true }, paint: { 'text-color': ['get', 'color'], 'text-halo-color': 'rgba(0,0,0,0.85)', 'text-halo-width': 1.5 } },
+    { id: 'journeys-pos', type: 'circle', source: 'journey-pos', paint: { 'circle-radius': ['interpolate', ['linear'], ['zoom'], 3, ['case', ['has', 'icon'], 2.5, 4], 10, ['case', ['has', 'icon'], 3.5, 7]], 'circle-color': ['get', 'color'], 'circle-stroke-color': '#10141a', 'circle-stroke-width': 2 } },
+    // pixel-art travellers (src/avatars.js), standing just above their position
+    { id: 'journeys-av', type: 'symbol', source: 'journey-pos', filter: ['has', 'icon'], layout: { 'icon-image': ['get', 'icon'], 'icon-anchor': 'bottom', 'icon-offset': [0, -3], 'icon-size': ['interpolate', ['linear'], ['zoom'], 3, 0.8, 7, 1.05, 10, 1.3], 'icon-allow-overlap': true, 'icon-ignore-placement': true, 'symbol-sort-key': ['-', 0, ['get', 'n']] } },
+    { id: 'journeys-pos-label', type: 'symbol', source: 'journey-pos', layout: { 'text-field': ['get', 'name'], 'text-font': TXT_UIB, 'text-size': 12.5, 'text-offset': ['case', ['has', 'icon'], ['literal', [0, 0.55]], ['literal', [0, -1.1]]], 'text-anchor': ['case', ['has', 'icon'], 'top', 'bottom'], 'text-allow-overlap': false, 'text-optional': true }, paint: { 'text-color': ['get', 'color'], 'text-halo-color': 'rgba(0,0,0,0.85)', 'text-halo-width': 1.5 } },
   ]),
   sky: { 'sky-color': '#7fa7d0', 'horizon-color': '#d6e4ee', 'fog-color': '#c9d6e0', 'horizon-fog-blend': 0.6, 'sky-horizon-blend': 0.6, 'fog-ground-blend': 0.85, 'atmosphere-blend': ['interpolate', ['linear'], ['zoom'], 0, 1, 5, 1, 8, 0] },
 };
@@ -510,6 +512,20 @@ const JOURNEYS = {};
 // in geo.js remain the fallback for any journey the router has not seen yet.
 const routeOf = (k, j) => (window.ROUTES && ROUTES[k] && ROUTES[k][j.name]) || j.pts;
 for (const k in GEO.JOURNEYS) JOURNEYS[k] = GEO.JOURNEYS[k].map(j => ({ ...j, wp: routeOf(k, j).map(p => ({ X: p[0], Y: p[1], t: typeof p[2] === 'number' ? p[2] : WX.parse(p[2]) })) }));
+// `with: [[leader, from, to]]`: companions share the leader's exact path while they travel together, so
+// they move as one party (and one avatar) instead of drifting apart on separately authored waypoints
+for (const k in JOURNEYS) {
+  const by = {}, done = new Set(); JOURNEYS[k].forEach(j => by[j.name] = j);
+  const resolve = j => {
+    if (done.has(j.name)) return; done.add(j.name);
+    for (const [ln, a, b] of j.with || []) {
+      const L = by[ln]; if (!L) continue; resolve(L);
+      const ta = WX.parse(a), tb = WX.parse(b), pa = partyAt(L, ta), pb = partyAt(L, tb); if (!pa || !pb) continue;
+      j.wp = j.wp.filter(w => w.t < ta).concat([{ X: pa.X, Y: pa.Y, t: ta }], L.wp.filter(w => w.t > ta && w.t < tb), [{ X: pb.X, Y: pb.Y, t: tb }], j.wp.filter(w => w.t > tb));
+    }
+  };
+  JOURNEYS[k].forEach(resolve);
+}
 function partyAt(j, t) {
   const w = j.wp;
   if (t < w[0].t) return null;
@@ -527,7 +543,7 @@ function nearestPlace(X, Y) {
 }
 function updateJourneys() {
   const js = JOURNEYS[S.story] || [];
-  const feats = [], pos = [];
+  const feats = [], pos = [], live = [];
   for (const j of js) {
     feats.push({ type: 'Feature', geometry: { type: 'LineString', coordinates: lineLL(j.wp.map(w => [w.X, w.Y])) }, properties: { part: 'all', color: j.color } });
     const p = partyAt(j, S.t);
@@ -536,7 +552,21 @@ function updateJourneys() {
     const gone = p.done && j.hide;
     const done = j.wp.slice(0, p.idx + 1).map(w => [w.X, w.Y]).concat([[p.X, p.Y]]);
     if (done.length > 1) feats.push({ type: 'Feature', geometry: { type: 'LineString', coordinates: lineLL(done) }, properties: { part: 'done', color: j.color } });
-    if (!gone) pos.push(pt(p.X, p.Y, { name: j.name, color: j.color }));
+    if (!gone) live.push({ j, p });
+  }
+  // parties travelling together (within a couple of miles) share one avatar: a head, or a company's badge
+  const grp = live.map((_, i) => i), root = i => grp[i] === i ? i : (grp[i] = root(grp[i]));
+  for (let a = 0; a < live.length; a++) for (let b = a + 1; b < live.length; b++)
+    if (Math.hypot(live[a].p.X - live[b].p.X, live[a].p.Y - live[b].p.Y) < 2) grp[root(b)] = root(a);
+  const clusters = {};
+  live.forEach((l, i) => (clusters[root(i)] = clusters[root(i)] || []).push(l));
+  for (const m of Object.values(clusters)) {
+    const ids = [...new Set(m.flatMap(l => window.AVATARS ? AVATARS.charsOf(S.story, l.j.name, S.t) : []))];
+    const X = m.reduce((a, l) => a + l.p.X, 0) / m.length, Y = m.reduce((a, l) => a + l.p.Y, 0) / m.length, color = m[0].j.color;
+    if (!ids.length || !mapLoaded) { m.forEach(l => pos.push(pt(l.p.X, l.p.Y, { name: l.j.name, color: l.j.color }))); continue; }
+    const ic = AVATARS.icon(ids, color, S.t), id = 'av:' + ic.key;
+    if (!map.hasImage(id)) map.addImage(id, ic.canvas.getContext('2d').getImageData(0, 0, ic.canvas.width, ic.canvas.height), { pixelRatio: 2 });
+    pos.push(pt(X, Y, { name: m.length > 1 || ids.length > 1 ? ic.name : m[0].j.name, color, icon: id, n: m.length }));
   }
   if (mapLoaded) { map.getSource('journeys').setData(FC(feats)); map.getSource('journey-pos').setData(FC(pos)); }
 }
@@ -620,7 +650,7 @@ const LAYER_GROUPS = {
   palantiri: ['palantiri-line', 'palantiri-pts'],
   grid: ['grid-lines', 'grid-labels'],
   regions: ['regions'],
-  journeys: ['journeys-all', 'journeys-case', 'journeys-done', 'journeys-pos', 'journeys-pos-label'],
+  journeys: ['journeys-all', 'journeys-case', 'journeys-done', 'journeys-pos', 'journeys-av', 'journeys-pos-label'],
 };
 const LAYER_ON = { rivers: 1, mountains: 1, forests: 1, seas: 1, places: 1, peoples: 0, realms: 0, admin: 0, roads: 1, infra: 1, beacons: 0, palantiri: 0, grid: 0, regions: 1, journeys: 1 };
 function setGroup(k, on) {
@@ -700,7 +730,7 @@ const PANELS = {
     return `<div class="ph"><h2>${esc(GEO.STORIES[S.story].title)}</h2><button class="x" aria-label="Close">×</button></div>
     <p class="note">Press play on the timeline to watch each party move day by day. Positions between recorded dates are interpolated along their routes.</p>
     <div class="eyebrow">Parties</div>
-    ${js.map(j => { const p = partyAt(j, S.t); const np = p && nearestPlace(p.X, p.Y); return `<div class="row"><span class="sw" style="background:${j.color}"></span><label>${esc(j.name)} <small>${p ? (np.d < 4 ? 'at ' : 'near ') + esc(np.p.name) : 'not yet set out'}</small></label><button class="btn" data-follow="${esc(j.name)}">${S.follow === j.name ? 'Following' : 'Follow'}</button></div>`; }).join('')}
+    ${js.map(j => { const p = partyAt(j, S.t); const np = p && nearestPlace(p.X, p.Y); const av = window.AVATARS && AVATARS.charsOf(S.story, j.name, S.t); return `<div class="row">${av && av.length ? `<img class="av" alt="" src="${AVATARS.dataURL(av, j.color, S.t)}">` : `<span class="sw" style="background:${j.color}"></span>`}<label>${esc(j.name)} <small>${p ? (np.d < 4 ? 'at ' : 'near ') + esc(np.p.name) : 'not yet set out'}</small></label><button class="btn" data-follow="${esc(j.name)}">${S.follow === j.name ? 'Following' : 'Follow'}</button></div>`; }).join('')}
     <div class="eyebrow">Chronicle</div>
     ${EVENTS[S.story].map(e => { const P = WX.parts(WX.parse(e[0])); return `<div class="row" style="align-items:flex-start"><button class="btn" data-t="${e[0]}" style="min-width:108px;justify-content:center;font-size:12.5px">${esc(P.name)}</button><span class="note" style="flex:1">${esc(e[1])}</span></div>`; }).join('')}`;
   },

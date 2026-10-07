@@ -94,3 +94,11 @@ Phase 1 is porting `gen.js` to run server-side and caching tiles as PMTiles.
 - The terrain's large-scale domain warp (gen.js evaluate, `w1`) is kept small (4 mi): the coast is traced from
   Tolkien's map and places, rivers and roads are not warped, so a bigger warp pulls the shore away from them.
   Places of type `port` get a town flat down to ~4 m so havens sit on the water.
+
+## Traveller avatars (src/avatars.js)
+- Pixel heads are composed in code on a 14×16 grid from parts (hair style, beard, hat, ears) per character in `C`;
+  `JOURNEY[story][name]` lists who travels in each journey (`[id, from, to]` for part of it).
+- updateJourneys clusters parties within 2 mi into one badge; `GROUPS` gives named companies (the Fellowship,
+  the Three Hunters, Thorin and Company, the Nine…) their own design, with `when` limiting a name to its days.
+- Journeys take `with: [[leader, from, to]]` in geo.js: while together they follow the leader's exact path.
+- `node`-free preview: render a sprite sheet in the page with AVATARS.drawHead / AVATARS.icon.
