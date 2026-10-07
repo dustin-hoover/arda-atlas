@@ -564,7 +564,10 @@ function updateJourneys() {
     const ids = [...new Set(m.flatMap(l => window.AVATARS ? AVATARS.charsOf(S.story, l.j.name, S.t) : []))];
     const X = m.reduce((a, l) => a + l.p.X, 0) / m.length, Y = m.reduce((a, l) => a + l.p.Y, 0) / m.length, color = m[0].j.color;
     if (!ids.length || !mapLoaded) { m.forEach(l => pos.push(pt(l.p.X, l.p.Y, { name: l.j.name, color: l.j.color }))); continue; }
-    const ic = AVATARS.icon(ids, color, S.t), id = 'av:' + ic.key;
+    // walking while the clock runs and the party is on the move; standing otherwise
+    const moving = S.playing && m.some(l => { if (l.p.done) return false; const q = partyAt(l.j, S.t + 0.03); return q && Math.hypot(q.X - l.p.X, q.Y - l.p.Y) > 0.02; });
+    const f = moving ? Math.floor(performance.now() / 150) % 4 : 0;
+    const ic = AVATARS.icon(ids, color, S.t, f), id = 'av:' + ic.key + ':' + f;
     if (!map.hasImage(id)) map.addImage(id, ic.canvas.getContext('2d').getImageData(0, 0, ic.canvas.width, ic.canvas.height), { pixelRatio: 2 });
     pos.push(pt(X, Y, { name: m.length > 1 || ids.length > 1 ? ic.name : m[0].j.name, color, icon: id, n: m.length }));
   }
@@ -618,6 +621,7 @@ function togglePlay(on) {
   S.playing = on === undefined ? !S.playing : on;
   $('#playico').innerHTML = S.playing ? '<path d="M4 2.5h3v11H4zM9 2.5h3v11H9z"/>' : '<path d="M4 2.5v11l9-5.5z"/>';
   $('#play').setAttribute('aria-label', S.playing ? 'Pause timeline' : 'Play timeline');
+  updateJourneys();      // travellers stop mid-stride when the clock stops
 }
 $('#play').onclick = () => togglePlay();
 

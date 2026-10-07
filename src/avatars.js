@@ -123,19 +123,97 @@ function grid(id) {
   }
   return g;
 }
-function shade(hex, f) { const n = parseInt(hex.slice(1), 16); const r = Math.round(((n >> 16) & 255) * f), g = Math.round(((n >> 8) & 255) * f), b = Math.round((n & 255) * f); return '#' + ((1 << 24) | (r << 16) | (g << 8) | b).toString(16).slice(1); }
+function shade(hex, f) { const n = parseInt(hex.slice(1), 16); const q = v => Math.min(255, Math.round(v * f)), r = q((n >> 16) & 255), g = q((n >> 8) & 255), b = q(n & 255); return '#' + ((1 << 24) | (r << 16) | (g << 8) | b).toString(16).slice(1); }
 
-// draw a head (with outline) into ctx at (x, y), each grid pixel s×s
-const GCACHE = {};
-function drawHead(ctx, id, x, y, s) {
-  const g = GCACHE[id] || (GCACHE[id] = grid(id));
-  ctx.fillStyle = OUT;
-  for (let j = 0; j < H; j++) for (let i = 0; i < W; i++) if (g[j][i]) for (const [dx, dy] of [[1, 0], [-1, 0], [0, 1], [0, -1]]) {
-    const a = i + dx, b = j + dy; if (a < 0 || a >= W || b < 0 || b >= H || !g[b][a]) ctx.fillRect(x + (a + 1) * s, y + (b + 1) * s, s, s);
+/* ---- bodies: a front-facing walk in four frames (0, 2 standing; 1 left foot up; 3 right foot up) ---- */
+const B = {
+  frodo:    { tunic: '#4f6b3a', legs: '#7a5a3a', cloak: '#6f7f6a', feet: 'hobbit' },
+  sam:      { tunic: '#8a6a3a', legs: '#5a4a30', cloak: '#5d6a52', feet: 'hobbit', gear: 'pack' },
+  merry:    { tunic: '#b8862f', legs: '#4a5a6a', cloak: '#5d6a52', feet: 'hobbit' },
+  pippin:   { tunic: '#3f5f8a', legs: '#6a5038', cloak: '#5d6a52', feet: 'hobbit' },
+  bilbo:    { tunic: '#c84f2a', legs: '#6b5a40', cloak: '#3a6a3a', feet: 'hobbit' },
+  bilboOld: { tunic: '#d9c49a', legs: '#6b5a40', cloak: '#8a7a5a', feet: 'hobbit' },
+  aragorn:  { tunic: '#3f4a3a', legs: '#3a3028', cloak: '#2f4a2f', boots: '#2a1f18', gear: 'sword' },
+  legolas:  { tunic: '#5f8a4a', legs: '#6a5a3a', cloak: '#4a6a3a', boots: '#5a4030', gear: 'bow' },
+  gimli:    { tunic: '#8f969e', legs: '#5a4030', boots: '#3a2a1a', belt: '#c9a03c', gear: 'axe', mail: 1 },
+  boromir:  { tunic: '#7a2a2a', legs: '#3a3a40', cloak: '#3e1818', boots: '#2a2020', gear: 'shield' },
+  gandalf:  { robe: '#8e8e94', gear: 'staff', staff: '#6b4a2a' },
+  gandalfW: { robe: '#f4f4ee', gear: 'staff', staff: '#e8e2d0' },
+  theoden:  { tunic: '#3f6a3a', legs: '#5a4a30', cloak: '#2a4a2a', boots: '#3a2a1a', belt: '#c9a03c', gear: 'sword' },
+  arwen:    { robe: '#5a4a7a' },
+  elrond:   { robe: '#4a3a5a', belt: '#c8ccd4' },
+  galadriel:{ robe: '#f8f6ee', belt: '#e6c04e' },
+  thorin:   { tunic: '#2f4f86', legs: '#3a3028', cloak: '#1e3560', boots: '#2a1f18', belt: '#c9a03c', gear: 'sword' },
+  nazgul:   { robe: '#1b1a20', rags: 1, gear: 'sword' },
+};
+const FW = W + 4, FH = H + 14, BY = H - 1;   // figure grid: head at (2, 0), body from row BY
+function figGrid(id, f) {
+  const g = Array.from({ length: FH }, () => Array(FW).fill(null)), b = B[id] || {}, c = C[id];
+  const set = (x, y, v) => { if (x >= 0 && x < FW && y >= 0 && y < FH && v) g[y][x] = v; };
+  const rect = (x0, y0, x1, y1, v) => { for (let y = y0; y <= y1; y++) for (let x = x0; x <= x1; x++) set(x, y, v); };
+  const R = r => BY + r, skin = c.skin || '#2a2a33';
+  const upL = f === 1 ? 1 : 0, upR = f === 3 ? 1 : 0;          // which foot is lifted
+  const armL = f === 1 ? 1 : f === 3 ? -1 : 0, armR = -armL;    // arms swing opposite the legs
+  // behind the body: cloak, pack, bow
+  if (b.cloak) { rect(5, R(1), 12, R(10), b.cloak); for (let r = 3; r <= 9; r++) { set(3, R(r), shade(b.cloak, 0.8)); set(14, R(r), shade(b.cloak, 0.7)); } rect(4, R(2), 4, R(10), b.cloak); rect(13, R(2), 13, R(10), shade(b.cloak, 0.85)); }
+  if (b.gear === 'pack') { rect(13, R(0), 15, R(5), '#7a5a32'); set(15, R(0), '#9aa0a8'); set(16, R(1), '#9aa0a8'); }
+  if (b.gear === 'bow') { for (let r = -2; r <= 9; r++) set(r < 1 || r > 6 ? 3 : 2, R(r), '#8a6234'); for (let r = -1; r <= 8; r++) set(4, R(r), '#e8e2d0'); }
+  if (b.robe) {
+    const o = b.robe, d = shade(o, 0.78);
+    rect(6, R(0), 11, R(6), o); rect(5, R(1), 12, R(2), o);
+    rect(5, R(7), 12, R(9), o); const sw = f === 1 ? -1 : f === 3 ? 1 : 0;
+    rect(4 + sw, R(10), 13 + sw, R(11), o); for (let x = 4 + sw; x <= 13 + sw; x++) set(x, R(11), b.rags && x % 2 ? null : d);
+    for (let r = 1; r <= 10; r++) set(11 + (r > 6 ? 1 : 0), R(r), d);
+    if (b.belt) rect(6, R(4), 11, R(4), b.belt);
+    // feet peeping out under the hem
+    const foot = b.rags ? '#050507' : '#5a4a3a';
+    if (f !== 3) rect(6, R(12), 7, R(12), foot); if (f !== 1) rect(10, R(12), 11, R(12), foot);
+    // sleeves and hands
+    rect(4, R(2 + armL), 5, R(5 + armL), o); set(4, R(6 + armL), b.rags ? null : skin);
+    rect(12, R(2 + armR), 13, R(5 + armR), d); set(13, R(6 + armR), b.rags ? null : skin);
+  } else {
+    // legs (behind the tunic's hem), then the tunic, belt and arms
+    const legs = b.legs || '#5a4a3a', boot = b.boots;
+    rect(6, R(7), 11, R(7), legs);
+    rect(6, R(8), 7, R(11 - upL), legs); rect(10, R(8), 11, R(11 - upR), shade(legs, 0.85));
+    if (b.feet === 'hobbit') {
+      const hair = c.hair[0];
+      rect(4, R(12 - upL), 7, R(12 - upL), skin); set(5, R(11 - upL), hair); set(6, R(11 - upL), hair);
+      rect(10, R(12 - upR), 13, R(12 - upR), shade(skin, 0.9)); set(11, R(11 - upR), hair); set(12, R(11 - upR), hair);
+    } else {
+      rect(5, R(12 - upL), 7, R(12 - upL), boot || '#3a2a1a'); rect(10, R(12 - upR), 12, R(12 - upR), boot || '#3a2a1a');
+      if (boot) { set(6, R(11 - upL), boot); set(7, R(11 - upL), boot); set(10, R(11 - upR), boot); set(11, R(11 - upR), boot); }
+    }
+    const t = b.tunic, td = shade(t, 0.8);
+    rect(6, R(0), 11, R(7), t); rect(5, R(1), 12, R(2), t); for (let r = 1; r <= 7; r++) set(11, R(r), td);
+    if (b.mail) for (let r = 1; r <= 7; r++) for (let x = 6; x <= 11; x++) if ((x + r) % 2) set(x, R(r), shade(t, 0.82));
+    rect(6, R(5), 11, R(5), b.belt || shade(t, 0.55));
+    rect(4, R(2 + armL), 5, R(5 + armL), t); set(4, R(6 + armL), skin); set(5, R(6 + armL), skin);
+    rect(12, R(2 + armR), 13, R(5 + armR), td); set(12, R(6 + armR), shade(skin, 0.9)); set(13, R(6 + armR), shade(skin, 0.9));
   }
-  for (let j = 0; j < H; j++) for (let i = 0; i < W; i++) if (g[j][i]) { ctx.fillStyle = g[j][i]; ctx.fillRect(x + (i + 1) * s, y + (j + 1) * s, s, s); }
+  // carried things, in front
+  if (b.gear === 'staff') { const y0 = R(6 + armR); for (let y = 4; y <= R(12); y++) set(14, y, b.staff); set(14, 3, shade(b.staff, 1.2)); set(15, 4, b.staff); set(13, 4, b.staff); set(13, y0, skin); }
+  if (b.gear === 'axe') { const y0 = R(6 + armR); for (let y = y0 - 7; y <= y0 + 1; y++) set(14, y, '#6b4a2a'); rect(15, y0 - 7, 16, y0 - 4, '#c8ccd4'); set(16, y0 - 7, '#9aa0a8'); set(16, y0 - 4, '#9aa0a8'); set(15, y0 - 3, '#9aa0a8'); }
+  if (b.gear === 'sword') { set(5, R(4), '#c9a03c'); set(4, R(4), '#c9a03c'); for (let r = 5; r <= 9; r++) set(4 + (r > 7 ? -1 : 0), R(r), b.rags ? '#6b7078' : '#d6dae2'); }
+  if (b.gear === 'shield') { rect(2, R(2 + armL), 5, R(6 + armL), '#6b2a2a'); set(2, R(2 + armL), null); set(5, R(2 + armL), null); set(2, R(6 + armL), null); set(5, R(6 + armL), null); set(3, R(4 + armL), '#d9d4c8'); set(4, R(4 + armL), '#d9d4c8'); }
+  // the head on top (beards fall over the chest)
+  const hg = GCACHE[id] || (GCACHE[id] = grid(id));
+  for (let y = 0; y < H; y++) for (let x = 0; x < W; x++) if (hg[y][x]) set(x + 2, y, hg[y][x]);
+  return g;
 }
-const HW = (W + 2), HH = (H + 2);    // head size in grid pixels, outline included
+// draw a grid with a one-pixel dark outline at (x, y), each grid pixel s×s
+function drawGrid(ctx, g, x, y, s) {
+  const h = g.length, w = g[0].length;
+  ctx.fillStyle = OUT;
+  for (let j = 0; j < h; j++) for (let i = 0; i < w; i++) if (g[j][i]) for (const [dx, dy] of [[1, 0], [-1, 0], [0, 1], [0, -1]]) {
+    const a = i + dx, b = j + dy; if (a < 0 || a >= w || b < 0 || b >= h || !g[b][a]) ctx.fillRect(x + (a + 1) * s, y + (b + 1) * s, s, s);
+  }
+  for (let j = 0; j < h; j++) for (let i = 0; i < w; i++) if (g[j][i]) { ctx.fillStyle = g[j][i]; ctx.fillRect(x + (i + 1) * s, y + (j + 1) * s, s, s); }
+}
+const GCACHE = {}, FCACHE = {};
+function drawHead(ctx, id, x, y, s) { drawGrid(ctx, GCACHE[id] || (GCACHE[id] = grid(id)), x, y, s); }
+function drawFigure(ctx, id, x, y, s, f) { const k = id + f; drawGrid(ctx, FCACHE[k] || (FCACHE[k] = figGrid(id, f)), x, y, s); }
+const HW = (W + 2), HH = (H + 2), FIGW = FW + 2, FIGH = FH + 2;    // sizes in grid pixels, outline included
 
 function roundRect(g, x, y, w, h, r) { g.beginPath(); g.moveTo(x + r, y); g.arcTo(x + w, y, x + w, y + h, r); g.arcTo(x + w, y + h, x, y + h, r); g.arcTo(x, y + h, x, y, r); g.arcTo(x, y, x + w, y, r); g.closePath(); }
 function emblem(g, kind, cx, cy, r, edge) {
@@ -158,55 +236,54 @@ function emblem(g, kind, cx, cy, r, edge) {
   g.restore();
 }
 
-/* An icon for one party: a single head on a disc of the journey's colour, or a badge for a company.
-   Returns { canvas, name }. Canvas pixels are at 2× (addImage with pixelRatio 2). */
+/* An icon for one party: a single walker on a coin of the journey's colour, or a company on its own
+   token. f is the walk frame (0–3); companions step out of time with each other. Canvas pixels are at 2×
+   (addImage with pixelRatio 2). Returns { canvas, name, key }. */
 const ICACHE = {};
-function icon(ids, color, t) {
+function groupOf(ids, t) {
   const S = new Set(ids);
-  const grp = ids.length > 1 || S.has('nazgul') ? GROUPS.find(G => G.test(S) && (!G.when || (t >= P(G.when[0]) && t <= P(G.when[1])))) : null;
+  return ids.length > 1 || S.has('nazgul') ? GROUPS.find(G => G.test(S) && (!G.when || (t >= P(G.when[0]) && t <= P(G.when[1])))) : null;
+}
+function icon(ids, color, t, f = 0) {
+  const S = new Set(ids), grp = groupOf(ids, t);
   const key = (grp ? grp.name : '') + '|' + [...S].sort().join(',') + '|' + color;
-  if (ICACHE[key]) return ICACHE[key];
-  const cv = document.createElement('canvas'), g = cv.getContext('2d');
-  let name;
-  if (ids.length === 1 && !grp) {
-    const s = 4, w = HW * s, pad = 8; cv.width = w + pad * 2; cv.height = HH * s + pad + 6;
-    g.fillStyle = color; g.strokeStyle = OUT; g.lineWidth = 3;
-    g.beginPath(); g.arc(cv.width / 2, cv.height - 30, 28, 0, 7); g.fill(); g.stroke();
-    drawHead(g, ids[0], pad, 0, s);
-    name = C[ids[0]].name;
+  if (ICACHE[key + f]) return ICACHE[key + f];
+  const cv = document.createElement('canvas'), g = cv.getContext('2d'), s = 3, fw = FIGW * s, fh = FIGH * s;
+  const show = grp && grp.show ? grp.show : grp && grp.order ? grp.order.filter(i => S.has(i)).concat([...S].filter(i => !grp.order.includes(i))) : [...S];
+  const two = show.length > 5, back = two ? show.slice(0, Math.floor(show.length / 2)) : [], front = two ? show.slice(back.length) : show;
+  const step = Math.round(fw * (show.length === 1 ? 1 : 0.56)), rowW = n => fw + (n - 1) * step;
+  const lift = two ? Math.round(fh * 0.2) : 0, width = Math.max(rowW(front.length), rowW(back.length) + step / 2);
+  const padX = show.length === 1 ? 10 : 22, baseH = show.length === 1 ? 22 : 30;
+  cv.width = width + padX * 2; cv.height = fh + lift + baseH / 2 + 6;
+  const cx = cv.width / 2, by = cv.height - baseH / 2 - 3, rx = cv.width / 2 - 3, ry = baseH / 2;
+  const frame = grp ? grp.frame : '#141a22', edge = grp ? grp.edge : color;
+  const ring = grp && grp.emblem === 'ring';
+  // the token they stand on (for the Fellowship, the One Ring: its far side behind them, near side in front)
+  if (ring) {
+    g.lineWidth = 9; g.strokeStyle = OUT; g.beginPath(); g.ellipse(cx, by, rx - 4, ry, 0, Math.PI, 2 * Math.PI); g.stroke();
+    g.lineWidth = 6; g.strokeStyle = '#a77a22'; g.stroke();
   } else {
-    const show = grp && grp.show ? grp.show : grp && grp.order ? grp.order.filter(i => S.has(i)).concat([...S].filter(i => !grp.order.includes(i))) : [...S];
-    const s = 4, hw = HW * s, step = Math.round(hw * (show.length > 5 ? 0.62 : 0.7));
-    const two = show.length > 5, back = two ? show.slice(0, Math.floor(show.length / 2)) : [], front = two ? show.slice(back.length) : show;
-    const rowW = n => hw + (n - 1) * step, width = Math.max(rowW(front.length), rowW(back.length) + step / 2);
-    const lift = two ? Math.round(HH * s * 0.42) : 0, padX = two ? 26 : 14, padTop = two ? 18 : grp ? 10 : 6;
-    cv.width = width + padX * 2; cv.height = HH * s + lift + padTop + (two ? 20 : 14);
-    const frame = grp ? grp.frame : '#141a22', edge = grp ? grp.edge : color;
-    if (grp && grp.emblem === 'ring' && two) {
-      // the Fellowship: the One Ring as a golden halo around the company
-      const cx = cv.width / 2, cy = cv.height * 0.56, rx = cv.width / 2 - 5, ry = cv.height * 0.42;
-      g.fillStyle = 'rgba(20,26,22,0.88)'; g.beginPath(); g.ellipse(cx, cy, rx, ry, 0, 0, 7); g.fill();
-      g.lineWidth = 9; g.strokeStyle = OUT; g.stroke(); g.lineWidth = 6; g.strokeStyle = '#c9952e'; g.stroke();
-      g.lineWidth = 2.5; g.strokeStyle = '#ffe9a0'; g.beginPath(); g.ellipse(cx, cy - 1.5, rx - 1, ry - 1, 0, 3.5, 5.6); g.stroke();
-      g.strokeStyle = 'rgba(255,150,60,0.55)'; g.lineWidth = 1.2; g.setLineDash([5, 4]); g.beginPath(); g.ellipse(cx, cy + 1, rx, ry, 0, 0.4, 2.7); g.stroke(); g.setLineDash([]);
-    } else {
-      g.fillStyle = frame; g.strokeStyle = OUT; g.lineWidth = 3; roundRect(g, 2, cv.height * 0.38, cv.width - 4, cv.height * 0.62 - 2, 16); g.fill(); g.stroke();
-      g.strokeStyle = edge; g.lineWidth = 3; roundRect(g, 6, cv.height * 0.38 + 4, cv.width - 12, cv.height * 0.62 - 10, 12); g.stroke();
-      if (grp && grp.emblem && grp.emblem !== 'ring') emblem(g, grp.emblem, cv.width - 18, cv.height * 0.38 + 2, 9, edge);
-      if (grp && grp.emblem === 'ring') emblem(g, 'ring', cv.width - 20, cv.height * 0.38 + 2, 11, edge);
-    }
-    const x0 = (cv.width - rowW(back.length)) / 2, x1 = (cv.width - rowW(front.length)) / 2;
-    back.forEach((id, k) => drawHead(g, id, x0 + k * step, padTop - 4, s));
-    front.forEach((id, k) => drawHead(g, id, x1 + k * step, padTop - 4 + lift, s));
-    name = grp ? grp.name : listNames(show);
+    g.fillStyle = show.length === 1 ? color : frame; g.strokeStyle = OUT; g.lineWidth = 3;
+    g.beginPath(); g.ellipse(cx, by, rx, ry, 0, 0, 7); g.fill(); g.stroke();
+    if (show.length > 1) { g.strokeStyle = edge; g.lineWidth = 2.5; g.beginPath(); g.ellipse(cx, by, rx - 5, ry - 4, 0, 0, 7); g.stroke(); }
+    g.fillStyle = 'rgba(255,255,255,0.25)'; g.beginPath(); g.ellipse(cx, by - ry * 0.35, rx * 0.7, ry * 0.3, 0, 0, 7); g.fill();
   }
-  return ICACHE[key] = { canvas: cv, name, key };
+  const x0 = (cv.width - rowW(back.length)) / 2, x1 = (cv.width - rowW(front.length)) / 2, foot = by + ry * (two ? 0.35 : 0.15);
+  back.forEach((id, k) => drawFigure(g, id, x0 + k * step, foot - fh - lift, s, (f + k * 2 + 1) % 4));
+  front.forEach((id, k) => drawFigure(g, id, x1 + k * step, foot - fh, s, (f + k * 2) % 4));
+  if (ring) {
+    g.lineWidth = 9; g.strokeStyle = OUT; g.beginPath(); g.ellipse(cx, by, rx - 4, ry, 0, 0, Math.PI); g.stroke();
+    g.lineWidth = 6; g.strokeStyle = '#d9a83a'; g.stroke();
+    g.lineWidth = 2; g.strokeStyle = '#ffe9a0'; g.beginPath(); g.ellipse(cx, by + 1, rx - 5, ry - 1, 0, 0.5, 2.6); g.stroke();
+  } else if (grp && grp.emblem) emblem(g, grp.emblem, cx, by + ry * 0.35, 8, edge);
+  const name = grp ? grp.name : show.length === 1 ? C[show[0]].name : listNames(show);
+  return ICACHE[key + f] = { canvas: cv, name, key };
 }
 function listNames(ids) {
   const n = [...new Set(ids.map(i => C[i].name))];
   return n.length <= 2 ? n.join(' & ') : n.length <= 4 ? n.slice(0, -1).join(', ') + ' & ' + n[n.length - 1] : n.slice(0, 3).join(', ') + ` & ${n.length - 3} more`;
 }
 function dataURL(ids, color, t) { return icon(ids, color, t).canvas.toDataURL(); }
-return { C, JOURNEY, GROUPS, charsOf, icon, dataURL, drawHead };
+return { C, B, JOURNEY, GROUPS, charsOf, icon, dataURL, drawHead, drawFigure };
 })();
 if (typeof self !== 'undefined') self.AVATARS = AVATARS;

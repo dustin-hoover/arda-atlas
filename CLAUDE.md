@@ -101,4 +101,8 @@ Phase 1 is porting `gen.js` to run server-side and caching tiles as PMTiles.
 - updateJourneys clusters parties within 2 mi into one badge; `GROUPS` gives named companies (the Fellowship,
   the Three Hunters, Thorin and Company, the Nine…) their own design, with `when` limiting a name to its days.
 - Journeys take `with: [[leader, from, to]]` in geo.js: while together they follow the leader's exact path.
-- `node`-free preview: render a sprite sheet in the page with AVATARS.drawHead / AVATARS.icon.
+- Bodies (`B`): outfit colours and gear (staff, bow, axe, sword, shield, pack); `figGrid(id, frame)` stacks the
+  head on a body with a four-frame front-facing walk. Icons are cached per company and frame; the map swaps
+  frames (150 ms) only while the clock plays and the party is moving.
+- Preview: render a sprite sheet in the page with AVATARS.drawFigure / AVATARS.icon (see tools/shots/avatars.png).
+- Headless screenshots can catch symbol layers mid-fade after jumpTo: pan by a pixel and wait before shooting.
