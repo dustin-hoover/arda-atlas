@@ -230,7 +230,7 @@ const style = {
     src('roads', FC(roadFeats)), src('walls', FC(wallFeats)), src('palantiri', FC(palFeats)), src('beacons', FC([beaconLine])),
     src('realms', FC(realmFeats('TA3018'))), src('realm-labels', FC(realmLabels('TA3018'))), src('admin', FC(adminFeats)), src('admin-labels', FC(adminLabels)),
     src('peoples', FC(peopleFeats)), src('people-labels', FC(peopleLabels)), src('grid', GRID.lines), src('grid-labels', GRID.labels),
-    src('buildings', FC(buildingFeats())), src('journeys', FC([])), src('journey-pos', FC([])), src('measure', FC([])), src('isobars', FC([])), src('hl', FC([])), src('lights', FC([])),
+    src('buildings', FC(buildingFeats())), src('journeys', FC([])), src('journey-pos', FC([])), src('battles', FC([])), src('measure', FC([])), src('isobars', FC([])), src('hl', FC([])), src('lights', FC([])),
   ]),
   layers: [
     { id: 'bg', type: 'background', paint: { 'background-color': '#0b1a2a' } },
@@ -278,6 +278,8 @@ const style = {
     { id: 'places-infra', type: 'symbol', source: 'places', minzoom: 7.5, filter: ['in', ['get', 'type'], ['literal', ['bridge', 'ford']]], layout: { 'icon-image': ['concat', 'i-', ['get', 'type']], 'icon-size': 0.62, 'text-field': ['get', 'name'], 'text-font': TXT_IT, 'text-size': 12.5, 'text-anchor': 'left', 'text-offset': [0.8, 0], 'text-optional': true }, paint: { 'text-color': '#f4ead2', 'text-halo-color': HALO, 'text-halo-width': 1.2 } },
     { id: 'places-beacons', type: 'symbol', source: 'places', filter: ['==', ['get', 'type'], 'beacon'], layout: { visibility: 'none', 'icon-image': 'i-beacon', 'icon-size': 0.7, 'icon-allow-overlap': true, 'text-field': ['get', 'name'], 'text-font': TXT_IT, 'text-size': 12, 'text-offset': [0, 1], 'text-anchor': 'top', 'text-optional': true }, paint: { 'text-color': '#ffd9a0', 'text-halo-color': HALO, 'text-halo-width': 1.2 } },
     { id: 'journeys-pos', type: 'circle', source: 'journey-pos', paint: { 'circle-radius': ['interpolate', ['linear'], ['zoom'], 3, ['case', ['has', 'icon'], 2.5, 4], 10, ['case', ['has', 'icon'], 3.5, 7]], 'circle-color': ['get', 'color'], 'circle-stroke-color': '#10141a', 'circle-stroke-width': 2 } },
+    // battles while they are fought: two small armies and their clash (src/avatars.js)
+    { id: 'battles-av', type: 'symbol', source: 'battles', layout: { 'icon-image': ['get', 'icon'], 'icon-size': ['interpolate', ['linear'], ['zoom'], 3, 0.8, 7, 1.3, 10, 1.8], 'icon-anchor': 'top', 'icon-offset': [0, 6], 'icon-allow-overlap': true, 'icon-ignore-placement': true, 'text-field': ['get', 'label'], 'text-font': TXT_UIB, 'text-size': 12.5, 'text-anchor': 'top', 'text-offset': ['interpolate', ['linear'], ['zoom'], 3, ['literal', [0, 3.6]], 7, ['literal', [0, 5.6]], 10, ['literal', [0, 7.6]]], 'text-allow-overlap': true, 'text-ignore-placement': true }, paint: { 'text-color': '#f3d89a', 'text-halo-color': 'rgba(0,0,0,0.9)', 'text-halo-width': 1.6 } },
     // pixel-art travellers (src/avatars.js), standing just above their position
     { id: 'journeys-av', type: 'symbol', source: 'journey-pos', filter: ['has', 'icon'], layout: { 'icon-image': ['get', 'icon'], 'icon-anchor': 'bottom', 'icon-offset': [0, -3], 'icon-size': ['interpolate', ['linear'], ['zoom'], 3, 0.8, 7, 1.05, 10, 1.3], 'icon-allow-overlap': true, 'icon-ignore-placement': true, 'symbol-sort-key': ['-', 0, ['get', 'n']] } },
     { id: 'journeys-pos-label', type: 'symbol', source: 'journey-pos', layout: { 'text-field': ['get', 'name'], 'text-font': TXT_UIB, 'text-size': 12.5, 'text-offset': ['case', ['has', 'icon'], ['literal', [0, 0.55]], ['literal', [0, -1.1]]], 'text-anchor': ['case', ['has', 'icon'], 'top', 'bottom'], 'text-allow-overlap': false, 'text-optional': true }, paint: { 'text-color': ['get', 'color'], 'text-halo-color': 'rgba(0,0,0,0.85)', 'text-halo-width': 1.5 } },
@@ -546,9 +548,29 @@ function nearestPlace(X, Y) {
   for (const p of PL) { const d = Math.hypot(p.X - X, p.Y - Y); if (d < bd) { bd = d; best = p; } }
   return { p: best, d: bd };
 }
-function updateJourneys() {
+const BATTLES = GEO.BATTLES.map((b, i) => ({ ...b, i, t0: WX.parse(b.from), t1: WX.parse(b.to) }));
+const battleOn = () => BATTLES.filter(b => b.story === S.story && S.t >= b.t0 - 0.15 && S.t <= b.t1 + 0.15);
+function updateBattles() {
+  if (!mapLoaded || !window.AVATARS) return;
+  const f = Math.floor(performance.now() / 170) % 4, feats = [];
+  for (const b of battleOn()) {
+    const id = 'bt:' + b.i + ':' + f, cv = AVATARS.battle(b, f);
+    if (!map.hasImage(id)) map.addImage(id, cv.getContext('2d').getImageData(0, 0, cv.width, cv.height), { pixelRatio: 2 });
+    feats.push(pt(b.at[0], b.at[1], { icon: id, label: b.name, i: b.i }));
+  }
+  S.battles = feats.length; map.getSource('battles').setData(FC(feats));
+}
+// battles, flyers and the Eye keep moving while the clock is stopped
+setInterval(() => { if (document.hidden || S.playing) return; if (S.battles) updateBattles(); if (S.idleAnim) updateJourneys(true); }, 170);
+function showBattle(b) {
+  const P = WX.parts(b.t0), Q = WX.parts(b.t1);
+  openCard(`<div class="kind">Battle</div><h1>${esc(b.name)}</h1><div class="alt">${esc(P.name)}${P.name !== Q.name ? ' – ' + esc(Q.name) : ''}</div>
+    ${b.sides.map(sd => `<p><b>${esc(sd.name)}</b>: ${esc(sd.note)}.</p>`).join('')}<p>${esc(b.outcome)}</p>
+    <dl><dt>Source</dt><dd>${esc(b.src)}</dd></dl>`, { kind: 'battle', X: b.at[0], Y: b.at[1], name: b.name, zoom: 9 });
+}
+function updateJourneys(posOnly) {
   const js = JOURNEYS[S.story] || [];
-  const feats = [], pos = [], live = [];
+  const feats = [], pos = [], live = []; let idleAnim = false;
   for (const j of js) {
     feats.push({ type: 'Feature', geometry: { type: 'LineString', coordinates: lineLL(j.wp.map(w => [w.X, w.Y])) }, properties: { part: 'all', color: j.color } });
     const p = partyAt(j, S.t);
@@ -578,12 +600,15 @@ function updateJourneys() {
       const q = partyAt(m[0].j, S.t + 0.05) || m[0].p, r = partyAt(m[0].j, S.t - 0.05) || m[0].p;
       const a = map.project(ll(r.X, r.Y)), b = map.project(ll(q.X, q.Y)); flip = b.x - a.x < -0.5;
     }
-    const f = moving || mode === 'fly' || (mode !== 'walk' && mode !== 'under' && mode !== 'ride' && S.playing) ? Math.floor(performance.now() / (mode === 'fly' ? 120 : 150)) % 4 : 0;
+    const idle = mode === 'fly' || ids.includes('sauron'); if (idle) idleAnim = true;
+    const f = moving || idle || (mode !== 'walk' && mode !== 'under' && mode !== 'ride' && S.playing) ? Math.floor(performance.now() / (mode === 'fly' ? 120 : 150)) % 4 : 0;
     const ic = AVATARS.icon(ids, color, S.t, f, mode, flip), id = 'av:' + ic.key + ':' + f;
     if (!map.hasImage(id)) map.addImage(id, ic.canvas.getContext('2d').getImageData(0, 0, ic.canvas.width, ic.canvas.height), { pixelRatio: 2 });
     pos.push(pt(X, Y, { name: m.length > 1 || ids.length > 1 ? ic.name : m[0].j.name, color, icon: id, n: m.length }));
   }
-  if (mapLoaded) { map.getSource('journeys').setData(FC(feats)); map.getSource('journey-pos').setData(FC(pos)); }
+  S.idleAnim = idleAnim;
+  if (mapLoaded) { if (!posOnly) map.getSource('journeys').setData(FC(feats)); map.getSource('journey-pos').setData(FC(pos)); }
+  if (!posOnly) updateBattles();
 }
 function setTime(t, fromSlider) {
   const st = GEO.STORIES[S.story];
@@ -666,7 +691,7 @@ const LAYER_GROUPS = {
   palantiri: ['palantiri-line', 'palantiri-pts'],
   grid: ['grid-lines', 'grid-labels'],
   regions: ['regions'],
-  journeys: ['journeys-all', 'journeys-case', 'journeys-done', 'journeys-pos', 'journeys-av', 'journeys-pos-label'],
+  journeys: ['journeys-all', 'journeys-case', 'journeys-done', 'battles-av', 'journeys-pos', 'journeys-av', 'journeys-pos-label'],
 };
 const LAYER_ON = { rivers: 1, mountains: 1, forests: 1, seas: 1, places: 1, peoples: 0, realms: 0, admin: 0, roads: 1, infra: 1, beacons: 0, palantiri: 0, grid: 0, regions: 1, journeys: 1 };
 function setGroup(k, on) {
@@ -1013,6 +1038,8 @@ map.on('click', e => {
   const [X, Y] = GEN.toXY(e.lngLat.lng, e.lngLat.lat);
   if (S.pick === 'ground') { toggleGroundPick(false); openGround(X, Y); return; }
   if (S.measure) { S.measure.push([X, Y]); drawMeasure(); return; }
+  const bf = map.getLayer('battles-av') ? map.queryRenderedFeatures([[e.point.x - 10, e.point.y - 10], [e.point.x + 10, e.point.y + 10]], { layers: ['battles-av'] }) : [];
+  if (bf.length) { showBattle(BATTLES[bf[0].properties.i]); return; }
   const f = map.queryRenderedFeatures([[e.point.x - 6, e.point.y - 6], [e.point.x + 6, e.point.y + 6]], { layers: ['places-1', 'places-2', 'places-3', 'places-4', 'places-5', 'places-infra', 'places-beacons', 'peaks'].filter(id => map.getLayer(id)) });
   if (f.length) {
     const p = f[0].properties;

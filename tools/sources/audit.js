@@ -51,6 +51,8 @@ for (const p of GEO.PLACES) {
   for (const r of e[1].split(';').map(s => s.trim().split(' ')[0])) if (!SOURCES.BIB[r]) problems.push(`${p[0]}: unknown source ${r}`);
 }
 for (const n of Object.keys(L)) if (!P[n]) problems.push(`ledger entry for a place not on the map: ${n}`);
+// battles cite their chapters too
+for (const b of GEO.BATTLES || []) for (const r of b.src.split(';').map(x => x.trim().split(' ')[0])) if (!SOURCES.BIB[r]) problems.push(`battle ${b.name}: unknown source ${r}`);
 const unchecked = Object.values(L).filter(e => !e[3]).length;
 say(`# Source audit\n`);
 say(`Places: ${GEO.PLACES.length}. Grades: ${Object.entries(grades).map(([g, n]) => g + ' ' + n).join(', ')}. References checked against the text: ${Object.keys(L).length - unchecked} of ${Object.keys(L).length}.\n`);

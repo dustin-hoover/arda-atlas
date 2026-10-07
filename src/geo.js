@@ -812,6 +812,16 @@ const JOURNEYS = {
     { name:'Gimli', with:[['Frodo & Sam','3018 12 25','3019 2 26'],['Aragorn','3019 2 26.6','3019 3 25']], color:'#d8a060', pts:[[768.4,138,'3018 9 20'],[769,128.4,'3018 9 21'],[766.5,97.5,'3018 9 23'],[788,-14,'3018 9 28'],[759,-14,'3018 9 30'],[703,-12,'3018 10 3'],[646,0,'3018 10 6'],[598,23,'3018 10 8'],[553,25,'3018 10 10'],[536,23,'3018 10 11'],[485.2,2.1,'3018 10 15'],[448,22,'3018 10 19'],[420.5,17.5,'3018 10 23'],[420.5,17.5,'3018 12 25'],[422.6,-30.5,'3018 12 30'],[380.1,-91.1,'3019 1 5'],[372,-113,'3019 1 8'],[377.4,-143.7,'3019 1 10'],[410.3,-154.9,'3019 1 11.5'],[381.3,-144.9,'3019 1 12.5'],[380,-159.2,'3019 1 13.8'],[401.9,-171.8,'3019 1 14.5'],[420.7,-184.8,'3019 1 15.3'],[424.3,-189.6,'3019 1 15.5'],[442.6,-211,'3019 1 16'],[448.2,-229.5,'3019 1 16.5'],[457.1,-254.8,'3019 1 17'],[457.1,-254.8,'3019 2 16'],[492.8,-298.2,'3019 2 16.5'],[511.2,-333.1,'3019 2 18'],[546,-364.7,'3019 2 19'],[573.5,-386.4,'3019 2 21'],[598.2,-407.3,'3019 2 23'],[611.9,-433.1,'3019 2 25'],[611.8,-462.2,'3019 2 26'],[587.6,-442.3,'3019 2 27'],[537.3,-413.7,'3019 2 28'],[488,-389.5,'3019 2 30'],[439.3,-378.4,'3019 3 1'],[438,-479.4,'3019 3 2'],[377.3,-451.8,'3019 3 3.5'],[377.3,-451.8,'3019 3 4.6'],[334,-379.1,'3019 3 5'],[368.1,-410.7,'3019 3 5.6'],[377.3,-451.8,'3019 3 6'],[443.2,-489,'3019 3 7'],[451.6,-512.4,'3019 3 8'],[436.8,-534.2,'3019 3 9'],[503.5,-591.6,'3019 3 11'],[505.2,-726.4,'3019 3 12'],[659.8,-727,'3019 3 13'],[734.4,-606.5,'3019 3 15'],[738.9,-604.6,'3019 3 19'],[764.9,-601.2,'3019 3 20'],[751.3,-526.6,'3019 3 23'],[763.1,-481,'3019 3 25'],[738,-556,'3019 3 27']] },
     { name:'Gandalf: to Orthanc', color:'#9a9aac', pts:[[127.9,7.4,'3018 6 29'],[196,-174,'3018 7 3'],[267,-366,'3018 7 7'],[334,-379.1,'3018 7 10'],[334,-379.1,'3018 9 17.9']], hide:true },
     { name:'Gandalf the White', with:[['Aragorn','3019 3 1','3019 3 2.5'],['Aragorn','3019 3 4','3019 3 5.5']], color:'#ffffff', pts:[[423.1,-178,'3019 2 14'],[457.1,-254.8,'3019 2 15'],[457.1,-254.8,'3019 2 17'],[431.7,-377.3,'3019 3 1'],[438,-479.4,'3019 3 2'],[377.3,-451.8,'3019 3 4'],[377.3,-451.8,'3019 3 4.6'],[334,-379.1,'3019 3 5.1'],[368.1,-410.7,'3019 3 5.2'],[438,-479.4,'3019 3 6'],[529.4,-519.9,'3019 3 7'],[675,-574.6,'3019 3 8'],[725.1,-599.1,'3019 3 9'],[725.1,-599.1,'3019 3 18'],[738.9,-604.6,'3019 3 19'],[764.9,-601.2,'3019 3 20'],[751.3,-526.6,'3019 3 23'],[763.1,-481,'3019 3 25'],[840.1,-554,'3019 3 25.6'],[738,-556,'3019 3 26']] },
+    // side characters
+    { name:'Elrond', color:'#b9c2d4', pts:[[420.5,17.5,'3018 6 20'],[420.5,17.5,'3019 3 30']] },
+    { name:'Galadriel', color:'#f6de88', pts:[[457.1,-254.8,'3018 6 20'],[457.1,-254.8,'3019 3 30']] },
+    { name:'Sauron', color:'#ff6a18', hide:true, pts:[[895.4,-532.8,'3018 6 20'],[895.4,-532.8,'3019 3 25.5']] },
+    { name:'Saruman', color:'#e8e8f0', pts:[[334,-379.1,'3018 6 20'],[334,-379.1,'3019 3 30']] },
+    { name:'Gríma Wormtongue', color:'#8a8a90', hide:true, pts:[[438,-479.4,'3018 6 20'],[438,-479.4,'3019 3 2.4'],[334,-379.1,'3019 3 4'],[334,-379.1,'3019 3 30']] },
+    { name:'Uglúk and the Uruk-hai', color:'#5a5a62', hide:true, with:[['Merry & Pippin','3019 2 26.5','3019 2 29.25']], pts:[[611.8,-462.2,'3019 2 26.5'],[440,-376.3,'3019 2 29.25']] },
+    { name:'Treebeard', color:'#8a9a6a', with:[['Merry & Pippin','3019 2 29.4','3019 3 3']], pts:[[423,-359.7,'3019 2 29.4'],[334,-379.1,'3019 3 3'],[334,-379.1,'3019 3 30']] },
+    { name:'Gollum', color:'#b4bc9c', hide:true, with:[['Frodo & Sam','3019 2 29','3019 3 12.8'],['Frodo & Sam','3019 3 24','3019 3 25']], pts:[[655.8,-451.5,'3019 2 29'],[781,-584.1,'3019 3 12.8'],[834.8,-546.9,'3019 3 24'],[840.3,-552.6,'3019 3 25']] },
+    { name:'Faramir', color:'#7fa86a', with:[['Frodo & Sam','3019 3 7','3019 3 8.3']], pts:[[739.3,-548.8,'3019 3 7'],[744.3,-565.9,'3019 3 8.3'],[711.3,-563.2,'3019 3 9.4'],[725.1,-599.1,'3019 3 10.75'],[725.1,-599.1,'3019 3 11.3'],[738.9,-604.6,'3019 3 11.9'],[738.9,-604.6,'3019 3 12.8'],[731.5,-602.3,'3019 3 13.4'],[725.1,-599.1,'3019 3 13.75'],[725.1,-599.1,'3019 3 30']] },
   ],
   'return': [
     { name:'Frodo & Sam homeward', color:'#f2d06b', pts:[[738,-556,'3019 3 26'],[738,-556,'3019 4 8'],[725.1,-599.1,'3019 5 1'],[725.1,-599.1,'3019 7 19'],[675,-575,'3019 7 23'],[588,-540,'3019 7 30'],[506,-500,'3019 8 4'],[438,-479.4,'3019 8 7'],[438,-479.4,'3019 8 10'],[377.3,-451.8,'3019 8 14'],[334,-379.1,'3019 8 22'],[320,-330,'3019 8 26'],[289,-290.6,'3019 8 29'],[350,-230,'3019 9 3'],[370,-140,'3019 9 8'],[400,-60,'3019 9 14'],[420.5,17.5,'3019 9 21'],[420.5,17.5,'3019 10 5'],[400.3,3.7,'3019 10 6'],[318,12,'3019 10 9'],[208,11,'3019 10 15'],[127.9,7.4,'3019 10 28'],[72,4.9,'3019 10 30'],[40,1,'3019 11 1'],[6.3,-2.2,'3019 11 3'],[0.3,0.5,'3019 11 3.5']] },
@@ -823,12 +833,16 @@ const JOURNEYS = {
     { name:'Frodo\'s last journey', color:'#f2d06b', pts:[[0.3,0.5,'3021 9 21'],[24,0,'3021 9 21.6'],[44.9,-11.2,'3021 9 22'],[6.3,-2.2,'3021 9 23'],[-33.1,0,'3021 9 24'],[-48,-1,'3021 9 25'],[-83.3,-13.7,'3021 9 27'],[-114,-13,'3021 9 28'],[-170.9,-7.6,'3021 9 29'],[-170.9,-7.6,'3021 9 29.75'],[-260,-40,'3021 9 30'],[-420,-80,'3021 10 2']] },
     { name:'Sam to the Havens and home', color:'#c9a65a', pts:[[0.3,0.5,'3021 9 21'],[24,0,'3021 9 21.6'],[44.9,-11.2,'3021 9 22'],[6.3,-2.2,'3021 9 23'],[-33.1,0,'3021 9 24'],[-48,-1,'3021 9 25'],[-83.3,-13.7,'3021 9 27'],[-114,-13,'3021 9 28'],[-170.9,-7.6,'3021 9 29'],[-170.9,-7.6,'3021 9 30'],[-114,-13,'3021 10 1.5'],[-83.3,-13.7,'3021 10 2.5'],[-48,-1,'3021 10 4'],[-33.1,0,'3021 10 5'],[0.3,0.5,'3021 10 6']] },
     { name:'Merry & Pippin to the Havens', color:'#b5e08a', pts:[[84.7,-8.3,'3021 9 26.1'],[72,4.9,'3021 9 26.4'],[24,0,'3021 9 27'],[-48,-1,'3021 9 28'],[-114,-13,'3021 9 28.8'],[-170.9,-7.6,'3021 9 29'],[-170.9,-7.6,'3021 9 30'],[-48,-1,'3021 10 3'],[72,4.9,'3021 10 5'],[84.7,-8.3,'3021 10 5.5']] },
+    { name:'Treebeard at Isengard', color:'#8a9a6a', pts:[[334,-379.1,'3019 3 25'],[334,-379.1,'3019 9 1']] },
+    { name:'Faramir & Éowyn', color:'#7fa86a', pts:[[725.1,-599.1,'3019 3 25'],[725.1,-599.1,'3019 7 19'],[438,-479.4,'3019 8 10'],[438,-479.4,'3019 8 14'],[725.1,-599.1,'3019 8 28'],[743.9,-617.7,'3019 9 10']] },
+    { name:'Saruman and Wormtongue', color:'#e8e8f0', hide:true, pts:[[334,-379.1,'3019 8 14'],[289,-290.6,'3019 8 28'],[196,-173.9,'3019 9 9'],[81.9,-79.1,'3019 9 20'],[0.3,0.5,'3019 9 25'],[0.3,0.5,'3019 11 3']] },
   ],
   'hobbit': [
     { name:'Bilbo & Thorin\'s Company', color:'#f2d06b', pts:[
       [0.3,0.5,'2941 4 28.1'],[6.3,-2.2,'2941 4 28.4'],[72,4.9,'2941 4 30'],[127.9,7.4,'2941 5 4'],[208,11,'2941 5 12'],[317.5,12,'2941 5 20'],[361.7,17.4,'2941 5 26'],[420.5,17.5,'2941 6 30'],[457.4,16.5,'2941 7 2'],[485.2,2.1,'2941 7 5'],[493,7.2,'2941 7 6'],[514.3,12.2,'2941 7 7'],[542.9,54.3,'2941 7 8'],[565.5,48.1,'2941 7 9'],[587,71.1,'2941 7 14'],[624.8,62.7,'2941 7 20'],[665.9,59,'2941 7 30'],[705,69.6,'2941 8 6'],[713.5,81,'2941 8 12'],[735.4,87.3,'2941 9 22'],[766.5,97.5,'2941 9 23'],[766.1,115.4,'2941 10 2'],[768.4,138,'2941 10 10'],[769,128.4,'2941 11 23'],[565.5,48.1,'2941 12 30'],[420.5,17.5,'2942 5 1'],[208,11,'2942 5 25'],[127.9,7.4,'2942 6 5'],[0.3,0.5,'2942 6 22']
     ]},
     { name:'Gandalf: the White Council at Dol Guldur', color:'#c8c8d8', pts:[[565.5,48.1,'2941 7 14'],[587,71.1,'2941 7 18'],[553,25,'2941 7 22'],[540,-60,'2941 7 28'],[609.2,-194.2,'2941 8 5'],[609.2,-194.2,'2941 8 25'],[560,-60,'2941 9 15'],[553,25,'2941 10 1'],[646,0,'2941 10 25'],[759,-14,'2941 11 10'],[769,128.4,'2941 11 22']] },
+    { name:'Gollum', color:'#b4bc9c', pts:[[493.1,7.2,'2941 4 25'],[493.1,7.2,'2942 6 30']] },
   ],
 };
 
@@ -860,6 +874,43 @@ const MODES = [
   ['Bilbo & Thorin', '2941 4 28', '2941 7 5', 'ride'],                                               // ponies, lost in Goblin-town
   ['Bilbo & Thorin', '2941 7 9.5', '2941 7 14', 'ride'],                                             // Beorn's ponies to the forest gate
   ['Gandalf: the White Council', '2941 7 14', '2941 11 22', 'ride'],
+  ['^Faramir$', '3019 3 8.3', '3019 3 13.8', 'ride'],                                                 // to the City and the defence of Osgiliath
+  ['Faramir & Éowyn', '3019 7 19', '3019 9 10', 'ride'],
+];
+
+// Battles, drawn as two small armies while they are fought. at: [X, Y]; units: [kind, how many to draw] —
+// a picture of the armies' make-up, not a count. Strengths are given only where the text states them.
+const BATTLES = [
+  { name:'The Battle of the Fords of Isen', story:'war', at:[319.5,-410], from:'3019 2 25.4', to:'3019 2 25.9', src:'UT III.5; LR AppB',
+    sides:[ { name:'Rohan', note:'Théodred\'s riders; Théodred falls', banner:'rohan', units:[['rider',3],['rohan',4]] },
+            { name:'Isengard', note:'Uruk-hai and Dunlendings out of Isengard', banner:'isengard', units:[['uruk',7],['dunland',3]] } ], outcome:'Théodred is slain; the Riders are driven from the Fords.' },
+  { name:'The Battle of the Hornburg', story:'war', at:[377.3,-451.8], from:'3019 3 3.75', to:'3019 3 4.3', src:'LR III.7',
+    sides:[ { name:'Rohan', note:'Théoden\'s riders, with Aragorn, Legolas and Gimli; Erkenbrand and the Huorns at dawn', banner:'rohan', units:[['rohan',5],['rider',2],['huorn',3]] },
+            { name:'Isengard', note:'a host of Uruk-hai, Orcs and wild men of Dunland, many thousands strong', banner:'isengard', units:[['uruk',9],['dunland',4],['orc',3]] } ], outcome:'At dawn the Riders sally, Gandalf and Erkenbrand come down from the hills, and the Huorns destroy the host.' },
+  { name:'The Ents destroy Isengard', story:'war', at:[334,-379.1], from:'3019 3 2.9', to:'3019 3 3.7', src:'LR III.9',
+    sides:[ { name:'The Ents', note:'Treebeard and the Ents, with the Huorns', banner:'ents', units:[['ent',4],['huorn',3]] },
+            { name:'Isengard', note:'the garrison Saruman kept back', banner:'isengard', units:[['orc',5],['uruk',3]] } ], outcome:'The Ents break the Ring of Isengard and flood it with the Isen; Saruman is shut in Orthanc.' },
+  { name:'The Battle of Pelargir', story:'war', at:[659.8,-727], from:'3019 3 13.3', to:'3019 3 13.7', src:'LR V.9',
+    sides:[ { name:'The Dead', note:'the Oathbreakers, led by Aragorn', banner:'dead', units:[['dead',8]] },
+            { name:'Umbar', note:'the Corsairs and their fleet', banner:'umbar', units:[['corsair',7]] } ], outcome:'The Corsairs flee in terror; Aragorn takes their ships and releases the Dead.' },
+  { name:'The Siege of Gondor', story:'war', at:[741,-597], from:'3019 3 13.6', to:'3019 3 15.1', src:'LR V.4',
+    sides:[ { name:'Gondor', note:'the garrison of Minas Tirith', banner:'gondor', units:[['gondor',7]] },
+            { name:'Mordor', note:'the host of Minas Morgul under the Witch-king, with Haradrim and Easterlings', banner:'mordor', units:[['orc',8],['troll',1],['harad',3],['nazgul',1]] } ], outcome:'The Pelennor is overrun; the Great Gate is broken at the coming of the Witch-king.' },
+  { name:'The Battle of the Pelennor Fields', story:'war', at:[747,-596], from:'3019 3 15.1', to:'3019 3 15.8', src:'LR V.6',
+    sides:[ { name:'Gondor and Rohan', note:'six thousand Riders of Rohan, the City\'s host, and Aragorn from the black ships', banner:'rohan', units:[['rider',5],['gondor',4],['dunedain',2]] },
+            { name:'Mordor', note:'Morgul\'s host, the Haradrim with their mûmakil, and Easterlings', banner:'mordor', units:[['mumak',2],['harad',4],['orc',6],['easterling',3],['nazgul',1]] } ], outcome:'Théoden falls; Éowyn and Merry slay the Witch-king; the host of Mordor is destroyed.' },
+  { name:'The Battle of Dale', story:'war', at:[769,128.4], from:'3019 3 15', to:'3019 3 17.5', src:'LR AppB',
+    sides:[ { name:'Dale and Erebor', note:'King Brand and King Dáin Ironfoot', banner:'erebor', units:[['dwarf',5],['dale',4]] },
+            { name:'The Easterlings', note:'Easterlings sent by Sauron', banner:'mordor', units:[['easterling',8]] } ], outcome:'Brand and Dáin fall before the Gate of Erebor; the Dwarves and Men hold the Mountain.' },
+  { name:'The Battle of the Morannon', story:'war', at:[761.9,-480], from:'3019 3 25.1', to:'3019 3 25.6', src:'LR V.10',
+    sides:[ { name:'The Host of the West', note:'about seven thousand under Aragorn', banner:'gondor', units:[['gondor',5],['rider',3],['dunedain',2],['eagle',3]] },
+            { name:'Mordor', note:'the hosts of the Black Gate, trolls and Easterlings', banner:'mordor', units:[['orc',9],['troll',2],['easterling',3],['nazgul',2]] } ], outcome:'The Eagles come; the Ring is destroyed and the hosts of Mordor scatter.' },
+  { name:'The Battle of Five Armies', story:'hobbit', at:[769,128.5], from:'2941 11 23.3', to:'2941 11 23.85', src:'H 17',
+    sides:[ { name:'Elves, Men and Dwarves', note:'the Elvenking, Bard and Dáin; the Eagles and Beorn at the last', banner:'erebor', units:[['elf',4],['dale',3],['dwarf',4],['eagle',3],['beorn',1]] },
+            { name:'Goblins and Wargs', note:'the Goblins of the north under Bolg, and the Wolves', banner:'goblins', units:[['goblin',9],['warg',4]] } ], outcome:'Thorin is mortally wounded; Beorn and the Eagles turn the day.' },
+  { name:'The Battle of Bywater', story:'return', at:[6.3,-2.2], from:'3019 11 3.3', to:'3019 11 3.7', src:'LR VI.8',
+    sides:[ { name:'The hobbits', note:'the Shire roused by Merry and Pippin', banner:'shire', units:[['hobbit',9]] },
+            { name:'Sharkey\'s Men', note:'ruffians come down from Isengard and the South', banner:'ruffians', units:[['ruffian',6]] } ], outcome:'The ruffians are routed: the last battle fought in the Shire.' },
 ];
 
 const STORIES = {
@@ -875,7 +926,7 @@ const LORE_WEATHER = [
   { name:'Fumes of Orodruin', x:840.1, y:-554, r:40, from:'3018 1 1', to:'3019 3 25', kind:'smoke' },
 ];
 
-return { MODES, COAST, ISLANDS, RANGES, HILLS, RELIEF, PEAKS, RIVERS, LAKES, FORESTS, MARSHES, ARID, FARMS, GRASS, ASH, UPLIFT, ICE, NUMENOR,
+return { MODES, BATTLES, COAST, ISLANDS, RANGES, HILLS, RELIEF, PEAKS, RIVERS, LAKES, FORESTS, MARSHES, ARID, FARMS, GRASS, ASH, UPLIFT, ICE, NUMENOR,
   PLACES, REGION_LABELS, SEA_LABELS, REALMS, ADMIN, PEOPLES, ROADS, WALLS, PALANTIRI, BEACONS, JOURNEYS, STORIES, LORE_WEATHER };
 })();
 if (typeof self !== 'undefined') self.GEO = GEO;

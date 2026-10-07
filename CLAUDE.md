@@ -109,3 +109,11 @@ Phase 1 is porting `gen.js` to run server-side and caching tiles as PMTiles.
   map mirrors them when the party heads west on screen. A cluster takes its first member's mode.
 - Preview: render a sprite sheet in the page with AVATARS.drawFigure / AVATARS.icon (see tools/shots/avatars.png).
 - Headless screenshots can catch symbol layers mid-fade after jumpTo: pan by a pixel and wait before shooting.
+
+## Side characters and battles
+- Side characters are ordinary journeys (some stationary: Elrond, Galadriel, Saruman, the Eye of Sauron) with `with`
+  windows to travel inside another party (Uglúk's band, Treebeard, Gollum, Faramir). `C[id].special` marks sprites
+  that aren't head-on-body: `ent` (Treebeard, taller) and `eye` (Sauron); the Nine fly on `fellGrid` fell beasts.
+- `GEO.BATTLES`: name, story, at, from/to, src, two sides with banner and `units` ([kind, how many to draw] — a
+  picture of the army's make-up, not a count). AVATARS.battle(b, frame) draws them; the map hangs battles below
+  their point and travellers stand above theirs. A 170 ms loop animates battles, flyers and the Eye while paused.

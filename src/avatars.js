@@ -25,21 +25,33 @@ const C = {
   galadriel:{ name: 'Galadriel', skin: '#f8e4d2', hair: ['#f6de88', '#d6b65a'], style: 'long', ears: 'elf', hat: 'circlet', hatC: ['#fff6d8', '#d8c48a'] },
   thorin:  { name: 'Thorin',    skin: '#efc19c', hair: ['#262021', '#141011'], style: 'none', beard: 'dwarf', beardC: ['#262021', '#141011'], hat: 'dwarfhood', hatC: ['#2f4f86', '#1e3560'], brows: 1 },
   nazgul:  { name: 'Nazgûl',    hood: 1 },
+  faramir: { name: 'Faramir',   skin: '#efc4a0', hair: ['#2e2420', '#1a1412'], style: 'short' },
+  eowyn:   { name: 'Éowyn',     skin: '#f6dcc4', hair: ['#f0d070', '#c8a848'], style: 'long' },
+  saruman: { name: 'Saruman',   skin: '#e8c0a0', hair: ['#e8e8ec', '#9a9aa8'], style: 'long', beard: 'wizard', beardC: ['#ececf0', '#8a8a98'], brows: 1 },
+  grima:   { name: 'Gríma',     skin: '#e6d8cc', hair: ['#1e1a1c', '#0e0c0e'], style: 'long', eye: '#3a4a3a' },
+  ugluk:   { name: 'Uglúk',     skin: '#5a4a3c', hair: ['#141010', '#0a0808'], style: 'none', hat: 'orchelm', eye: '#f0c040', fangs: 1, brows: 1, beardC: ['#141010', '#0a0808'] },
+  uruk:    { name: 'Uruk-hai',  skin: '#4e4234', hair: ['#141010', '#0a0808'], style: 'none', hat: 'orchelm', eye: '#e8a838', fangs: 1 },
+  gollum:  { name: 'Gollum',    skin: '#b4bc9c', hair: ['#4a4a3a', '#2a2a20'], style: 'sparse', ears: 'gollum', bigEyes: 1 },
+  treebeard:{ name: 'Treebeard', special: 'ent' },
+  sauron:  { name: 'Sauron',    special: 'eye' },
 };
 
 // which characters travel in each journey; [id, from, to] limits a companion to part of the journey
 const JOURNEY = {
   war: {
     'Frodo & Sam': ['frodo', 'sam'], 'Aragorn': ['aragorn'], 'Merry & Pippin': ['merry', 'pippin'], 'Pippin': ['pippin'],
-    'Merry with Théoden': ['merry', 'theoden'], 'Gandalf the Grey': ['gandalf'], 'The Black Riders': ['nazgul'], 'Boromir': ['boromir'],
+    'Merry with Théoden': ['merry', 'theoden', ['eowyn', '3019 3 10', '3019 3 15.6']], 'Gandalf the Grey': ['gandalf'], 'The Black Riders': ['nazgul'], 'Boromir': ['boromir'],
     'Legolas': ['legolas'], 'Gimli': ['gimli'], 'Gandalf: to Orthanc': ['gandalf'], 'Gandalf the White': ['gandalfW'],
+    'Elrond': ['elrond'], 'Galadriel': ['galadriel'], 'Sauron': ['sauron'], 'Saruman': ['saruman'], 'Gríma Wormtongue': ['grima'],
+    'Uglúk and the Uruk-hai': ['ugluk', 'uruk'], 'Treebeard': ['treebeard'], 'Gollum': ['gollum'], 'Faramir': ['faramir'],
   },
   return: {
     'Frodo & Sam homeward': ['frodo', 'sam'], 'Merry & Pippin homeward': ['merry', 'pippin'], 'Aragorn & Arwen': ['aragorn', ['arwen', '3019 6 31']],
     'Arwen comes to the City': ['arwen', 'elrond'], 'Gandalf to Bombadil': ['gandalfW'], 'Bilbo, Elrond & Galadriel': ['bilboOld', 'elrond', 'galadriel'],
     'Frodo\'s last journey': ['frodo'], 'Sam to the Havens and home': ['sam'], 'Merry & Pippin to the Havens': ['merry', 'pippin'],
+    'Treebeard at Isengard': ['treebeard'], 'Faramir & Éowyn': ['faramir', 'eowyn'], 'Saruman and Wormtongue': ['saruman', 'grima'],
   },
-  hobbit: { 'Bilbo & Thorin\'s Company': ['bilbo', 'thorin', ['gandalf', null, '2941 7 14']], 'Gandalf: the White Council at Dol Guldur': ['gandalf'] },
+  hobbit: { 'Bilbo & Thorin\'s Company': ['bilbo', 'thorin', ['gandalf', null, '2941 7 14']], 'Gandalf: the White Council at Dol Guldur': ['gandalf'], 'Gollum': ['gollum'] },
 };
 const P = s => typeof s === 'string' ? WX.parse(s) : s;
 function charsOf(story, name, t) {
@@ -56,9 +68,20 @@ const GROUPS = [
   { name: 'Gandalf and the Three Hunters', frame: '#e8e6de', edge: '#ffffff', emblem: 'star', test: S => S.size === 4 && has(S, 'aragorn', 'legolas', 'gimli', 'gandalfW') },
   { name: 'The Four Hobbits', frame: '#2c3d1c', edge: '#e2c25a', emblem: 'leaf', test: S => S.size === 4 && has(S, ...HOBBITS) },
   { name: 'The Hobbits and Strider', frame: '#2c3d1c', edge: '#c9a14a', emblem: 'leaf', test: S => S.size === 5 && has(S, ...HOBBITS, 'aragorn') },
+  { name: 'Riddles in the Dark', frame: '#101418', edge: '#b4bc9c', emblem: 'ring', test: S => has(S, 'bilbo', 'gollum') },
   { name: 'Thorin and Company', frame: '#1e2c48', edge: '#e0b84e', emblem: 'key', test: S => has(S, 'bilbo', 'thorin') },
   { name: 'The Nine', frame: '#0c0b10', edge: '#7a1d24', emblem: 'eye', test: S => S.size === 1 && S.has('nazgul'), show: ['nazgul', 'nazgul', 'nazgul'] },
   { name: 'The Ring-bearers', frame: '#1b2433', edge: '#f2d06b', emblem: 'ring', test: S => S.size === 2 && has(S, 'frodo', 'bilboOld') },
+  { name: 'Captives of the Uruk-hai', frame: '#1e1a18', edge: '#e8e4dc', emblem: 'hand', test: S => has(S, 'merry', 'pippin', 'ugluk'), order: ['uruk', 'merry', 'ugluk', 'pippin'] },
+  { name: 'The Uruk-hai of Isengard', frame: '#1e1a18', edge: '#e8e4dc', emblem: 'hand', test: S => S.size === 2 && has(S, 'ugluk', 'uruk'), show: ['uruk', 'ugluk', 'uruk'] },
+  { name: 'Treebeard and the Hobbits', frame: '#24361c', edge: '#8a9a6a', emblem: 'leaf', test: S => has(S, 'merry', 'pippin', 'treebeard') },
+  { name: 'Frodo, Sam and Sméagol', frame: '#1b2433', edge: '#b4bc9c', emblem: 'ring', test: S => S.size === 3 && has(S, 'frodo', 'sam', 'gollum') },
+  { name: 'Faramir and the Ring-bearer', frame: '#24361c', edge: '#7fa86a', emblem: 'star', test: S => has(S, 'frodo', 'sam', 'faramir') },
+  { name: 'Théoden, Dernhelm and Merry', frame: '#1f3a24', edge: '#e6c04e', emblem: 'horse', test: S => S.size === 3 && has(S, 'theoden', 'eowyn', 'merry') },
+  { name: 'Sharkey and Wormtongue', frame: '#2a2a2e', edge: '#d8d8e2', emblem: 'hand', test: S => S.size === 2 && has(S, 'saruman', 'grima') },
+  { name: 'In the House of Elrond', frame: '#1b2433', edge: '#b9c2d4', emblem: 'star', test: S => S.has('elrond') && S.size >= 3 },
+  { name: 'In Lothlórien', frame: '#2a3a1c', edge: '#f6de88', emblem: 'star', test: S => S.has('galadriel') && S.size >= 3 && !S.has('elrond') },
+  { name: 'Saruman and his prisoner', frame: '#2a2a2e', edge: '#d8d8e2', emblem: 'hand', test: S => S.size === 2 && has(S, 'saruman', 'gandalf') },
 ];
 
 /* ---- one head on the 14×16 grid ---- */
@@ -97,11 +120,15 @@ function grid(id) {
   if (c.ears === 'hobbit') { set(2, 9, c.skin); set(11, 9, shade(c.skin, 0.88)); set(2, 8, c.skin); set(11, 8, shade(c.skin, 0.88)); }
   if (c.ears === 'elf') { set(2, 9, c.skin); set(1, 8, c.skin); set(0, 7, c.skin); set(11, 9, shade(c.skin, 0.88)); set(12, 8, shade(c.skin, 0.88)); set(13, 7, shade(c.skin, 0.88)); }
   if (!c.ears && c.style !== 'long' && c.hat !== 'dwarfhood') { set(2, 9, c.skin); set(11, 9, shade(c.skin, 0.88)); }
+  if (c.style === 'sparse') { set(5, 5, h); set(7, 4, hd); set(8, 5, h); set(10, 6, hd); set(4, 6, hd); }
+  if (c.ears === 'gollum') { set(2, 8, c.skin); set(1, 7, c.skin); set(2, 9, c.skin); set(11, 8, shade(c.skin, 0.88)); set(12, 7, shade(c.skin, 0.88)); set(11, 9, shade(c.skin, 0.88)); }
   // eyes, brows, mouth, cheeks
-  set(5, 9, '#1a1410'); set(8, 9, '#1a1410');
+  if (c.bigEyes) { for (const x of [4, 8]) { set(x, 8, '#e8f0c8'); set(x + 1, 8, '#e8f0c8'); set(x, 9, '#e8f0c8'); set(x + 1, 9, '#16110d'); } }
+  else { set(5, 9, c.eye || '#1a1410'); set(8, 9, c.eye || '#1a1410'); }
   if (c.brows) { const b = (c.beardC || c.hair)[1]; set(4, 8, b); set(5, 8, b); set(8, 8, b); set(9, 8, b); }
   set(6, 11, shade(c.skin, 0.7)); set(7, 11, shade(c.skin, 0.7));
   if (c.blush) { set(4, 10, '#e8968a'); set(9, 10, '#e8968a'); }
+  if (c.fangs) { set(5, 11, '#f0ece0'); set(8, 11, '#f0ece0'); set(6, 11, '#2a1810'); set(7, 11, '#2a1810'); set(5, 12, '#f0ece0'); }
   if (c.wrinkles) { set(4, 8, shade(c.skin, 0.8)); set(9, 8, shade(c.skin, 0.8)); }
   // beards
   const [b, bd] = c.beardC || [null, null];
@@ -117,6 +144,10 @@ function grid(id) {
   if (c.hat === 'helm') { const m = '#9aa0a8', md = '#6b7078'; rect(5, 2, 8, 2, m); rect(4, 3, 9, 3, m); rect(3, 4, 10, 5, m); set(9, 3, md); set(10, 4, md); set(10, 5, md); rect(2, 6, 11, 6, '#c9a03c'); set(6, 7, md); set(7, 7, md); set(2, 7, b); set(11, 7, bd); set(2, 8, b); set(11, 8, bd); set(2, 9, b); set(11, 9, bd); }
   if (c.hat === 'crown') { const y1 = '#e6c04e', y2 = '#b08a2a'; rect(3, 4, 10, 4, y1); set(3, 3, y1); set(6, 2, y1); set(7, 2, y2); set(6, 3, y1); set(7, 3, y2); set(10, 3, y2); set(6, 4, '#3f8a5a'); set(7, 4, '#3f8a5a'); }
   if (c.hat === 'circlet') { const [a, d] = c.hatC; rect(3, 6, 10, 6, a); set(10, 6, d); set(6, 6, '#bfe3ff'); set(7, 6, '#ffffff'); }
+  if (c.hat === 'orchelm') {      // black iron of Isengard, the white S-rune on the brow
+    const m = '#2a2a30', md = '#16161a'; rect(4, 3, 9, 3, m); rect(3, 4, 10, 6, m); set(10, 4, md); set(10, 5, md); set(10, 6, md); set(2, 6, m); set(11, 6, md);
+    set(6, 4, '#f0f0ea'); set(7, 5, '#f0f0ea'); set(6, 6, '#f0f0ea'); for (let y = 7; y <= 9; y++) { set(2, y, m); set(11, y, md); }
+  }
   if (c.hat === 'dwarfhood') {
     const [a, d] = c.hatC; rect(5, 2, 8, 2, a); rect(4, 3, 9, 3, a); rect(3, 4, 10, 4, a); rect(2, 5, 11, 6, a); for (let y = 7; y <= 13; y++) { set(2, y, a); set(11, y, d); }
     set(9, 1, '#c8ccd4'); set(10, 0, '#c8ccd4'); for (let x = 2; x <= 11; x++) set(x, 6, x % 2 ? d : a);
@@ -145,9 +176,61 @@ const B = {
   galadriel:{ robe: '#f8f6ee', belt: '#e6c04e' },
   thorin:   { tunic: '#2f4f86', legs: '#3a3028', cloak: '#1e3560', boots: '#2a1f18', belt: '#c9a03c', gear: 'sword' },
   nazgul:   { robe: '#1b1a20', rags: 1, gear: 'sword' },
+  faramir:  { tunic: '#4a5a3a', legs: '#3a3428', cloak: '#3f5a34', boots: '#2a1f18', gear: 'sword' },
+  eowyn:    { tunic: '#3f6a3a', legs: '#5a4a30', cloak: '#2a4a2a', boots: '#3a2a1a', belt: '#c9a03c', gear: 'sword', mail: 1 },
+  saruman:  { robe: '#d8d8e2', iris: 1, gear: 'staff', staff: '#2a2a30' },
+  grima:    { robe: '#2a2a2e' },
+  ugluk:    { tunic: '#2a2626', legs: '#2a2020', boots: '#141010', gear: 'handshield', mail: 1 },
+  uruk:     { tunic: '#2e2a28', legs: '#2a2020', boots: '#141010', gear: 'handshield', mail: 1 },
+  gollum:   { gollum: 1 },
 };
 const FW = W + 4, FH = H + 14, BY = H - 1;   // figure grid: head at (2, 0), body from row BY
+// Treebeard: an Ent half again as tall as a Man, with a leafy crown, bark grain, mossy beard, branch arms and root feet
+function entGrid(f) {
+  const Wd = 22, Ht = 46, g = Array.from({ length: Ht }, () => Array(Wd).fill(null));
+  const set = (x, y, v) => { if (x >= 0 && x < Wd && y >= 0 && y < Ht) g[y][x] = v; };
+  const rect = (x0, y0, x1, y1, v) => { for (let y = y0; y <= y1; y++) for (let x = x0; x <= x1; x++) set(x, y, v); };
+  const bark = '#6a4a2e', barkD = '#4a321e', barkL = '#8a6a44', moss = '#8a9a6a', mossD = '#5e6e44', leaf = '#5a8a3a', leafD = '#3e6a2a';
+  const upL = f === 1 ? 1 : 0, upR = f === 3 ? 1 : 0, sw = f === 1 ? 1 : f === 3 ? -1 : 0;
+  // branch arms behind the trunk, with three-pronged twig hands
+  for (let y = 18; y <= 30; y++) { set(4 - (y > 24 ? 1 : 0), y + sw, barkD); set(5 - (y > 24 ? 1 : 0), y + sw, bark); set(17 + (y > 24 ? 1 : 0), y - sw, bark); set(16 + (y > 24 ? 1 : 0), y - sw, barkD); }
+  for (const [x, d] of [[3, -1], [18, 1]]) { const o = d < 0 ? sw : -sw; set(x + d, 31 + o, barkD); set(x, 32 + o, barkD); set(x - d, 31 + o, barkD); set(x + 2 * d, 30 + o, leaf); }
+  // trunk and root legs
+  rect(6, 16, 15, 36, bark); for (let y = 16; y <= 36; y++) { set(15, y, barkD); if (y % 4 === 0) set(8 + (y % 3), y, barkD); if (y % 5 === 0) set(12, y, barkL); }
+  rect(7, 37, 9, 42 - upL, bark); rect(12, 37, 14, 42 - upR, barkD);
+  rect(5, 43 - upL, 10, 43 - upL, barkD); set(4, 44 - upL, barkD); set(7, 44 - upL, barkD); set(10, 44 - upL, barkD);
+  rect(11, 43 - upR, 16, 43 - upR, barkD); set(11, 44 - upR, barkD); set(14, 44 - upR, barkD); set(17, 44 - upR, barkD);
+  // head: leafy crown, bark face with a deep brow, green-brown eyes with a glint, a long nose
+  for (let x = 4; x <= 17; x++) { const h = 1 + ((x * 7) % 5); for (let y = 5 - h; y <= 5; y++) set(x, y, (x + y) % 3 ? leaf : leafD); }
+  rect(5, 4, 16, 16, bark); for (let y = 4; y <= 16; y++) { set(16, y, barkD); if (y % 3 === 0) set(6, y, barkD); }
+  rect(6, 8, 15, 8, barkD); for (const x of [7, 13]) { set(x, 9, '#a8c860'); set(x + 1, 9, '#3a5a1a'); set(x, 10, '#3a5a1a'); set(x + 1, 10, '#a8c860'); }
+  rect(10, 9, 11, 13, barkL); set(11, 13, barkD); rect(9, 14, 12, 14, barkD);
+  // mossy beard of twigs, falling to the waist
+  for (let y = 14; y <= 27; y++) { const w = Math.max(1, 5 - Math.floor((y - 14) / 3)); for (let x = 11 - w; x <= 10 + w; x++) set(x, y, (x + y) % 4 ? moss : mossD); }
+  return g;
+}
+// the Lidless Eye, wreathed in flame between the horns of Barad-dûr
+function eyeGrid(f) {
+  const Wd = 24, Ht = 34, g = Array.from({ length: Ht }, () => Array(Wd).fill(null));
+  const set = (x, y, v) => { if (x >= 0 && x < Wd && y >= 0 && y < Ht) g[y][x] = v; };
+  const rect = (x0, y0, x1, y1, v) => { for (let y = y0; y <= y1; y++) for (let x = x0; x <= x1; x++) set(x, y, v); };
+  const k = '#16141a', k2 = '#2a2830';
+  rect(7, 16, 16, 33, k); for (let y = 16; y <= 33; y++) { set(7, y, k2); if (y % 4 === 1) rect(8, y, 15, y, k2); }
+  for (let i = 0; i <= 9; i++) { set(3 + Math.round(i / 3), 16 - i, k); set(4 + Math.round(i / 3), 16 - i, k); set(20 - Math.round(i / 3), 16 - i, k); set(19 - Math.round(i / 3), 16 - i, k); }
+  rect(5, 15, 18, 16, k);
+  // a teardrop of flame, licking upward, then the lens-shaped eye with its cat's slit
+  const lick = [[0, 2, 1, 3], [2, 0, 3, 1], [1, 3, 0, 2], [3, 1, 2, 0]][f];
+  for (let y = 1; y <= 13; y++) { const w = y < 4 ? 1 + y + lick[y % 4] % 2 : Math.round(7 - Math.abs(y - 8) * 0.6); for (let x = 11 - w; x <= 12 + w; x++) set(x, y, (x + y + f) % 3 ? '#d83a10' : '#ff6a18'); }
+  for (let i = 0; i < 4; i++) { const x = 6 + i * 4 + (lick[i] % 2); set(x, 3 - lick[i] % 3, '#ff9a30'); set(x, 4 - lick[i] % 3, '#e04a14'); }
+  const lens = [[7, 10, 13], [8, 8, 15], [9, 6, 17], [10, 6, 17], [11, 8, 15], [12, 10, 13]];
+  for (const [y, x0, x1] of lens) rect(x0, y, x1, y, '#ff8a20');
+  for (const [y, x0, x1] of lens.slice(1, 5)) rect(x0 + 2, y, x1 - 2, y, '#ffd050');
+  rect(11, 6, 12, 13, '#0a0606'); set(11, 5, '#0a0606'); set(12, 14, '#0a0606');
+  return g;
+}
 function figGrid(id, f) {
+  if (C[id].special === 'ent') return entGrid(f);
+  if (C[id].special === 'eye') return eyeGrid(f);
   const g = Array.from({ length: FH }, () => Array(FW).fill(null)), b = B[id] || {}, c = C[id];
   const set = (x, y, v) => { if (x >= 0 && x < FW && y >= 0 && y < FH && v) g[y][x] = v; };
   const rect = (x0, y0, x1, y1, v) => { for (let y = y0; y <= y1; y++) for (let x = x0; x <= x1; x++) set(x, y, v); };
@@ -158,13 +241,22 @@ function figGrid(id, f) {
   if (b.cloak) { rect(5, R(1), 12, R(10), b.cloak); for (let r = 3; r <= 9; r++) { set(3, R(r), shade(b.cloak, 0.8)); set(14, R(r), shade(b.cloak, 0.7)); } rect(4, R(2), 4, R(10), b.cloak); rect(13, R(2), 13, R(10), shade(b.cloak, 0.85)); }
   if (b.gear === 'pack') { rect(13, R(0), 15, R(5), '#7a5a32'); set(15, R(0), '#9aa0a8'); set(16, R(1), '#9aa0a8'); }
   if (b.gear === 'bow') { for (let r = -2; r <= 9; r++) set(r < 1 || r > 6 ? 3 : 2, R(r), '#8a6234'); for (let r = -1; r <= 8; r++) set(4, R(r), '#e8e2d0'); }
-  if (b.robe) {
+  if (b.gollum) {
+    // thin, crouched, all skin and bone with a loincloth; long arms and big flat feet
+    const sk = skin, sd = shade(skin, 0.82);
+    rect(7, R(1), 10, R(6), sk); set(10, R(2), sd); set(10, R(4), sd); rect(7, R(5), 10, R(7), '#5a4a32');
+    rect(5, R(1 + armL), 6, R(1 + armL), sk); rect(4, R(2 + armL), 4, R(8 + armL), sk); set(3, R(9 + armL), sk); set(4, R(9 + armL), sk);
+    rect(11, R(1 + armR), 12, R(1 + armR), sd); rect(13, R(2 + armR), 13, R(8 + armR), sd); set(13, R(9 + armR), sd); set(14, R(9 + armR), sd);
+    rect(7, R(8), 7, R(11 - upL), sk); rect(10, R(8), 10, R(11 - upR), sd); set(6, R(9), sk); set(11, R(9), sd);
+    rect(5, R(12 - upL), 8, R(12 - upL), sk); rect(9, R(12 - upR), 12, R(12 - upR), sd);
+  } else if (b.robe) {
     const o = b.robe, d = shade(o, 0.78);
     rect(6, R(0), 11, R(6), o); rect(5, R(1), 12, R(2), o);
     rect(5, R(7), 12, R(9), o); const sw = f === 1 ? -1 : f === 3 ? 1 : 0;
     rect(4 + sw, R(10), 13 + sw, R(11), o); for (let x = 4 + sw; x <= 13 + sw; x++) set(x, R(11), b.rags && x % 2 ? null : d);
     for (let r = 1; r <= 10; r++) set(11 + (r > 6 ? 1 : 0), R(r), d);
     if (b.belt) rect(6, R(4), 11, R(4), b.belt);
+    if (b.iris) { const IR = ['#f0b4d0', '#a8e0f0', '#f0e49a', '#b8f0c0', '#d0b8f8']; for (let r = 1; r <= 11; r++) for (let x = 4; x <= 13; x++) if (g[R(r)][x] && (x * 5 + r * 3 + f) % 7 === 0) set(x, R(r), IR[(x + r) % IR.length]); }
     // feet peeping out under the hem
     const foot = b.rags ? '#050507' : '#5a4a3a';
     if (f !== 3) rect(6, R(12), 7, R(12), foot); if (f !== 1) rect(10, R(12), 11, R(12), foot);
@@ -196,6 +288,9 @@ function figGrid(id, f) {
   if (b.gear === 'axe') { const y0 = R(6 + armR); for (let y = y0 - 7; y <= y0 + 1; y++) set(14, y, '#6b4a2a'); rect(15, y0 - 7, 16, y0 - 4, '#c8ccd4'); set(16, y0 - 7, '#9aa0a8'); set(16, y0 - 4, '#9aa0a8'); set(15, y0 - 3, '#9aa0a8'); }
   if (b.gear === 'sword') { set(5, R(4), '#c9a03c'); set(4, R(4), '#c9a03c'); for (let r = 5; r <= 9; r++) set(4 + (r > 7 ? -1 : 0), R(r), b.rags ? '#6b7078' : '#d6dae2'); }
   if (b.gear === 'shield') { rect(2, R(2 + armL), 5, R(6 + armL), '#6b2a2a'); set(2, R(2 + armL), null); set(5, R(2 + armL), null); set(2, R(6 + armL), null); set(5, R(6 + armL), null); set(3, R(4 + armL), '#d9d4c8'); set(4, R(4 + armL), '#d9d4c8'); }
+  if (b.gear === 'handshield') { rect(1, R(1 + armL), 5, R(7 + armL), '#16161a'); set(1, R(1 + armL), null); set(5, R(1 + armL), null); set(1, R(7 + armL), null); set(5, R(7 + armL), null);
+    rect(3, R(3 + armL), 3, R(5 + armL), '#f0f0ea'); set(2, R(3 + armL), '#f0f0ea'); set(4, R(3 + armL), '#f0f0ea'); set(2, R(4 + armL), '#f0f0ea'); set(4, R(4 + armL), '#f0f0ea'); set(3, R(2 + armL), '#f0f0ea');   // the White Hand
+    for (let y = R(4 + armR) - 6; y <= R(6 + armR); y++) set(14, y, '#8a8e96'); set(14, R(4 + armR) - 7, '#c8ccd4'); }
   // the head on top (beards fall over the chest)
   const hg = GCACHE[id] || (GCACHE[id] = grid(id));
   for (let y = 0; y < H; y++) for (let x = 0; x < W; x++) if (hg[y][x]) set(x + 2, y, hg[y][x]);
@@ -222,6 +317,8 @@ function emblem(g, kind, cx, cy, r, edge) {
     g.strokeStyle = '#7a5a1a'; g.beginPath(); g.ellipse(cx, cy, r * 1.02, r * 0.5, 0, 0, 7); g.stroke();
     g.strokeStyle = '#f3cf5e'; g.lineWidth *= 0.6; g.beginPath(); g.ellipse(cx, cy - 1, r, r * 0.48, 0, 0, 7); g.stroke();
     g.strokeStyle = 'rgba(255,240,190,0.9)'; g.lineWidth = 1.5; g.beginPath(); g.ellipse(cx, cy - 2, r * 0.95, r * 0.45, 0, 3.6, 5.4); g.stroke();
+  } else if (kind === 'hand') {
+    g.fillStyle = edge; g.fillRect(cx - r * 0.45, cy - r * 0.2, r * 0.9, r * 0.8); for (let k = 0; k < 4; k++) g.fillRect(cx - r * 0.45 + k * r * 0.24, cy - r * (0.75 - Math.abs(k - 1.5) * 0.12), r * 0.17, r * 0.6); g.fillRect(cx + r * 0.42, cy, r * 0.3, r * 0.17);
   } else if (kind === 'eye') {
     g.fillStyle = '#ff6a2c'; g.beginPath(); g.ellipse(cx, cy, r, r * 0.42, 0, 0, 7); g.fill(); g.fillStyle = '#120a0a'; g.fillRect(cx - 1.5, cy - r * 0.4, 3, r * 0.8);
   } else if (kind === 'star') {
@@ -283,7 +380,31 @@ function horseGrid(ids, f, k) {
 }
 
 // a Great Eagle (or, for the Nine, a fell beast) with riders on its back, wings swept back over them
+// a fell beast: a naked, leathery winged creature with a long neck and tail, bearing a Ringwraith
+function fellGrid(ids, f) {
+  const W2 = 58, by = BY + 12, g = blank(W2, by + 16), hide = '#3a3540', hideD = '#24202a', bone = '#14121a', mem = '#4a4452';
+  const up = [-16, -5, 10, -5][f];
+  // far wing: bony fingers with membrane, ragged trailing edge
+  const wing = (rx, tipX, dy, c, cd) => {
+    for (let x = tipX; x <= rx; x++) {
+      const u = (rx - x) / (rx - tipX), y = Math.round(by + 1 + dy * u), th = 1 + Math.round(5 * Math.sin(Math.PI * Math.min(1, u * 1.15)));
+      setp(g, x, y - 1, bone); rectp(g, x, y, x, y + th - ((x % 5 === 0) ? 1 : 0), c);
+      if (x % 6 === 0 && u > 0.2) for (let k = 0; k < th + 2; k++) setp(g, x - k / 2, y + k, cd);
+    }
+  };
+  wing(34, 8, up - 3, hideD, bone);
+  // tail, body, long neck and a cruel beaked head
+  for (let i = 0; i < 14; i++) setp(g, 2 + i, by + 7 - Math.round(Math.sin(i / 3 + f) * 1.5), hideD), setp(g, 2 + i, by + 8 - Math.round(Math.sin(i / 3 + f) * 1.5), hide);
+  rectp(g, 14, by + 1, 36, by + 7, hide); rectp(g, 16, by + 8, 34, by + 8, hideD);
+  for (let i = 0; i < 12; i++) rectp(g, 35 + i, by + 2 - i, 37 + i, by + 3 - i, i % 3 ? hide : hideD);
+  rectp(g, 46, by - 13, 52, by - 9, hide); rectp(g, 53, by - 11, 56, by - 10, '#6a6458'); setp(g, 50, by - 12, '#ff3b2f'); setp(g, 47, by - 14, bone); setp(g, 45, by - 15, bone);
+  for (const x of [20, 30]) { rectp(g, x, by + 9, x, by + 11, hideD); setp(g, x + 1, by + 12, bone); setp(g, x - 1, by + 12, bone); }
+  paste(g, upper(ids[0], 0), 15, by - (BY + 6) + 2);
+  wing(32, 4, up, mem, bone);
+  return g;
+}
 function eagleGrid(ids, f) {
+  if (ids.includes('nazgul')) return fellGrid(ids, f);
   const fell = ids.includes('nazgul'), W2 = 50, by = BY + 10, g = blank(W2, by + 14);
   const [b0, b1, hd, bk] = fell ? ['#2c2832', '#18151c', '#3a3540', '#8a8478'] : ['#7a5430', '#4e3418', '#d0a252', '#f0c040'];
   // a wing from the shoulder (rx, by) back to its tip; dy is the tip's height: up, level, down, level
@@ -354,10 +475,17 @@ function icon(ids, color, t, f = 0, mode = 'walk', flip = false) {
   const key = (grp ? grp.name : '') + '|' + [...S].sort().join(',') + '|' + color + '|' + mode + (flip ? '|w' : '');
   if (ICACHE[key + f]) return ICACHE[key + f];
   if (mode !== 'walk' && mode !== 'under') return ICACHE[key + f] = mounted(ids, S, grp, color, f, mode, flip, key);
-  const cv = document.createElement('canvas'), g = cv.getContext('2d'), s = 3, fw = FIGW * s, fh = FIGH * s;
+  const cv = document.createElement('canvas'), g = cv.getContext('2d'), s = 3, fw = FIGW * s;
   const show = grp && grp.show ? grp.show : grp && grp.order ? grp.order.filter(i => S.has(i)).concat([...S].filter(i => !grp.order.includes(i))) : [...S];
+  const hOf = id => (figGrid(id, 0).length + 2) * s, fh = Math.max(...show.map(hOf));
+  if (show.length === 1 && C[show[0]].special === 'eye') {
+    const gh = hOf('sauron'); cv.width = fw + 30; cv.height = gh + 20;
+    const rg = g.createRadialGradient(cv.width / 2, 30, 4, cv.width / 2, 30, cv.width * 0.6); rg.addColorStop(0, 'rgba(255,120,30,0.75)'); rg.addColorStop(1, 'rgba(255,60,10,0)');
+    g.fillStyle = rg; g.fillRect(0, 0, cv.width, cv.height); drawFigure(g, 'sauron', 15, 8, s, f);
+    return ICACHE[key + f] = { canvas: cv, name: 'The Eye of Sauron', key };
+  }
   const two = show.length > 5, back = two ? show.slice(0, Math.floor(show.length / 2)) : [], front = two ? show.slice(back.length) : show;
-  const step = Math.round(fw * (show.length === 1 ? 1 : 0.56)), rowW = n => fw + (n - 1) * step;
+  const step = Math.round(fw * (show.length === 1 ? 1 : show.includes('treebeard') ? 0.75 : 0.56)), rowW = n => fw + (n - 1) * step + (show.includes('treebeard') ? 12 : 0);
   const lift = two ? Math.round(fh * 0.2) : 0, width = Math.max(rowW(front.length), rowW(back.length) + step / 2);
   const padX = show.length === 1 ? 10 : 22, baseH = show.length === 1 ? 22 : 30;
   cv.width = width + padX * 2; cv.height = fh + lift + baseH / 2 + 6;
@@ -375,8 +503,8 @@ function icon(ids, color, t, f = 0, mode = 'walk', flip = false) {
     g.fillStyle = 'rgba(255,255,255,0.25)'; g.beginPath(); g.ellipse(cx, by - ry * 0.35, rx * 0.7, ry * 0.3, 0, 0, 7); g.fill();
   }
   const x0 = (cv.width - rowW(back.length)) / 2, x1 = (cv.width - rowW(front.length)) / 2, foot = by + ry * (two ? 0.35 : 0.15);
-  back.forEach((id, k) => drawFigure(g, id, x0 + k * step, foot - fh - lift, s, (f + k * 2 + 1) % 4));
-  front.forEach((id, k) => drawFigure(g, id, x1 + k * step, foot - fh, s, (f + k * 2) % 4));
+  back.forEach((id, k) => drawFigure(g, id, x0 + k * step, foot - hOf(id) - lift, s, (f + k * 2 + 1) % 4));
+  front.forEach((id, k) => drawFigure(g, id, x1 + k * step, foot - hOf(id), s, (f + k * 2) % 4));
   if (ring) {
     g.lineWidth = 9; g.strokeStyle = OUT; g.beginPath(); g.ellipse(cx, by, rx - 4, ry, 0, 0, Math.PI); g.stroke();
     g.lineWidth = 6; g.strokeStyle = '#d9a83a'; g.stroke();
@@ -414,11 +542,159 @@ function mounted(ids, S, grp, color, f, mode, flip, key) {
   const name = grp ? grp.name : show.length === 1 ? C[show[0]].name : listNames(show);
   return { canvas: cv, name, key };
 }
+/* ---- battles: two small armies under their banners, and the clash between them ---- */
+const KIND = {
+  rohan:     { skin: '#e8b892', helm: '#c9a03c', body: '#3f6a3a', legs: '#5a4a30', shield: '#2a5a2a', mark: '#f0f0ea', arm: 'spear' },
+  gondor:    { skin: '#e8b892', helm: '#d6dae2', body: '#1e1e24', mark: '#f0f0ea', legs: '#2a2a30', shield: '#1e1e24', arm: 'spear' },
+  dunedain:  { skin: '#e0b088', helm: '#3a4a3a', body: '#3a4a3a', legs: '#2a2a24', arm: 'sword' },
+  uruk:      { skin: '#4e4234', helm: '#2a2a30', body: '#2e2a28', legs: '#2a2020', shield: '#16161a', mark: '#f0f0ea', arm: 'sword', eye: '#e8a838' },
+  orc:       { skin: '#6a6e4a', helm: '#4a3a2a', body: '#4a3a2e', legs: '#3a2e24', shield: '#3a1a14', mark: '#e03a1a', arm: 'scimitar', eye: '#e8c040' },
+  dunland:   { skin: '#e0b48c', helm: '#6a4a2a', body: '#7a5a3a', legs: '#5a4a30', arm: 'axe' },
+  harad:     { skin: '#8a5a3a', helm: '#c9a03c', body: '#a02828', legs: '#6a1a1a', shield: '#c9a03c', mark: '#16110d', arm: 'spear' },
+  easterling:{ skin: '#d8a878', helm: '#5a1a1a', body: '#7a2020', legs: '#2a1a1a', arm: 'axe' },
+  corsair:   { skin: '#c8946a', helm: '#a02828', body: '#1e2a44', legs: '#2a2a30', arm: 'scimitar' },
+  dead:      { skin: '#d8f0e4', helm: '#a8c8b8', body: '#b8d8c8', legs: '#98b8a8', arm: 'spear', ghost: 1 },
+  dwarf:     { skin: '#e8b892', helm: '#9aa0a8', body: '#5a6a7a', legs: '#3a3a40', beard: '#8a5a30', arm: 'axe', short: 1 },
+  dale:      { skin: '#e8b892', helm: '#9aa0a8', body: '#2f4f86', legs: '#3a3a40', shield: '#2f4f86', mark: '#e6c04e', arm: 'spear' },
+  elf:       { skin: '#f6dcc4', helm: '#f0d070', body: '#4a7a3a', legs: '#6a5a3a', arm: 'bow' },
+  goblin:    { skin: '#7a8a5a', helm: '#3a3a2e', body: '#3a3a2e', legs: '#2a2a20', arm: 'scimitar', short: 1, eye: '#e8c040' },
+  hobbit:    { skin: '#f0c4a0', helm: '#6a4a2a', body: '#4f6b3a', legs: '#6a5a3a', arm: 'fork', short: 1 },
+  ruffian:   { skin: '#d8a880', helm: '#4a3a2a', body: '#6a6a5a', legs: '#4a4a40', arm: 'club' },
+};
+// one foot soldier facing right, 8×12 (short folk 8×10)
+function soldier(k, f, lunge) {
+  const K = KIND[k], g = blank(9, 12), top = K.short ? 2 : 0, a = (f % 2) ? 1 : 0;
+  const al = K.ghost ? 'cc' : '';
+  const c = v => v && K.ghost ? v + al : v;
+  rectp(g, 2, top, 5, top + 1, c(K.helm)); rectp(g, 2, top + 2, 5, top + 3, c(K.skin)); setp(g, 5, top + 2, c(K.eye || '#16110d'));
+  if (K.beard) rectp(g, 3, top + 3, 6, top + 5, K.beard);
+  rectp(g, 2, top + 4, 5, 8, c(K.body)); if (K.mark && !K.shield) setp(g, 4, 6, K.mark);
+  rectp(g, 2, 9, 3, 11 - (a ? 0 : 1), c(K.legs)); rectp(g, 4, 9, 5, 11 - a, c(shade(K.legs, 0.8)));
+  if (K.shield) { rectp(g, 0, top + 4, 2, 8, c(K.shield)); setp(g, 1, 6, K.mark); }
+  const r = lunge && a ? 1 : 0, hx = 6 + r;
+  setp(g, hx, 6 - a, c(K.skin));
+  if (K.arm === 'spear' || K.arm === 'fork') { for (let y = 0; y <= 10; y++) setp(g, hx + 1, y - a, '#8a6a44'); setp(g, hx + 1, -a, '#d6dae2'); if (K.arm === 'fork') { setp(g, hx, 0, '#8a8a90'); setp(g, hx + 2, 0, '#8a8a90'); } }
+  if (K.arm === 'sword' || K.arm === 'scimitar') { for (let i = 0; i < 4; i++) setp(g, hx + 1 + (K.arm === 'scimitar' && i > 2 ? 1 : 0), 5 - a - i, '#d6dae2'); setp(g, hx, 6 - a, '#c9a03c'); }
+  if (K.arm === 'axe') { for (let y = 2; y <= 7; y++) setp(g, hx + 1, y - a, '#6b4a2a'); rectp(g, hx + 2, 2 - a, hx + 2, 4 - a, '#c8ccd4'); }
+  if (K.arm === 'club') { for (let y = 3; y <= 7; y++) setp(g, hx + 1, y - a, '#6b4a2a'); rectp(g, hx + 1, 2 - a, hx + 2, 3 - a, '#5a3a22'); }
+  if (K.arm === 'bow') { for (let y = 2; y <= 9; y++) setp(g, hx + (y < 4 || y > 7 ? 0 : 1), y, '#8a6234'); }
+  return g;
+}
+// the great beasts and the tree-folk
+function beast(k, f) {
+  const a = f % 2;
+  if (k === 'mumak') {
+    const g = blank(24, 19), gr = '#8a8a8e', gd = '#626266';
+    rectp(g, 6, 0, 14, 5, '#a02828'); rectp(g, 6, 0, 14, 0, '#c9a03c'); for (const x of [7, 10, 13]) setp(g, x, 2, '#16110d');
+    rectp(g, 2, 6, 18, 14, gr); rectp(g, 4, 5, 15, 5, gr); rectp(g, 16, 4, 21, 11, gr); rectp(g, 15, 5, 17, 10, gd);
+    for (let y = 11; y <= 16; y++) setp(g, 21 + (y > 14 ? 1 : 0) - (a && y > 13 ? 1 : 0), y, gr); rectp(g, 20, 10, 23, 10, '#f0ece0'); setp(g, 23, 9, '#f0ece0'); setp(g, 19, 6, '#16110d');
+    for (const [x, ph] of [[3, 0], [6, 1], [13, 1], [16, 0]]) rectp(g, x, 15, x + 1, 18 - (ph === a ? 1 : 0), gd);
+    setp(g, 1, 7, gd); setp(g, 0, 8, gd);
+    return g;
+  }
+  if (k === 'troll') {
+    const g = blank(12, 17), sk = '#6a7a6a', sd = '#4a5a4a';
+    rectp(g, 4, 0, 7, 3, sk); setp(g, 7, 1, '#e8c040'); rectp(g, 2, 4, 9, 11, sk); rectp(g, 8, 4, 9, 11, sd); rectp(g, 3, 9, 8, 10, '#4a3a2a');
+    rectp(g, 3, 12, 4, 16 - a, sd); rectp(g, 7, 12, 8, 16 - (1 - a), sd); rectp(g, 10, 3 + a, 11, 9 + a, '#5a4a3a'); rectp(g, 9, 1 + a, 11, 3 + a, '#3a3a40');
+    return g;
+  }
+  if (k === 'ent' || k === 'huorn') {
+    const g = blank(11, 19), ent = k === 'ent', b0 = ent ? '#6a4a2e' : '#24301c', b1 = ent ? '#4a321e' : '#141c10', lf = ent ? '#5a8a3a' : '#2a4020';
+    for (let y = 0; y <= 5; y++) rectp(g, 3 - (y > 1 ? 2 : 0) + ((y + a) % 2), y, 8 + (y > 1 ? 2 : 0) - ((y + a) % 2), y, (y + a) % 3 ? lf : shade(lf, 0.75));
+    rectp(g, 3, 5, 7, 16, b0); for (let y = 6; y <= 16; y += 3) setp(g, 5, y, b1);
+    if (ent) { setp(g, 4, 7, '#a8c860'); setp(g, 6, 7, '#a8c860'); rectp(g, 4, 9, 6, 12, '#8a9a6a'); }
+    for (let y = 8; y <= 12; y++) { setp(g, 2 - (y > 10 ? 1 : 0), y + a - 1, b1); setp(g, 8 + (y > 10 ? 1 : 0), y - a, b1); }
+    rectp(g, 2, 17, 4, 18 - a, b1); rectp(g, 6, 17, 8, 18 - (1 - a), b1);
+    return g;
+  }
+  if (k === 'eagle' || k === 'nazgul') {
+    const g = blank(18, 10), ea = k === 'eagle', b0 = ea ? '#7a5430' : '#2c2832', b1 = ea ? '#4e3418' : '#18151c', hd = ea ? '#d0a252' : '#3a3540';
+    rectp(g, 4, 4, 12, 6, b0); rectp(g, 12, 3, 15, 5, hd); setp(g, 16, 4, ea ? '#f0c040' : '#6a6458'); setp(g, 14, 3, ea ? '#16110d' : '#ff3b2f'); rectp(g, 1, 5, 4, 6, b1);
+    if (!ea) { rectp(g, 7, 2, 9, 4, '#1b1a20'); setp(g, 8, 1, '#1b1a20'); }
+    const wy = a ? 0 : 8; for (let x = 4; x <= 11; x++) { const y = Math.round(4 + (wy - 4) * (11 - x) / 7 * (a ? 1 : 0.9)); rectp(g, x, Math.min(y, 4), x, Math.max(y, 4), b1); }
+    return g;
+  }
+  if (k === 'warg') {
+    const g = blank(14, 9), w0 = '#4a4a52', w1 = '#2a2a30';
+    rectp(g, 2, 2, 10, 5, w0); rectp(g, 10, 1, 13, 4, w0); setp(g, 11, 0, w1); setp(g, 12, 2, '#e8c040'); setp(g, 13, 4, '#f0ece0'); rectp(g, 0, 1, 2, 2, w1);
+    for (const [x, ph] of [[3, 0], [5, 1], [8, 1], [10, 0]]) rectp(g, x + (ph === a ? 1 : 0), 6, x + (ph === a ? 1 : 0), 8, w1);
+    return g;
+  }
+  if (k === 'beorn') {
+    const g = blank(16, 12), b0 = '#5a3a20', b1 = '#3a2410';
+    rectp(g, 1, 3, 11, 8, b0); rectp(g, 3, 1, 9, 2, b0); rectp(g, 11, 1, 15, 6, b0); setp(g, 12, 0, b1); setp(g, 14, 0, b1); setp(g, 14, 2, '#16110d'); setp(g, 15, 4, b1);
+    for (const [x, ph] of [[2, 0], [4, 1], [9, 1], [11, 0]]) rectp(g, x, 9, x + 1, 11 - (ph === a ? 1 : 0), b1);
+    return g;
+  }
+  if (k === 'rider') {
+    const g = blank(16, 15), h0 = '#8a5a30', h1 = '#5a3a1a';
+    rectp(g, 2, 7, 11, 10, h0); rectp(g, 11, 4, 13, 8, h0); rectp(g, 13, 3, 15, 5, h0); setp(g, 0, 8, h1); setp(g, 1, 7, h1); setp(g, 1, 9, h1);
+    for (const [x, ph] of [[3, 0], [5, 1], [9, 1], [11, 0]]) rectp(g, x + (ph === a ? 1 : 0), 11, x + (ph === a ? 1 : 0), 14 - (ph === a ? 1 : 0), h1);
+    rectp(g, 5, 0, 7, 1, '#c9a03c'); rectp(g, 5, 2, 7, 3, '#e8b892'); setp(g, 7, 2, '#16110d'); rectp(g, 5, 4, 7, 7, '#3f6a3a'); setp(g, 6, 8, '#5a4a30');
+    for (let y = 0; y <= 7; y++) setp(g, 9 + (a ? 1 : 0), y - 1 + Math.round(y / 3), '#8a6a44'); setp(g, 9 + (a ? 1 : 0), -1, '#d6dae2');
+    return g;
+  }
+  return soldier(k, f, true);
+}
+const BANNER = {
+  rohan: ['#2a5a2a', '#f0f0ea', 'horse'], gondor: ['#141418', '#f0f0ea', 'tree'], mordor: ['#141418', '#e03a1a', 'eye'], isengard: ['#141418', '#f0f0ea', 'hand'],
+  dead: ['#4a5a54', '#c8e8d8', 'star'], umbar: ['#1e2a44', '#a02828', 'star'], erebor: ['#2f4f86', '#e6c04e', 'star'], ents: ['#3e6a2a', '#a8c860', 'leaf'],
+  goblins: ['#2a1a14', '#e03a1a', 'eye'], shire: ['#4f6b3a', '#e6c04e', 'leaf'], ruffians: ['#5a5a50', '#2a2a24', 'star'],
+};
+function banner(g, kind, x, y, s, f, flip) {
+  const [bg, fg] = BANNER[kind] || ['#333', '#ccc'];
+  g.fillStyle = OUT; g.fillRect(x - 1, y - 1, s + 2, 30 * s / 2 + 2); g.fillStyle = '#8a6a44'; g.fillRect(x, y, s, 30 * s / 2);
+  const fx = flip ? x - 12 * s : x + s, wave = f % 2 ? s : 0;
+  g.fillStyle = OUT; g.fillRect(fx - 1, y - 1, 12 * s + 2, 9 * s + 2 + wave);
+  g.fillStyle = bg; g.fillRect(fx, y, 12 * s, 9 * s + wave); g.fillStyle = fg;
+  const cx = fx + 6 * s, cy = y + 4.5 * s;
+  if ((BANNER[kind] || [])[2] === 'eye') { g.fillRect(cx - 3 * s, cy - s, 6 * s, 2 * s); g.fillStyle = '#16110d'; g.fillRect(cx - 0.5 * s, cy - s, s, 2 * s); }
+  else if ((BANNER[kind] || [])[2] === 'tree') { g.fillRect(cx - 0.5 * s, cy - 2 * s, s, 5 * s); g.fillRect(cx - 2.5 * s, cy - 2 * s, 5 * s, s); g.fillRect(cx - 1.5 * s, cy - 3 * s, 3 * s, s); }
+  else if ((BANNER[kind] || [])[2] === 'hand') { g.fillRect(cx - 2 * s, cy - s, 4 * s, 3 * s); for (let k = 0; k < 4; k++) g.fillRect(cx - 2 * s + k * s, cy - 3 * s, s * 0.8, 2 * s); }
+  else if ((BANNER[kind] || [])[2] === 'horse') { g.fillRect(cx - 3 * s, cy, 4 * s, 2 * s); g.fillRect(cx, cy - 2 * s, 2 * s, 3 * s); g.fillRect(cx + 2 * s, cy - 2 * s, s, s); g.fillRect(cx - 3 * s, cy + 2 * s, s, s); g.fillRect(cx, cy + 2 * s, s, s); }
+  else { g.fillRect(cx - s, cy - 2 * s, 2 * s, 4 * s); g.fillRect(cx - 2 * s, cy - s, 4 * s, 2 * s); }
+}
+const BCACHE2 = {};
+function battle(b, f) {
+  const key = b.name + f; if (BCACHE2[key]) return BCACHE2[key];
+  const s = 2, half = 150, W2 = half * 2 + 20, H2 = 120, cv = document.createElement('canvas'), g = cv.getContext('2d');
+  cv.width = W2; cv.height = H2; const mid = W2 / 2, ground = H2 - 14;
+  // dust of the field
+  g.fillStyle = 'rgba(70,52,30,0.35)'; g.beginPath(); g.ellipse(mid, ground - 6, half + 4, 16, 0, 0, 7); g.fill();
+  b.sides.forEach((side, si) => {
+    const dir = si === 0 ? 1 : -1, list = [];
+    for (const [k, n] of side.units) for (let i = 0; i < n; i++) list.push(k);
+    const big = list.filter(k => ['mumak', 'troll', 'ent', 'huorn', 'beorn'].includes(k)), fly = list.filter(k => k === 'eagle' || k === 'nazgul'), foot = list.filter(k => !big.includes(k) && !fly.includes(k));
+    const place = [];
+    // foot and riders in ranks, front rank nearest the clash
+    foot.forEach((k, i) => { const col = Math.floor(i / 3), row = i % 3; place.push([k, mid - dir * (18 + col * 15 + (row % 2) * 7), ground - 30 + row * 9, i < 3]); });
+    const footBack = foot.length ? 18 + Math.floor((foot.length - 1) / 3) * 15 + 7 : 0;
+    big.forEach((k, i) => place.push([k, mid - dir * ((foot.length ? footBack + 10 : 24) + i * (foot.length ? 22 : 17)), ground - 12 + (foot.length ? 0 : (i % 2) * 6), !foot.length && i === 0]));
+    place.sort((p, q) => p[2] - q[2]);
+    const reach = Math.max(30, ...place.map(p => Math.abs(p[1] - mid)));
+    banner(g, side.banner, Math.max(8, Math.min(W2 - 8, mid - dir * (reach + 16))), 22, s, f + si, dir < 0);
+    for (const [k, x, y, front] of place) {
+      const gr = ['mumak', 'troll', 'ent', 'huorn', 'beorn', 'rider', 'warg'].includes(k) ? beast(k, f + (x | 0) % 2) : soldier(k, f + (x | 0) % 2, front);
+      const w = (gr[0].length + 2) * s, h = (gr.length + 2) * s, bob = front && f % 2 ? dir * 2 : 0;
+      g.save(); if (dir < 0) { g.translate(x + w / 2 + bob, 0); g.scale(-1, 1); g.translate(-w / 2, 0); } else g.translate(x - w / 2 + bob, 0);
+      drawGrid(g, gr, 0, y - h + (gr.length > 14 ? 10 : 0), s); g.restore();
+    }
+    fly.forEach((k, i) => { const gr = beast(k, f + i); const w = (gr[0].length + 2) * s; g.save(); const x = mid - dir * (26 + i * 30), y = 6 + (i % 2) * 12 + (f % 2) * 2;
+      if (dir < 0) { g.translate(x + w / 2, 0); g.scale(-1, 1); g.translate(-w / 2, 0); } else g.translate(x - w / 2, 0); drawGrid(g, gr, 0, y, s); g.restore(); });
+  });
+  // the clash: sparks along the line, changing each frame
+  for (let i = 0; i < 3; i++) {
+    const y = ground - 40 + i * 12 + ((f + i) % 2) * 3, x = mid + ((f * 7 + i * 5) % 9) - 4, r = (f + i) % 2 ? 7 : 4;
+    g.fillStyle = '#fff6c8'; g.beginPath(); for (let k = 0; k < 8; k++) { const ang = k * Math.PI / 4 + f, q = k % 2 ? r * 0.35 : r; g.lineTo(x + Math.cos(ang) * q, y + Math.sin(ang) * q); } g.fill();
+    g.fillStyle = '#ffb030'; g.beginPath(); g.arc(x, y, r * 0.3, 0, 7); g.fill();
+  }
+  return BCACHE2[key] = cv;
+}
 function listNames(ids) {
   const n = [...new Set(ids.map(i => C[i].name))];
   return n.length <= 2 ? n.join(' & ') : n.length <= 4 ? n.slice(0, -1).join(', ') + ' & ' + n[n.length - 1] : n.slice(0, 3).join(', ') + ` & ${n.length - 3} more`;
 }
 function dataURL(ids, color, t) { return icon(ids, color, t).canvas.toDataURL(); }
-return { C, B, JOURNEY, GROUPS, charsOf, icon, dataURL, drawHead, drawFigure };
+return { C, B, JOURNEY, GROUPS, charsOf, icon, dataURL, drawHead, drawFigure, battle };
 })();
 if (typeof self !== 'undefined') self.AVATARS = AVATARS;
