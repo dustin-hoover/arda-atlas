@@ -8,7 +8,8 @@
     "dev": "node build.js && node scripts/serve.js",
     "serve": "node scripts/serve.js",
     "check": "for f in src/*.js; do node --check $f || exit 1; done && echo syntax ok",
-    "audit": "node tools/sources/audit.js --md docs/SOURCES.md"
+    "audit": "node tools/sources/audit.js --md docs/SOURCES.md",
+    "worlds": "node worlds/validate.js got && node worlds/got/calendar.test.js"
   },
   "dependencies": {
     "maplibre-gl": "5.24.0",

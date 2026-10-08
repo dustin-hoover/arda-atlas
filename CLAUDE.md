@@ -3,6 +3,10 @@
 Procedural, Earth-like globe of Middle-earth. Plain JavaScript, no framework, no bundler: `build.js`
 concatenates `src/` into a single HTML page. Read README.md for the file map.
 
+**Arda is the first world of the Other Worldly Project.** Before starting a new world (next: A Song of Ice and Fire),
+read `docs/otherworldly/` in this order: LAWS.md (binding), PLAYBOOK.md, WORLD_SPEC.md (data contract and the repack
+plan), got/PLAN.md. Starter code lives in `worlds/` (`npm run worlds` validates packages and runs their tests).
+
 ## Commands
 - `npm run dev` — build and serve at http://localhost:8765/dist/preview.html
 - `npm run build` — rebuild `dist/` and `site/` after any change in `src/`

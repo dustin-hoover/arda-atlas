@@ -1,0 +1,8 @@
+{
+  "worlds": [
+    { "id": "arda", "title": "Arda", "subtitle": "The Hobbit and The Lord of the Rings", "status": "live", "url": "https://dustin-hoover.github.io/arda-atlas/", "package": "src/" },
+    { "id": "got", "title": "The Known World", "subtitle": "A Song of Ice and Fire", "status": "planned", "package": "worlds/got/", "plan": "docs/otherworldly/got/PLAN.md" },
+    { "id": "dcc", "title": "Dungeon Crawler Carl", "status": "announced" },
+    { "id": "hp", "title": "Harry Potter", "status": "announced" }
+  ]
+}
