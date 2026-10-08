@@ -49,6 +49,7 @@ const C = {
   dain:    { name: 'Dáin', skin: '#e8b48e', hair: ['#b04020', '#7a2a14'], style: 'none', beard: 'dwarf', beardC: ['#b04020', '#7a2a14'], hat: 'helm', brows: 1 },
   arkenstone: { name: 'The Arkenstone', special: 'gem' },
   nazgul:  { name: 'Nazgûl',    hood: 1 },
+  denethor: { name: 'Denethor', skin: '#ecc8ac', hair: ['#c8c8cc', '#9a9aa0'], style: 'short', beard: 'short', beardC: ['#c8c8cc', '#9a9aa0'], brows: 1 },
   faramir: { name: 'Faramir',   skin: '#efc4a0', hair: ['#2e2420', '#1a1412'], style: 'short' },
   eowyn:   { name: 'Éowyn',     skin: '#f6dcc4', hair: ['#f0d070', '#c8a848'], style: 'long' },
   saruman: { name: 'Saruman',   skin: '#e8c0a0', hair: ['#e8e8ec', '#9a9aa8'], style: 'long', beard: 'wizard', beardC: ['#ececf0', '#8a8a98'], brows: 1 },
@@ -241,6 +242,7 @@ const B = {
   galadriel:{ robe: '#f8f6ee', belt: '#e6c04e' },
   thorin:   { tunic: '#2f4f86', legs: '#3a3028', cloak: '#5a8ad8', boots: '#2a1f18', belt: '#c9a03c', gear: 'sword' },
   nazgul:   { robe: '#1b1a20', rags: 1, gear: 'sword' },
+  denethor: { robe: '#1e1e24', belt: '#c8ccd4' },
   faramir:  { tunic: '#4a5a3a', legs: '#3a3428', cloak: '#3f5a34', boots: '#2a1f18', gear: 'sword' },
   eowyn:    { tunic: '#3f6a3a', legs: '#5a4a30', cloak: '#2a4a2a', boots: '#3a2a1a', belt: '#c9a03c', gear: 'sword', mail: 1 },
   saruman:  { robe: '#d8d8e2', iris: 1, gear: 'staff', staff: '#2a2a30' },
@@ -1020,9 +1022,135 @@ function unitCanvas(kind, f, flip) {
   const g = cv.getContext('2d'); if (flip) { g.translate(cv.width, 0); g.scale(-1, 1); } drawGrid(g, gr, 0, 0, s);
   return UCACHE[key] = cv;
 }
+
+/* ---- the dead: a body lying where it fell under a death mark, and then its final rest ---- */
+const SKULL = ['.#####.', '#######', '#..#..#', '#######', '.##.##.', '.#.#.#.'];
+const pale = v => { if (!v) return v; const n = parseInt(v.slice(1, 7), 16), r = (n >> 16) & 255, g = (n >> 8) & 255, b = n & 255, m = (r + g + b) / 3;
+  const q = c => Math.round(c * 0.62 + m * 0.38).toString(16).padStart(2, '0'); return '#' + q(r) + q(g) + q(b); };
+function lying(g, special) {
+  if (special) return g.map(row => row.map(pale)).reverse();
+  const h = g.length, w = g[0].length, out = blank(h, w);
+  for (let y = 0; y < h; y++) for (let x = 0; x < w; x++) if (g[y][x]) out[w - 1 - x][y] = pale(g[y][x]);
+  return out;
+}
+function deathMark(g, cx, cy, r) {
+  g.fillStyle = 'rgba(10,6,6,0.88)'; g.beginPath(); g.arc(cx, cy, r, 0, 7); g.fill(); g.strokeStyle = '#c8b8a8'; g.lineWidth = 1.5; g.stroke();
+  const u = r * 0.22; g.fillStyle = '#f0ece0';
+  for (let y = 0; y < 6; y++) for (let x = 0; x < 7; x++) if (SKULL[y][x] === '#') g.fillRect(cx + (x - 3.5) * u, cy + (y - 3.2) * u, u, u);
+}
+function pool(g, cx, cy, rx, ry) { g.fillStyle = 'rgba(110,8,8,0.75)'; g.beginPath(); g.ellipse(cx, cy, rx, ry, 0, 0, 7); g.fill(); }
+const DCACHE = {};
+function corpse(id) {
+  if (DCACHE[id]) return DCACHE[id];
+  const sp = C[id] && C[id].special, gr = lying(figGrid(id, 0), sp), s = sp ? 2 : 3;
+  const w = (gr[0].length + 2) * s, h = (gr.length + 2) * s, cv = document.createElement('canvas'), g = cv.getContext('2d');
+  cv.width = w + 16; cv.height = h + 34;
+  if (id !== 'balrog' && id !== 'smaug') pool(g, cv.width / 2 + 4, cv.height - 9, w * 0.42, 6);
+  drawGrid(g, gr, 8, cv.height - h - 6, s); deathMark(g, cv.width / 2, 13, 11);
+  return DCACHE[id] = cv;
+}
+// final rest: a mound white with simbelmynë, a stone tomb, a grey funeral-boat on the falls, a pyre, ash, a dragon's
+// bones in the shallows, an empty black mantle and crown
+function restGrid(kind, f, who) {
+  if (kind === 'mound') {
+    const g = blank(34, 16);
+    for (let y = 2; y < 16; y++) { const hw = Math.round(15 * Math.sqrt(Math.max(0, 1 - Math.pow((15 - y) / 13, 2)))); for (let x = 17 - hw; x <= 16 + hw; x++) setp(g, x, y, (x * 3 + y) % 7 === 0 ? '#f4f4ea' : (x + y) % 5 === 0 ? '#3a6a2a' : '#4a7a36'); }
+    rectp(g, 16, 0, 17, 4, '#8a8a84'); setp(g, 16, 0, '#a8a8a0');
+    return g;
+  }
+  if (kind === 'tomb') {
+    const g = blank(26, 15), st = '#8a8a90', st2 = '#6a6a70';
+    rectp(g, 1, 5, 24, 14, st2); rectp(g, 2, 4, 23, 12, st); rectp(g, 0, 3, 25, 4, '#a8a8ae');
+    for (const x of [6, 12, 18]) { setp(g, x, 8, '#4a4a50'); setp(g, x + 1, 9, '#4a4a50'); setp(g, x, 10, '#4a4a50'); }
+    return g;
+  }
+  if (kind === 'boat') {
+    const g = blank(40, 20), b = f % 2;
+    for (let y = 13; y < 20; y++) for (let x = 0; x < 40; x++) setp(g, x, y, (x + y + f) % 4 ? '#5a8aaa' : '#9ac4e0');
+    for (let k = 0; k < 6; k++) setp(g, 30 + k + (f + k) % 2, 9 + (k * 3 + f) % 5, '#f4f8ff');                 // spray off the brink
+    rectp(g, 6, 11 + b, 30, 12 + b, '#b8b4a8'); rectp(g, 8, 13 + b, 28, 13 + b, '#8e897c'); rectp(g, 29, 8 + b, 31, 11 + b, '#b8b4a8'); setp(g, 32, 7 + b, '#c9a03c');
+    const body = lying(figGrid(who || 'boromir', 0)); paste(g, body.slice(0, 7).map(r => r.slice(0, 22)), 8, 4 + b);
+    rectp(g, 22, 8 + b, 25, 10 + b, '#6b2a2a'); setp(g, 23, 9 + b, '#d9d4c8'); rectp(g, 12, 9 + b, 17, 9 + b, '#e8e2d0');   // shield and the cloven horn
+    return g;
+  }
+  if (kind === 'pyre') {
+    const g = blank(26, 26);
+    for (let y = 20; y < 26; y++) for (let x = 3; x < 23; x++) setp(g, x, y, (x + y) % 3 ? '#6a4628' : '#4a2e18');
+    for (let i = 0; i < 9; i++) { const x = 4 + i * 2.2, h = 7 + ((i * 5 + f * 3) % 7); for (let k = 0; k < h; k++) setp(g, x + (k % 2) * (f % 2 ? 1 : -1), 20 - k, k < 3 ? '#ffd060' : k < 6 ? '#ff8a24' : '#c02010'); }
+    for (let k = 0; k < 6; k++) { const y = 8 - k * 1.4, x = 13 + Math.sin(k + f) * 2; rectp(g, x - 1, y - 1, x + 1, y, '#6a625a'); }
+    return g;
+  }
+  if (kind === 'ash') {
+    const g = blank(24, 9);
+    for (let y = 3; y < 9; y++) { const hw = Math.round(11 * Math.sqrt(Math.max(0, 1 - Math.pow((8 - y) / 6, 2)))); for (let x = 12 - hw; x <= 11 + hw; x++) setp(g, x, y, (x + y) % 4 ? '#5a5652' : '#3a3634'); }
+    setp(g, 8, 6, f % 2 ? '#ff7a2a' : '#c03a10'); setp(g, 15, 7, '#c03a10'); setp(g, 12, 2 - (f % 2), '#8a8a8a');
+    return g;
+  }
+  if (kind === 'bones') {
+    const g = blank(48, 16);
+    for (let y = 9; y < 16; y++) for (let x = 0; x < 48; x++) setp(g, x, y, (x + y) % 5 ? '#4a7a8a' : '#7aaab8');
+    for (let i = 0; i < 9; i++) { const x = 8 + i * 3.4, h = 6 - Math.abs(i - 4) * 0.5; for (let k = 0; k < h; k++) setp(g, x + (k > h / 2 ? 1 : 0), 10 - k, '#e8e2d0'); }
+    rectp(g, 6, 9, 40, 9, '#d8d2c0'); rectp(g, 40, 6, 45, 8, '#e8e2d0'); setp(g, 46, 7, '#e8e2d0'); setp(g, 42, 7, '#16110d');
+    for (let i = 0; i < 6; i++) setp(g, 1 + i, 10 + (i % 2), '#d8d2c0');
+    return g;
+  }
+  if (kind === 'mantle') {
+    const g = blank(24, 10), k = '#1b1a20', k2 = '#2b2a33';
+    for (let x = 1; x < 23; x++) for (let y = 4 + Math.round(Math.sin(x * 0.5) * 1.5); y < 10; y++) setp(g, x, y, (x + y) % 4 ? k : k2);
+    rectp(g, 15, 1, 20, 3, '#9a9aa0'); for (const x of [15, 17, 19]) setp(g, x, 0, '#c8c8d0'); setp(g, 4, 6, '#6b7078'); rectp(g, 5, 6, 11, 6, '#8a8e96');   // crown and broken sword
+    return g;
+  }
+  return null;
+}
+function rest(kind, f, who) {
+  const key = 'r' + kind + f + who; if (DCACHE[key]) return DCACHE[key];
+  const cv = document.createElement('canvas'), g = cv.getContext('2d');
+  if (kind === 'mark') { cv.width = 34; cv.height = 34; g.fillStyle = 'rgba(255,90,20,0.35)'; g.beginPath(); g.arc(17, 17, 16, 0, 7); g.fill(); deathMark(g, 17, 17, 12); return DCACHE[key] = cv; }
+  const gr = restGrid(kind, f, who); if (!gr) return null;
+  const s = 3, w = (gr[0].length + 2) * s, h = (gr.length + 2) * s; cv.width = w; cv.height = h + 24;
+  drawGrid(g, gr, 0, 24, s);
+  // a quiet sign of rest, not the death mark: a small pale star above
+  g.fillStyle = 'rgba(240,236,224,0.9)'; const cx = w / 2; g.beginPath(); for (let k = 0; k < 10; k++) { const a = -Math.PI / 2 + k * Math.PI / 5, r = k % 2 ? 3 : 8; g.lineTo(cx + Math.cos(a) * r, 12 + Math.sin(a) * r); } g.closePath(); g.fill();
+  return DCACHE[key] = cv;
+}
 /* ---- landmarks drawn on the map: Orodruin smoking (its fire follows the story) and Minas Tirith ---- */
 // Mount Doom, f = frame 0..3, heat 0 (dormant) .. 1 (the War) .. 2 (erupting as the Ring is unmade)
 function doomGrid(f, heat) {
+  if (heat >= 3) return doomRuinGrid(f, heat);
+  return doomWholeGrid(f, heat);
+}
+// the Mountain destroyed (our staging of LR VI.3: "the Mountain... burst asunder"): heat 3 the cone blows apart in fire
+// and flying rock; 4 a shattered stump, its rifts still glowing under a pall of smoke; 5 the broken, cooling ruin
+function doomRuinGrid(f, heat) {
+  const Wd = 46, Ht = 44, g = blank(Wd, Ht), cx = 23, ash = ['#4d3f36', '#3b302a', '#2a221e'];
+  if (heat === 3) {
+    // the fireball, rising and spreading
+    const R = 13 + f * 1.5;
+    for (let y = 0; y < 30; y++) for (let x = 0; x < Wd; x++) { const d = Math.hypot(x - cx, (y - 16) * 1.15); if (d < R) setp(g, x, y, d < R * 0.35 ? '#fff6c8' : d < R * 0.6 ? '#ffd060' : d < R * 0.82 ? '#ff8a24' : (x + y + f) % 3 ? '#c02010' : '#4a2a20'); }
+  } else {
+    // the pall of smoke over the ruin, thinning as it cools
+    const puffs = heat === 4 ? 8 : 3;
+    for (let k = 0; k < puffs; k++) { const age = (k + f / 4) / puffs, y = 20 - age * 18, x = cx - age * 12 + Math.sin(k * 2.1) * 3, r = 2.5 + age * (heat === 4 ? 6 : 3);
+      for (let yy = -r; yy <= r; yy++) for (let xx = -r * 1.3; xx <= r * 1.3; xx++) if ((xx / 1.3) ** 2 + yy * yy <= r * r) setp(g, x + xx, y + yy, heat === 4 && age < 0.3 ? '#5a2a18' : age < 0.5 ? '#4a423c' : '#6a625a'); }
+  }
+  // the shattered base: the cone gone, the shoulders split into a ragged crater
+  for (let y = 26; y < Ht; y++) {
+    const hw = 10.2 + (y - 29) * 0.85 + (y > 31 ? 1.5 : 0);
+    for (let x = Math.round(cx - hw); x <= Math.round(cx + hw); x++) {
+      const crater = y < 31 && Math.abs(x - cx) < 6 - (y - 26) * 0.6, jag = y < 28 && (x * 7 + y) % 4 === 0;
+      if (crater || jag) continue;
+      setp(g, x, y, x < cx - hw * 0.35 ? ash[0] : x > cx + hw * 0.4 ? ash[2] : ash[1]);
+    }
+  }
+  // the rifts and the crater's glow
+  const hot = f % 2 ? '#ffb040' : '#ff7a1c';
+  if (heat <= 4) { for (const [x0, dir] of [[cx - 3, -1], [cx + 3, 1], [cx, 0.3]]) { let x = x0; for (let y = 29; y < Ht - 1; y++) { x += dir * 0.45 + Math.sin(y + f) * 0.3; setp(g, x, y, (y + f) % 4 ? hot : '#ffd060'); } } rectp(g, cx - 4, 29, cx + 4, 30, heat === 3 ? '#fff0a0' : hot); }
+  else { rectp(g, cx - 3, 29, cx + 3, 30, '#7a2a14'); setp(g, cx - 1, 31, '#c03a10'); }
+  // flung rock in the burst
+  if (heat === 3) for (let k = 0; k < 14; k++) { const a = k / 14 * Math.PI + Math.PI, r = 8 + ((k * 5 + f * 4) % 14); setp(g, cx + Math.cos(a) * r * 1.4, 22 + Math.sin(a) * r * 0.9, k % 3 ? '#2a221e' : '#ff8a24'); }
+  return g;
+}
+function doomWholeGrid(f, heat) {
   const Wd = 46, Ht = 44, g = blank(Wd, Ht), cx = 23;
   const ash = ['#4d3f36', '#3b302a', '#2a221e'], hot = f % 2 ? '#ffb040' : '#ff7a1c';
   // the smoke: puffs rising from the crater and drifting away west, more and darker as the fire wakes
@@ -1045,6 +1173,50 @@ function doomGrid(f, heat) {
     for (const [dir, slope] of streams) { let x = cx + dir; for (let y = 16; y < Ht - 2; y++) { x += dir * slope * 0.5 + Math.sin(y * 0.9 + dir) * 0.4; setp(g, x, y, (y + f) % 5 === 0 ? '#ffd060' : y > 34 ? '#c03a10' : hot); } }
     // the Sammath Naur: a red mouth in the cone's eastern side
     rectp(g, cx + 5, 22, cx + 6, 23, f % 2 ? '#ff9a30' : '#e05010');
+    // in the eruption the Nazgûl, flying to the Mountain, are caught in the fire and fall burning (LR VI.3)
+    if (heat > 1.5) for (let k = 0; k < 3; k++) { const x = cx + 9 + k * 4 - f, y = 6 + k * 3 + f * 2; rectp(g, x - 2, y, x + 2, y, '#1b1a20'); setp(g, x - 3, y - 1, '#1b1a20'); setp(g, x + 3, y - 1, '#1b1a20'); setp(g, x, y - 1, (f + k) % 2 ? '#ffb040' : '#ff5a14'); setp(g, x + 1, y - 2, '#ff8a24'); }
+  }
+  return g;
+}
+
+// The fall of Barad-dûr as the Ring is unmade (LR VI.3-4, our staging): st 1 the Eye blazes in the tower's crown;
+// 2 the towers crumble in fire and dust; 3 a vast shadow rises from the ruin, crowned, reaching out a threatening hand;
+// 4 a great wind takes it and it is blown away eastward; 5 a smoking ruin; 6 the cold ruin
+function baradGrid(f, st) {
+  const Wd = 64, Ht = 92, g = blank(Wd, Ht), cx = 32, k = '#16131a', k2 = '#221d24', iron = '#2c2522';
+  const tower = (fall) => {
+    // tiers of black stone, the upper ones displaced and tumbling as the tower falls
+    const tiers = [[28, 82, 91], [22, 68, 82], [17, 54, 68], [11, 36, 54], [8, 26, 36]];
+    tiers.forEach(([hw, y0, y1], i) => { const drop = fall ? Math.max(0, (i - 1)) * fall : 0, sh = fall ? Math.round((i % 2 ? 1 : -1) * fall * i * 0.6) : 0;
+      if (fall && i >= 3 && fall > 5) return;
+      for (let y = y0 + drop; y <= Math.min(Ht - 1, y1 + drop); y++) for (let x = cx - hw + sh; x <= cx + hw + sh; x++) setp(g, x, y, (x + y) % 7 ? (x > cx + sh ? k : k2) : iron); });
+    if (!fall) for (const s of [-1, 1]) for (let y = 12; y <= 26; y++) setp(g, cx + s * (4 + (26 - y) * 0.3), y, iron);    // the horns of the crown
+  };
+  const dust = (n, top) => { for (let i = 0; i < n; i++) { const x = cx + Math.sin(i * 2.3 + f) * 26, y = top + ((i * 13 + f * 3) % (Ht - top)), r = 2 + (i % 4); for (let yy = -r; yy <= r; yy++) for (let xx = -r; xx <= r; xx++) if (xx * xx + yy * yy <= r * r) setp(g, x + xx, y + yy, i % 3 ? '#5a524a' : '#7a6e60'); } };
+  const rubble = (hot) => { for (let y = 70; y < Ht; y++) { const hw = (y - 70) * 1.5; for (let x = Math.round(cx - hw); x <= Math.round(cx + hw); x++) setp(g, x, y, hot && (x * 3 + y + f) % 9 === 0 ? (f % 2 ? '#ff8a24' : '#c03a10') : (x + y) % 3 ? k2 : '#3a3238'); } };
+  if (st === 1) {
+    tower(0);
+    const r = 10 + (f % 2) * 2;      // the Eye blazing white-hot, a ring of fire, lightning
+    for (let y = 0; y < 30; y++) for (let x = 0; x < Wd; x++) { const d = Math.hypot(x - cx, (y - 14) * 1.3); if (d < r) setp(g, x, y, d < 3 ? '#ffffff' : d < 6 ? '#fff0a0' : d < 8 ? '#ffb040' : '#ff5a14'); }
+    for (let i = 0; i < 4; i++) { let x = cx + (i % 2 ? 12 : -12), y = 6; for (let s = 0; s < 10; s++) { x += ((s + i + f) % 3) - 1; y += 2; setp(g, x, y, '#fff6c8'); } }
+  } else if (st === 2) {
+    tower(2 + f * 2); dust(20, 20);
+    for (let i = 0; i < 10; i++) setp(g, cx + Math.sin(i * 1.7) * 20, 40 + ((i * 7 + f * 5) % 40), i % 2 ? '#ff8a24' : '#ffd060');
+  } else if (st === 3 || st === 4) {
+    rubble(true); dust(st === 3 ? 10 : 4, 50);
+    // the shadow: a crowned shape vast as the sky, dithered so the world shows through; in st 4 it is torn eastward
+    const torn = st === 4 ? 1 : 0;
+    for (let y = 2; y < 74; y++) for (let x = 0; x < Wd; x++) {
+      const head = Math.hypot(x - cx, y - 12) < 7, body = y > 18 && Math.abs(x - cx) < 6 + (y - 18) * 0.42, arm = y > 22 && y < 30 && x < cx && x > cx - 30 + (y - 22) * 0.5 - (y > 26 ? 2 : 0);
+      const crown = y > 2 && y < 7 && Math.abs(x - cx) < 7 && (x + 1) % 3 === 0;
+      if (!(head || body || arm || crown)) continue;
+      const keep = torn ? (x + y * 3 + f * 5) % 5 === 0 && x > cx - 12 : (x + y) % 2 === 0;
+      if (keep) setp(g, x + (torn ? Math.round((y % 7) * 1.5 + f * 2) : 0), y, (x + y) % 6 ? '#0c0a0e' : '#26202a');
+    }
+    if (!torn) { setp(g, cx - 3, 12, '#ff3b2f'); setp(g, cx + 3, 12, '#ff3b2f'); }
+    if (torn) for (let i = 0; i < 12; i++) { const y = 8 + i * 5, x0 = cx + 6 + (i * 3 + f * 4) % 20; for (let x = x0; x < Math.min(Wd, x0 + 10); x += 2) setp(g, x, y, '#2a242c'); }
+  } else if (st >= 5) {
+    rubble(st === 5); if (st === 5) dust(6, 58);
   }
   return g;
 }
@@ -1119,10 +1291,10 @@ function orthancGrid(f, st) {
 }
 function landmark(kind, f, heat = 1) {
   const key = kind + f + ':' + heat; if (LCACHE[key]) return LCACHE[key];
-  const gr = kind === 'doom' ? doomGrid(f, heat) : kind === 'fireworks' ? fireworksGrid(f, heat) : kind === 'orthanc' ? orthancGrid(f, heat) : cityGrid(f), s = 3, cv = document.createElement('canvas');
+  const gr = kind === 'doom' ? doomGrid(f, heat) : kind === 'fireworks' ? fireworksGrid(f, heat) : kind === 'orthanc' ? orthancGrid(f, heat) : kind === 'barad' ? baradGrid(f, heat) : cityGrid(f), s = 3, cv = document.createElement('canvas');
   cv.width = (gr[0].length + 2) * s; cv.height = (gr.length + 2) * s; drawGrid(cv.getContext('2d'), gr, 0, 0, s);
   return LCACHE[key] = cv;
 }
-return { C, B, JOURNEY, GROUPS, charsOf, icon, dataURL, drawHead, drawFigure, battle, unitCanvas, landmark };
+return { C, B, JOURNEY, GROUPS, charsOf, icon, dataURL, drawHead, drawFigure, battle, unitCanvas, landmark, corpse, rest };
 })();
 if (typeof self !== 'undefined') self.AVATARS = AVATARS;

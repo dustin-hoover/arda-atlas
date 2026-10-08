@@ -870,6 +870,8 @@ function W3far(o) {
       m.position.set(dp.x, 0, dp.z); grp.add(m);
     }
     const fire = glow('rgba(255,210,110,1)', 'rgba(255,60,10,0)', 900); fire.position.set(dp.x, y0 + 160, dp.z); grp.add(fire);
+    // the burst: a blinding fireball where the cone was
+    const flash = glow('rgba(255,250,220,1)', 'rgba(255,90,20,0)', 9000); flash.position.set(dp.x, y0 + 900, dp.z); flash.visible = false; grp.add(flash);
     const naurP = rel(840.3, -552.6), naur = glow('rgba(255,170,80,1)', 'rgba(255,60,10,0)', 160);
     naur.position.set(naurP.x, hAt(840.3, -552.6) - drop(naurP.x, naurP.z) + 15, naurP.z); grp.add(naur);
     // rivers of fire down the cone and over the shoulders
@@ -894,7 +896,10 @@ function W3far(o) {
     // seen from afar the plume is drawn larger and kept dark, so the Mountain marks the east wherever you stand in Mordor
     const fogMix = Math.min(0.35, dd / 220000), boost = 1 + dd / 30000, cLow = new THREE.Color(), cHigh = new THREE.Color();
     ups.push((dt, t) => {
-      const heat = heatAt(), H = [1400, 5000, 12000][heat] * Math.pow(boost, 0.75), spread = [3000, 9000, 9000][heat], night = 1 - Math.min(1, G.hemi.intensity / 0.9);
+      // doomHeat: 1 burning, 2 erupting, 3 bursting apart, 4 the shattered ruin still burning, 5 the cold ruin
+      const hv = heatAt(), heat = hv >= 5 ? 0 : hv === 4 ? 1 : Math.min(hv, 2), burst = hv === 3;
+      flash.visible = burst; if (burst) { flash.scale.setScalar(9000 + 5000 * Math.sin(t * 9) ** 2); flash.material.opacity = 0.8; }
+      const H = [1400, 5000, 12000][heat] * (burst ? 1.6 : 1) * Math.pow(boost, 0.75), spread = [3000, 9000, 9000][heat], night = 1 - Math.min(1, G.hemi.intensity / 0.9);
       cHigh.set(0x4a443e).lerp(G.scene.fog.color, fogMix).multiplyScalar(0.35 + 0.65 * (1 - night));
       cLow.set(heat ? 0x8a3418 : 0x4a4440).lerp(cHigh, 0.35);
       const shown = [16, 44, 72][heat];

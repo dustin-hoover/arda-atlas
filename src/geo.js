@@ -819,7 +819,7 @@ const JOURNEYS = {
     { name:'Tom Bombadil', color:'#3a7ae0', with:[['Frodo & Sam','3018 9 26.4','3018 9 26.8'],['Frodo & Sam','3018 9 28.15','3018 9 28.5']], pts:[[105.8,-25.5,'3018 6 20'],[105.8,-25.5,'3018 9 26.3'],[105.8,-25.5,'3018 9 28.1'],[105.8,-25.5,'3018 9 28.9'],[105.8,-25.5,'3019 3 30']] },
     { name:'Goldberry', color:'#f6d860', pts:[[105.8,-25.5,'3018 6 20'],[105.8,-25.5,'3019 3 30']] },
     { name:'Galadriel', color:'#f6de88', pts:[[457.1,-254.8,'3018 6 20'],[457.1,-254.8,'3019 3 30']] },
-    { name:'Sauron', color:'#ff6a18', hide:true, pts:[[895.4,-532.8,'3018 6 20'],[895.4,-532.8,'3019 3 25.5']] },
+    { name:'Sauron', color:'#ff6a18', hide:true, pts:[[895.4,-532.8,'3018 6 20'],[895.4,-532.8,'3019 3 25.4']] },
     { name:'Saruman', color:'#e8e8f0', pts:[[334,-379.1,'3018 6 20'],[334,-379.1,'3019 3 30']] },
     { name:'Gríma Wormtongue', color:'#8a8a90', hide:true, pts:[[438,-479.4,'3018 6 20'],[438,-479.4,'3019 3 2.4'],[334,-379.1,'3019 3 4'],[334,-379.1,'3019 3 30']] },
     // the orc-bands before the capture (LR III.3; their roads are not told, so these are our inference, dates est.):
@@ -933,6 +933,29 @@ const MODES = [
 
 // Battles, drawn as two small armies while they are fought. at: [X, Y]; units: [kind, how many to draw] —
 // a picture of the armies' make-up, not a count. Strengths are given only where the text states them.
+// The dead (LR, H; dates as in the journeys, a few estimated). The body lies where it fell for `body` days under a
+// death mark, then passes to its final rest: each `rest` stage is { kind, at, from?, label } (mound, tomb, boat,
+// pyre, ash, bones, mantle). Stages follow one another; the last stays to the end of the tale.
+const DEATHS = [
+  { who:'deagol', at:[543,-180.7], t:'2463 5 1.6', how:'strangled by Sméagol for the Ring', body:1 },
+  { who:'balin', at:[412,-176], t:'2994 11 10', how:'slain by an orc-arrow in Dimrill Dale', body:0, rest:[{ kind:'tomb', label:'Balin\'s tomb in the Chamber of Mazarbul' }] },
+  { who:'greatgoblin', at:[493,7.2], t:'2941 7 6.4', how:'slain by Gandalf with Glamdring', body:1.5 },
+  { who:'smaug', at:[766.5,97.5], t:'2941 10 16.05', how:'shot by Bard\'s black arrow', body:1, rest:[{ kind:'bones', at:[767.6,97], label:'Smaug\'s bones in the shallows of the Long Lake' }] },
+  { who:'fili', at:[768.8,128.9], t:'2941 11 23.65', how:'falls defending Thorin', body:1.5, rest:[{ kind:'tomb', at:[768.4,137.4], label:'The tomb of Thorin, Fíli and Kíli, deep beneath the Mountain' }] },
+  { who:'kili', at:[769.3,128.6], t:'2941 11 23.65', how:'falls defending Thorin', body:1.5 },
+  { who:'bolg', at:[769.6,129.8], t:'2941 11 23.8', how:'crushed by Beorn', body:2 },
+  { who:'thorin', at:[768.6,129.2], t:'2941 11 23.95', how:'dies of his wounds after the battle, at peace with Bilbo', body:1.4 },
+  { who:'balrog', at:[423.1,-178], t:'3019 1 25.4', how:'cast down by Gandalf upon the mountain-side, breaking it in his ruin', body:3 },
+  { who:'boromir', at:[611.8,-462.2], t:'3019 2 26.5', how:'slain by the Uruk-hai defending Merry and Pippin', body:0.35, rest:[{ kind:'boat', at:[619.3,-475.7], label:'Boromir\'s funeral boat goes over Rauros' }, { kind:'none', from:'3019 2 28' }] },
+  { who:'grishnakh', at:[445,-378], t:'3019 2 29.1', how:'shot by a Rider of Rohan', body:0.4 },
+  { who:'ugluk', at:[440,-376.3], t:'3019 2 29.2', how:'slain by Éomer', body:0.4, rest:[{ kind:'pyre', label:'The Riders burn the orc-carcasses' }, { kind:'ash', from:'3019 3 3', label:'Ashes of the orcs\' pyre' }] },
+  { who:'nazgul', at:[731.9,-602], t:'3019 3 15.42', how:'the Witch-king, struck down by Éowyn and Merry', body:0, rest:[{ kind:'mantle', label:'The Witch-king\'s empty mantle and crown' }, { kind:'none', from:'3019 3 17' }] },
+  { who:'theoden', at:[731.5,-601.8], t:'3019 3 15.45', how:'crushed beneath Snowmane', body:1, rest:[{ kind:'tomb', at:[724.4,-599.3], label:'Théoden lies in state in the Hallows of Rath Dínen' }, { kind:'mound', at:[437.2,-479.7], from:'3019 8 10', label:'Théoden\'s mound below Edoras, white with simbelmynë' }] },
+  { who:'denethor', at:[724.2,-599.4], t:'3019 3 15.5', how:'burns himself on a pyre in the House of the Stewards', body:0, rest:[{ kind:'pyre', label:'Denethor\'s pyre in Rath Dínen' }, { kind:'ash', from:'3019 3 17', label:'The burned House of the Stewards' }] },
+  { who:'gollum', at:[840.3,-552.6], t:'3019 3 25.4', how:'falls into the Crack of Doom with the Ring', body:0, rest:[{ kind:'mark', label:'Gollum falls into the Fire with the Ring' }, { kind:'none', from:'3019 3 27' }] },
+  { who:'saruman', at:[0.4,0.5], t:'3019 11 3.6', how:'killed by Gríma at the door of Bag End', body:1 },
+  { who:'grima', at:[0.2,0.4], t:'3019 11 3.6', how:'shot by hobbit-archers', body:1 },
+];
 const BATTLES = [
   { name:'The Battle of the Fords of Isen', story:'war', at:[319.5,-410], from:'3019 2 25.4', to:'3019 2 25.9', src:'UT III.5; LR AppB',
     sides:[ { name:'Rohan', note:'Théodred\'s riders; Théodred falls', banner:'rohan', units:[['rider',3],['rohan',4]] },
@@ -987,7 +1010,7 @@ const LORE_WEATHER = [
   { name:'Fumes of Orodruin', x:840.1, y:-554, r:40, from:'3018 1 1', to:'3019 3 25', kind:'smoke' },
 ];
 
-return { MODES, BATTLES, COAST, ISLANDS, RANGES, HILLS, RELIEF, PEAKS, RIVERS, LAKES, FORESTS, MARSHES, ARID, FARMS, GRASS, ASH, UPLIFT, ICE, NUMENOR,
+return { MODES, BATTLES, DEATHS, COAST, ISLANDS, RANGES, HILLS, RELIEF, PEAKS, RIVERS, LAKES, FORESTS, MARSHES, ARID, FARMS, GRASS, ASH, UPLIFT, ICE, NUMENOR,
   PLACES, REGION_LABELS, SEA_LABELS, REALMS, ADMIN, PEOPLES, ROADS, WALLS, PALANTIRI, BEACONS, JOURNEYS, STORIES, LORE_WEATHER, FIREWORKS };
 })();
 if (typeof self !== 'undefined') self.GEO = GEO;

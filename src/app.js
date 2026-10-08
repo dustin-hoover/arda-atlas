@@ -230,7 +230,7 @@ const style = {
     src('roads', FC(roadFeats)), src('walls', FC(wallFeats)), src('palantiri', FC(palFeats)), src('beacons', FC([beaconLine])),
     src('realms', FC(realmFeats('TA3018'))), src('realm-labels', FC(realmLabels('TA3018'))), src('admin', FC(adminFeats)), src('admin-labels', FC(adminLabels)),
     src('peoples', FC(peopleFeats)), src('people-labels', FC(peopleLabels)), src('grid', GRID.lines), src('grid-labels', GRID.labels),
-    src('buildings', FC(buildingFeats())), src('journeys', FC([])), src('journey-pos', FC([])), src('battles', FC([])), src('landmarks', FC([])), src('measure', FC([])), src('isobars', FC([])), src('hl', FC([])), src('lights', FC([])),
+    src('buildings', FC(buildingFeats())), src('journeys', FC([])), src('journey-pos', FC([])), src('battles', FC([])), src('landmarks', FC([])), src('dead', FC([])), src('measure', FC([])), src('isobars', FC([])), src('hl', FC([])), src('lights', FC([])),
   ]),
   layers: [
     { id: 'bg', type: 'background', paint: { 'background-color': '#0b1a2a' } },
@@ -282,6 +282,8 @@ const style = {
     // battles while they are fought: two small armies and their clash (src/avatars.js)
     { id: 'battles-av', type: 'symbol', source: 'battles', layout: { 'icon-image': ['get', 'icon'], 'icon-size': ['interpolate', ['linear'], ['zoom'], 3, 0.8, 7, 1.3, 10, 1.8], 'icon-anchor': 'top', 'icon-offset': [0, 6], 'icon-allow-overlap': true, 'icon-ignore-placement': true, 'text-field': ['get', 'label'], 'text-font': TXT_UIB, 'text-size': 12.5, 'text-anchor': 'top', 'text-offset': ['interpolate', ['linear'], ['zoom'], 3, ['literal', [0, 3.6]], 7, ['literal', [0, 5.6]], 10, ['literal', [0, 7.6]]], 'text-allow-overlap': true, 'text-ignore-placement': true }, paint: { 'text-color': '#f3d89a', 'text-halo-color': 'rgba(0,0,0,0.9)', 'text-halo-width': 1.6 } },
     // pixel-art travellers (src/avatars.js), standing just above their position
+    { id: 'dead-av', type: 'symbol', source: 'dead', minzoom: 3.5, layout: { 'icon-image': ['get', 'icon'], 'icon-anchor': 'bottom', 'icon-size': ['interpolate', ['linear'], ['zoom'], 3.5, 0.7, 7, 1, 10, 1.3], 'icon-allow-overlap': true, 'icon-ignore-placement': true,
+      'text-field': ['get', 'label'], 'text-font': TXT_IT, 'text-size': 11.5, 'text-anchor': 'top', 'text-offset': [0, 0.3], 'text-optional': true, 'text-max-width': 12 }, paint: { 'text-color': '#f0e4d8', 'text-halo-color': 'rgba(20,10,6,0.9)', 'text-halo-width': 1.4 } },
     { id: 'journeys-av', type: 'symbol', source: 'journey-pos', filter: ['has', 'icon'], layout: { 'icon-image': ['get', 'icon'], 'icon-anchor': 'bottom', 'icon-offset': [0, -3], 'icon-size': ['interpolate', ['linear'], ['zoom'], 3, 0.8, 7, 1.05, 10, 1.3], 'icon-allow-overlap': true, 'icon-ignore-placement': true, 'symbol-sort-key': ['-', 0, ['get', 'n']] } },
     { id: 'journeys-pos-label', type: 'symbol', source: 'journey-pos', layout: { 'text-field': ['get', 'name'], 'text-font': TXT_UIB, 'text-size': 12.5, 'text-offset': ['case', ['has', 'icon'], ['literal', [0, 0.55]], ['literal', [0, -1.1]]], 'text-anchor': ['case', ['has', 'icon'], 'top', 'bottom'], 'text-allow-overlap': false, 'text-optional': true }, paint: { 'text-color': ['get', 'color'], 'text-halo-color': 'rgba(0,0,0,0.85)', 'text-halo-width': 1.5 } },
   ]),
@@ -496,14 +498,16 @@ const EVENTS = {
     ['3019 2 10', 'Orcs of Moria, the Northerners, set out down the vales of Anduin after the Fellowship (date est.)', 424.3, -189.6],
     ['3019 2 13', 'Uglúk\'s Uruk-hai run out of Isengard for the Anduin, sent by Saruman to take the halflings alive (date est.)', 334, -379.1],
     ['3019 2 18', 'Grishnákh\'s Orcs of Mordor leave the Black Gate for the River on the same errand, for the Eye (date est.)', 761.9, -477.6],
-    ['3019 2 26.4', 'The three orc-bands meet below Amon Hen (date est.)', 611.8, -462.2]],
-  war: [['3001 9 22.77', 'Gandalf\'s fireworks over the Party Field: rockets, fountains and starbursts, and last a dragon that roars over the hobbits', 0.6, 0.1], ['3001 9 22.9', 'The Long-expected Party: on his eleventy-first birthday Bilbo makes his speech, puts on the Ring and vanishes', 0.3, 0.5], ['3001 9 23', 'Bilbo leaves the Shire for Rivendell; Frodo inherits Bag End, and the Ring', 0.3, 0.5], ['3001 10 21', 'Bilbo comes to Rivendell (the day is not recorded)', 420.5, 17.5], ['3018 6 22', 'The Nine ride out of Minas Morgul at Midsummer', 773.6, -597.9], ['3018 7 4', 'Boromir sets out from Minas Tirith for Imladris', 725.1, -599.1], ['3018 6 27', 'Gandalf leaves Bag End, promising to return before Frodo sets out (late June)', 0.3, 0.5], ['3018 9 26', 'Tom Bombadil rescues the hobbits from Old Man Willow', 98, -20], ['3018 9 28', 'Tom Bombadil frees the hobbits from the Barrow-wight', 108.6, -17.4], ['3019 3 9', 'The Muster of Rohan at Dunharrow; the Red Arrow comes from Gondor', 443.2, -489], ['3018 7 10', 'Gandalf is made prisoner in Orthanc', 334, -379.1], ['3018 9 22', 'The Black Riders cross the Shire at Sarn Ford', 81.9, -79.1], ['3018 9 18', 'Gandalf escapes from Orthanc on the Eagle Gwaihir', 334, -379.1], ['3018 9 22', 'Frodo\'s fiftieth birthday at Bag End', 0.3, 0.5], ['3018 9 23', 'Frodo, Sam and Pippin leave Bag End by night', 0.3, 0.5], ['3018 9 24', 'Gildor\'s Elves shelter the hobbits in the Woody End', 44.9, -11.2], ['3018 9 25', 'Across the Brandywine to Crickhollow', 84, -7.4], ['3018 9 26', 'Through the Old Forest to the house of Tom Bombadil', 104.2, -24.2], ['3018 9 28', 'Captured by a Barrow-wight', 112.8, -6.6], ['3018 9 29', 'The Prancing Pony at Bree; Strider', 127.9, 7.4], ['3018 10 6', 'Frodo is stabbed by the Witch-king on Weathertop', 208, 11], ['3018 10 20', 'Flight to the Ford of Bruinen', 400.3, 3.7], ['3018 10 25', 'The Council of Elrond', 420.5, 17.5], ['3018 12 25', 'The Fellowship sets out from Rivendell', 420.5, 17.5], ['3019 1 11', 'Snowstorm on Caradhras turns the Company back', 414.8, -157.6], ['3019 1 13', 'Wolves in Hollin; the Company enters Moria', 380, -159.2], ['3019 1 15', 'The Bridge of Khazad-dûm: Gandalf breaks the bridge and falls with the Balrog', 420.3, -184.9], ['3019 1 23', 'Gandalf pursues the Balrog up the Endless Stair to the peak of Zirakzigil', 423.1, -178], ['3019 1 25', 'The Battle of the Peak: Gandalf casts down the Balrog, and passes out of thought and time', 423.1, -178], ['3019 1 17', 'The Company comes to Caras Galadhon', 454.7, -254.7], ['3019 2 16', 'Farewell to Lórien', 489.1, -297.6], ['3019 2 26', 'Breaking of the Fellowship; death of Boromir', 611.7, -462.2], ['3019 3 1', 'Aragorn meets Gandalf the White in Fangorn', 431.7, -377.3], ['3019 3 3', 'Battle of the Hornburg', 377.3, -451.8], ['3019 3 3', 'The Ents destroy Isengard', 334, -379.1], ['3019 3 7', 'Faramir takes Frodo to Henneth Annûn', 744.5, -565.6], ['3019 3 8', 'The Beacons of Gondor are lit', 694, -582.9], ['3019 3 10', 'The Dawnless Day; the Rohirrim muster', 840.1, -554], ['3019 3 13', 'Frodo captured at Cirith Ungol; Aragorn takes Pelargir', 781.2, -583.9], ['3019 3 15', 'Battle of the Pelennor Fields', 731.5, -602.2], ['3019 3 25', 'The Ring is destroyed; Sauron is overthrown', 840.3, -553.1], ['3019 3 26', 'The Eagles bear Frodo and Sam to the Field of Cormallen', 738, -556]],
-  return: [['3019 4 8', 'The Field of Cormallen: the Ring-bearers honoured', 738, -556], ['3019 5 1', 'Coronation of King Elessar at Minas Tirith', 725.1, -599.1], ['3019 6 31', 'Arwen comes to the City; the wedding of Aragorn and Arwen at Midsummer', 725.1, -599.1], ['3019 7 19', 'Théoden\'s funeral escort sets out for Rohan', 725.1, -599.1], ['3019 8 10', 'Théoden laid to rest at Edoras; Éomer king; Éowyn betrothed to Faramir', 438, -479.4], ['3019 8 22', 'At Isengard; the Fellowship begins to part', 334, -379.1], ['3019 8 28', 'Saruman met on the road in Dunland', 289, -290.6], ['3019 9 21', 'Return to Rivendell; Bilbo gives Frodo his books', 420.5, 17.5], ['3019 10 6', 'Frodo\'s wound aches on the anniversary of Weathertop', 400.3, 3.7], ['3019 10 28', 'At Bree; Gandalf leaves them to visit Bombadil', 127.9, 7.4], ['3019 11 3', 'The Battle of Bywater; the Scouring of the Shire', 6.3, -2.2], ['3021 9 22', 'Frodo and Sam meet Elrond, Galadriel and Bilbo in the Woody End', 44.9, -11.2], ['3021 9 29', 'The Grey Havens: Frodo and Bilbo sail with the Elves into the West', -170.9, -7.6], ['3021 10 6', '\u201cWell, I\u2019m back.\u201d Sam comes home to Bag End', 0.3, 0.5]],
+    ['3019 2 26.4', 'The three orc-bands meet below Amon Hen (date est.)', 611.8, -462.2],
+    ['3019 3 25.47', 'The towers of Barad-dûr fall in ruin; a vast shadow rises over them, crowned, reaching out a threatening hand, and a great wind takes it and it is blown away', 895.4, -532.8],
+    ['3019 3 25.65', 'Orodruin bursts asunder in fire and is left a shattered ruin (our staging of the eruption)', 840.1, -554]],
+  war: [['3001 9 22.77', 'Gandalf\'s fireworks over the Party Field: rockets, fountains and starbursts, and last a dragon that roars over the hobbits', 0.6, 0.1], ['3001 9 22.9', 'The Long-expected Party: on his eleventy-first birthday Bilbo makes his speech, puts on the Ring and vanishes', 0.3, 0.5], ['3001 9 23', 'Bilbo leaves the Shire for Rivendell; Frodo inherits Bag End, and the Ring', 0.3, 0.5], ['3001 10 21', 'Bilbo comes to Rivendell (the day is not recorded)', 420.5, 17.5], ['3018 6 22', 'The Nine ride out of Minas Morgul at Midsummer', 773.6, -597.9], ['3018 7 4', 'Boromir sets out from Minas Tirith for Imladris', 725.1, -599.1], ['3018 6 27', 'Gandalf leaves Bag End, promising to return before Frodo sets out (late June)', 0.3, 0.5], ['3018 9 26', 'Tom Bombadil rescues the hobbits from Old Man Willow', 98, -20], ['3018 9 28', 'Tom Bombadil frees the hobbits from the Barrow-wight', 108.6, -17.4], ['3019 3 9', 'The Muster of Rohan at Dunharrow; the Red Arrow comes from Gondor', 443.2, -489], ['3018 7 10', 'Gandalf is made prisoner in Orthanc', 334, -379.1], ['3018 9 22', 'The Black Riders cross the Shire at Sarn Ford', 81.9, -79.1], ['3018 9 18', 'Gandalf escapes from Orthanc on the Eagle Gwaihir', 334, -379.1], ['3018 9 22', 'Frodo\'s fiftieth birthday at Bag End', 0.3, 0.5], ['3018 9 23', 'Frodo, Sam and Pippin leave Bag End by night', 0.3, 0.5], ['3018 9 24', 'Gildor\'s Elves shelter the hobbits in the Woody End', 44.9, -11.2], ['3018 9 25', 'Across the Brandywine to Crickhollow', 84, -7.4], ['3018 9 26', 'Through the Old Forest to the house of Tom Bombadil', 104.2, -24.2], ['3018 9 28', 'Captured by a Barrow-wight', 112.8, -6.6], ['3018 9 29', 'The Prancing Pony at Bree; Strider', 127.9, 7.4], ['3018 10 6', 'Frodo is stabbed by the Witch-king on Weathertop', 208, 11], ['3018 10 20', 'Flight to the Ford of Bruinen', 400.3, 3.7], ['3018 10 25', 'The Council of Elrond', 420.5, 17.5], ['3018 12 25', 'The Fellowship sets out from Rivendell', 420.5, 17.5], ['3019 1 11', 'Snowstorm on Caradhras turns the Company back', 414.8, -157.6], ['3019 1 13', 'Wolves in Hollin; the Company enters Moria', 380, -159.2], ['3019 1 15', 'The Bridge of Khazad-dûm: Gandalf breaks the bridge and falls with the Balrog', 420.3, -184.9], ['3019 1 23', 'Gandalf pursues the Balrog up the Endless Stair to the peak of Zirakzigil', 423.1, -178], ['3019 1 25', 'The Battle of the Peak: Gandalf casts down the Balrog, and passes out of thought and time', 423.1, -178], ['3019 1 17', 'The Company comes to Caras Galadhon', 454.7, -254.7], ['3019 2 16', 'Farewell to Lórien', 489.1, -297.6], ['3019 2 26', 'Breaking of the Fellowship; death of Boromir', 611.7, -462.2], ['3019 3 1', 'Aragorn meets Gandalf the White in Fangorn', 431.7, -377.3], ['3019 3 3', 'Battle of the Hornburg', 377.3, -451.8], ['3019 3 3', 'The Ents destroy Isengard', 334, -379.1], ['3019 3 7', 'Faramir takes Frodo to Henneth Annûn', 744.5, -565.6], ['3019 3 8', 'The Beacons of Gondor are lit', 694, -582.9], ['3019 3 10', 'The Dawnless Day; the Rohirrim muster', 840.1, -554], ['3019 3 13', 'Frodo captured at Cirith Ungol; Aragorn takes Pelargir', 781.2, -583.9], ['3019 3 15', 'Battle of the Pelennor Fields', 731.5, -602.2], ['3019 3 25.4', 'The Ring is destroyed: Gollum falls into the Fire with it, and Sauron is overthrown', 840.3, -553.1], ['3019 3 26', 'The Eagles bear Frodo and Sam to the Field of Cormallen', 738, -556]],
+  return: [['3019 3 25.47', 'Barad-dûr falls and Sauron\'s shadow is blown away', 895.4, -532.8], ['3019 3 25.65', 'Orodruin bursts asunder (our staging)', 840.1, -554], ['3019 4 8', 'The Field of Cormallen: the Ring-bearers honoured', 738, -556], ['3019 5 1', 'Coronation of King Elessar at Minas Tirith', 725.1, -599.1], ['3019 6 31', 'Arwen comes to the City; the wedding of Aragorn and Arwen at Midsummer', 725.1, -599.1], ['3019 7 19', 'Théoden\'s funeral escort sets out for Rohan', 725.1, -599.1], ['3019 8 10', 'Théoden laid to rest at Edoras; Éomer king; Éowyn betrothed to Faramir', 438, -479.4], ['3019 8 22', 'At Isengard; the Fellowship begins to part', 334, -379.1], ['3019 8 28', 'Saruman met on the road in Dunland', 289, -290.6], ['3019 9 21', 'Return to Rivendell; Bilbo gives Frodo his books', 420.5, 17.5], ['3019 10 6', 'Frodo\'s wound aches on the anniversary of Weathertop', 400.3, 3.7], ['3019 10 28', 'At Bree; Gandalf leaves them to visit Bombadil', 127.9, 7.4], ['3019 11 3', 'The Battle of Bywater; the Scouring of the Shire', 6.3, -2.2], ['3021 9 22', 'Frodo and Sam meet Elrond, Galadriel and Bilbo in the Woody End', 44.9, -11.2], ['3021 9 29', 'The Grey Havens: Frodo and Bilbo sail with the Elves into the West', -170.9, -7.6], ['3021 10 6', '\u201cWell, I\u2019m back.\u201d Sam comes home to Bag End', 0.3, 0.5]],
   hobbit: [['2463 5 1.35', 'Déagol finds the One Ring in the Anduin by the Gladden Fields; Sméagol murders him for it (the day is not recorded)', 543, -180.7], ['2463 5 20', 'Sméagol, now called Gollum, is driven out by his kin', 547, -176], ['2470 6 1', 'Gollum hides under the Misty Mountains with the Ring (about this year)', 493.1, 7.2],
     ['2770 5 3.2', 'Smaug the Golden falls on the Lonely Mountain out of the north: Dale is burned and Erebor taken (the day is not recorded)', 768.4, 138], ['2770 5 3.4', 'Thrór and Thráin escape by a secret door; Thorin, abroad, escapes too, and they go south into exile', 768.4, 138],
     ['2890 9 22', 'Bilbo Baggins is born at Bag End, son of Bungo Baggins and Belladonna Took', 0.3, 0.5], ['2941 4 28', 'The Company sets out from Bag End (dates approximate)', 0.3, 0.5], ['2941 5 25', 'Roast Mutton: caught by Bert, Tom and William; at dawn they turn to stone', 361.7, 17.4], ['2941 7 6.6', 'Out of the Frying-Pan: Wargs and goblins at the fir-tree glade; the Eagles come', 514.3, 12.2], ['2941 7 10', 'Queer Lodgings at Beorn\'s house', 565.5, 48.1], ['2941 8 6', 'Flies and Spiders in Mirkwood', 705, 69.6], ['2941 10 17', 'Bilbo finds the Arkenstone in the hoard and keeps it', 768.4, 138], ['2941 11 22', 'Bilbo gives the Arkenstone to Bard and the Elvenking', 769, 128.4], ['2941 6 30', 'Rivendell on Midsummer\'s Eve', 420.5, 17.5], ['2941 7 6', 'Goblin-town; Bilbo finds the Ring', 493.1, 7.2], ['2941 7 9', 'Beorn\'s hall', 565.6, 48.2], ['2941 8 12', 'Taken by the Wood-elves', 713.8, 81.2], ['2941 9 22', 'Barrels out of bond', 735.5, 87.4], ['2941 10 13', 'Inside Information: Bilbo goes down to Smaug', 768.4, 138], ['2941 10 16', 'Fire and Water: Smaug burns Lake-town and Bard slays him', 766.5, 97.5], ['2941 8 25', 'The White Council drives the Necromancer from Dol Guldur', 609.2, -194.2], ['2941 11 23', 'Battle of Five Armies', 769, 128.5], ['2942 6 22', 'Bilbo returns to Bag End', 0.3, 0.5]],
 };
-EVENTS.war = EVENTS.war.concat(EVENTS._isengard); delete EVENTS._isengard;
+EVENTS.war = EVENTS.war.concat(EVENTS._isengard); delete EVENTS._isengard;   // (_isengard also holds the fall of Sauron)
 for (const k in EVENTS) EVENTS[k].sort((a, b) => WX.parse(a[0]) - WX.parse(b[0]));
 const JOURNEYS = {};
 // Routed paths (src/routes.js, from tools/routing) follow roads, valleys and passes; the authored waypoints
@@ -568,6 +572,7 @@ function warpOf(story) {
   for (let d = 0; d < n; d++) w[d] = near(d) ? 0.15 + Math.min(5, moved[d]) : -1;
   for (let d = 0; d < n;) { if (w[d] >= 0) { d++; continue; } let e = d; while (e < n && w[e] < 0) e++; const q = Math.min(0.0005, 2.5 / (e - d)); for (let k = d; k < e; k++) w[k] = q; d = e; }
   for (let d = 0; d < n; d++) if (w[d] > 0.01) { act += w[d]; actN++; }
+  { const d = Math.floor(WX.parse('3019 3 25') - a); if (story !== 'hobbit' && d >= 0 && d < n) w[d] = Math.max(w[d], 30); }   // the fall of Sauron plays slowly
   const C = new Float64Array(n + 1); for (let d = 0; d < n; d++) C[d + 1] = C[d] + w[d];
   return WARP[story] = { a, b, n, w, C, total: C[n], mean: act / (actN || 1) };
 }
@@ -590,19 +595,28 @@ function updateBattles() {
   S.battles = feats.length; map.getSource('battles').setData(FC(feats));
 }
 // Mount Doom: dormant in Bilbo's day (it woke in 2954), burning through the War, erupting as the Ring is unmade
+// then, as the Ring is unmade, the eruption, the bursting of the Mountain, and its shattered ruin (our staging)
 function doomHeat(t) {
   if (S.story === 'hobbit') return 0;
   const end = WX.parse('3019 3 25.4');
-  return t >= end && t < end + 2 ? 2 : t < end + 12 ? 1 : 0;
+  return t < end ? 1 : t < end + 0.22 ? 2 : t < end + 0.55 ? 3 : t < end + 21 ? 4 : 5;
 }
-const LANDMARK_ART = [['doom', 840.1, -554], ['city', 725.1, -599.1], ['orthanc', 334, -379.1]];
+// Barad-dûr: whole until the Ring is unmade; then the Eye's last blaze, the fall, the shadow, the wind, the ruin
+function baradState(t) {
+  if (S.story === 'hobbit') return 0;
+  const end = WX.parse('3019 3 25.4');
+  return t < end ? 0 : t < end + 0.06 ? 1 : t < end + 0.16 ? 2 : t < end + 0.26 ? 3 : t < end + 0.34 ? 4 : t < end + 30 ? 5 : 6;
+}
+const doomGone = t => doomHeat(t) >= 4 ? 1 : 0;
+const LANDMARK_ART = [['doom', 840.1, -554], ['city', 725.1, -599.1], ['orthanc', 334, -379.1], ['barad', 895.4, -532.8]];
 // Isengard: quiet in the years of the Hobbit, its pits burning while Saruman breeds and arms his Uruk-hai, a lake after the Ents
 function isenState(t) { if (S.story === 'hobbit') return 0; return t >= WX.parse('3019 3 3.4') ? 2 : t >= WX.parse('3018 7 1') ? 1 : 0; }
 function updateLandmarks() {
   if (!mapLoaded || !window.AVATARS) return;
   const f = Math.floor(performance.now() / 260) % 4, heat = doomHeat(S.t), feats = [];
   for (const [kind, X, Y] of LANDMARK_ART) {
-    const h = kind === 'orthanc' ? isenState(S.t) : heat, fr = kind === 'doom' || kind === 'orthanc' ? f : f >> 1, id = 'lm:' + kind + fr + ':' + h;
+    const h = kind === 'orthanc' ? isenState(S.t) : kind === 'barad' ? baradState(S.t) : heat; if (kind === 'barad' && !h) continue;
+    const fr = kind === 'doom' || kind === 'orthanc' || kind === 'barad' ? f : f >> 1, id = 'lm:' + kind + fr + ':' + h;
     if (!map.hasImage(id)) { const cv = AVATARS.landmark(kind, fr, h); map.addImage(id, cv.getContext('2d').getImageData(0, 0, cv.width, cv.height), { pixelRatio: 2 }); }
     feats.push(pt(X, Y, kind === 'orthanc' ? { icon: id, off: [-50, 2] } : { icon: id }));     // Orthanc stands beside those gathered at its foot
   }
@@ -615,7 +629,31 @@ function updateLandmarks() {
   }
   map.getSource('landmarks').setData(FC(feats));
 }
-setInterval(() => { if (!document.hidden) updateLandmarks(); }, 200);
+// the dead (GEO.DEATHS): the body under a death mark for a while, then its final rest in stages
+const DEAD = (GEO.DEATHS || []).map(d => {
+  const t = WX.parse(d.t), stages = (d.rest || []).map(r => ({ ...r, t0: r.from ? WX.parse(r.from) : null }));
+  stages.forEach((r, i) => { if (r.t0 == null) r.t0 = i ? stages[i - 1].t0 : t + (d.body || 0); });
+  stages.forEach((r, i) => { r.t1 = i < stages.length - 1 ? stages[i + 1].t0 : Infinity; r.at = r.at || (i ? stages[i - 1].at : d.at); });
+  return { ...d, tt: t, stages };
+});
+function updateDead() {
+  if (!mapLoaded || !window.AVATARS) return;
+  const f = Math.floor(performance.now() / 260) % 4, feats = [], nm = id => (AVATARS.C[id] || {}).name || id;
+  for (const d of DEAD) {
+    if (S.t >= d.tt && S.t < d.tt + (d.body || 0)) {
+      const id = 'dead:' + d.who; if (!map.hasImage(id)) { const cv = AVATARS.corpse(d.who); map.addImage(id, cv.getContext('2d').getImageData(0, 0, cv.width, cv.height), { pixelRatio: 2 }); }
+      feats.push(pt(d.at[0], d.at[1], { icon: id, label: nm(d.who) + ' †' }));
+    }
+    for (const r of d.stages) {
+      if (r.kind === 'none' || S.t < r.t0 || S.t >= r.t1) continue;
+      const fr = ['pyre', 'boat', 'ash', 'mark'].includes(r.kind) ? f : 0, id = 'rest:' + r.kind + ':' + d.who + ':' + fr;
+      if (!map.hasImage(id)) { const cv = AVATARS.rest(r.kind, fr, d.who); if (!cv) continue; map.addImage(id, cv.getContext('2d').getImageData(0, 0, cv.width, cv.height), { pixelRatio: 2 }); }
+      feats.push(pt(r.at[0], r.at[1], { icon: id, label: r.label || '' }));
+    }
+  }
+  map.getSource('dead').setData(FC(feats));
+}
+setInterval(() => { if (!document.hidden) { updateLandmarks(); updateDead(); } }, 200);
 // battles, flyers and the Eye keep moving while the clock is stopped
 setInterval(() => { if (document.hidden || S.playing) return; if (S.battles) updateBattles(); if (S.idleAnim) updateJourneys(true); }, 170);
 function showBattle(b) {
@@ -1207,7 +1245,7 @@ async function openGround(X, Y, name, opt = {}) {
     heading = (Math.atan2(p.X - X, p.Y - Y) * 180 / Math.PI + 360) % 360;
   }
   if (opt.heading != null) heading = opt.heading;
-  window.GROUND.open({ X, Y, heading, t: S.t, title: opt.title || name || (np.d < 3 ? 'Near ' + np.p.name : biomeAt(X, Y).name), sub: fmtXY(X, Y) + ' of Hobbiton', run, weatherAt, staticAt, places: PL, peaks: GEO.PEAKS, travellers: window.AVATARS ? travellersAt : null, battles: battlesAt, heat: doomHeat, fireworks: GEO.FIREWORKS.filter(f => f.story === S.story), onExit: t => { if (t) setTime(t); } });
+  window.GROUND.open({ X, Y, heading, t: S.t, title: opt.title || name || (np.d < 3 ? 'Near ' + np.p.name : biomeAt(X, Y).name), sub: fmtXY(X, Y) + ' of Hobbiton', run, weatherAt, staticAt, places: PL, peaks: GEO.PEAKS, travellers: window.AVATARS ? travellersAt : null, battles: battlesAt, heat: doomHeat, doomGone, fireworks: GEO.FIREWORKS.filter(f => f.story === S.story), onExit: t => { if (t) setTime(t); } });
 }
 function hashAng(s) { let h = 0; for (const c of s) h = (h * 31 + c.charCodeAt(0)) | 0; return (h % 628) / 100; }
 

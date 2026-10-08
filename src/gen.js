@@ -166,6 +166,13 @@ function peakAt(X, Y, pix) {
       const base = 0.66 * Math.pow(sat((1 - d) / 0.62), 1.25), cone = 0.36 * Math.pow(Math.max(0, 1 - d / 0.2), 1.15);
       prof = base + cone;
       if (d < 0.035) prof -= (0.035 - d) * 4.5;
+      // after the Ring is unmade the Mountain is shattered (our staging of LR VI.3-4): the ash-cone is gone, the
+      // shoulders split by rifts, and a ragged crater opens in the base where the Sammath Naur was
+      if (DOOM) {
+        const ang = Math.atan2(dy, dx), jag = 0.5 + 0.5 * Math.sin(ang * 7 + 1.3) * Math.sin(ang * 3.1);
+        prof = base * (1 - 0.32 * Math.pow(Math.max(0, 1 - d / 0.42), 1.3)) + 0.05 * jag * Math.max(0, 1 - Math.abs(d - 0.36) / 0.08);
+        prof -= 0.05 * Math.max(0, 1 - Math.abs(Math.sin(ang * 2 + 0.6)) * 30) * sat((1 - d) / 0.3);          // the rifts
+      }
       prof *= 1 + 0.06 * noise(X * 3, Y * 3) * sat(d * 4);
     } else if (p.kind === 'knee') {
       // the Hill of Guard: seven terraces, one under each circle of Minas Tirith, each a hundred feet above the
@@ -306,6 +313,8 @@ function evaluate(X, Y, pix) {
 }
 
 /* ---------------- climate ---------------- */
+let DOOM = 0;
+function setDoom(v) { DOOM = +v || 0; }
 function tempAt(lat, h) {
   const c = Math.cos(Math.abs(lat) * D2R);
   return 34 * Math.pow(c, 1.5) - 9 - 0.0065 * Math.max(h, 0);
@@ -978,7 +987,7 @@ function buildingsNear(X, Y, rad) {
   return { list: out, special: sp };
 }
 
-return { D2R, MI, EARTH_C, toLL, toXY, noise, fbm, fbmA, hash2, sat, sstep, mix, clamp, init, evaluate, F, R, CH, tempAt, moistAt,
+return { setDoom, D2R, MI, EARTH_C, toLL, toXY, noise, fbm, fbmA, hash2, sat, sstep, mix, clamp, init, evaluate, F, R, CH, tempAt, moistAt,
   demTile, imageryTile, renderGrid, tileLL, drawVectors, buildingsNear, numenorField, orchardAt };
 })();
 if (typeof self !== 'undefined') self.GEN = GEN;

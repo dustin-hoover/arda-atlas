@@ -177,7 +177,7 @@ async function textureFor(run, X, Y, half, size, strips) {
   const cv = document.createElement('canvas'); cv.width = cv.height = size;
   const ctx = cv.getContext('2d');
   const rows = size / strips;
-  await Promise.all(Array.from({ length: strips }, (_, s) => run({ type: 'pt', X, Y, half, tex: size, r0: s * rows, r1: (s + 1) * rows }).then(r => { ctx.drawImage(r.bmp, 0, s * rows); r.bmp.close && r.bmp.close(); })));
+  await Promise.all(Array.from({ length: strips }, (_, s) => run({ type: 'pt', X, Y, half, tex: size, r0: s * rows, r1: (s + 1) * rows, doom: G.doom }).then(r => { ctx.drawImage(r.bmp, 0, s * rows); r.bmp.close && r.bmp.close(); })));
   const t = new THREE.CanvasTexture(cv);
   t.colorSpace = THREE.SRGBColorSpace; t.anisotropy = G.renderer.capabilities.getMaxAnisotropy(); t.generateMipmaps = true; t.minFilter = THREE.LinearMipmapLinearFilter;
   return { tex: t, canvas: cv };
@@ -618,9 +618,9 @@ function drawMini() {
 async function loadNear(Xc, Yc, offX, offZ) {
   const o = G.o, run = o.run, half = 2600, n = 321, mobile = innerWidth < 760;
   const [hr, tx, tr] = await Promise.all([
-    run({ type: 'ph', X: Xc, Y: Yc, half, n }),
+    run({ type: 'ph', X: Xc, Y: Yc, half, n, doom: G.doom }),
     textureFor(run, Xc, Yc, half, mobile ? 1536 : 2048, 8),
-    run({ type: 'trees', X: Xc, Y: Yc, half, cell: 26, spacing: mobile ? 9 : 6.5, treeHalf: mobile ? 600 : 850, seed: 7, bHalf: half }),
+    run({ type: 'trees', X: Xc, Y: Yc, half, cell: 26, spacing: mobile ? 9 : 6.5, treeHalf: mobile ? 600 : 850, seed: 7, bHalf: half, doom: G.doom }),
   ]);
   if (G.nearGroup) { G.scene.remove(G.nearGroup); G.nearGroup.traverse(m => { if (m.geometry) m.geometry.dispose(); if (m.material) { if (m.material.map) m.material.map.dispose(); m.material.dispose(); } }); }
   const grp = new THREE.Group();
@@ -649,7 +649,7 @@ async function loadNear(Xc, Yc, offX, offZ) {
 }
 async function loadFar(X, Y) {
   const run = G.o.run, half = 60000, n = 241;
-  const [hr, tx] = await Promise.all([run({ type: 'ph', X, Y, half, n }), textureFor(run, X, Y, half, 1024, 4)]);
+  const [hr, tx] = await Promise.all([run({ type: 'ph', X, Y, half, n, doom: G.doom }), textureFor(run, X, Y, half, 1024, 4)]);
   G.farHeights = hr.h;
   G.farH = heightFn(hr.h, n, half);
   G.seaLevel = 0;
@@ -712,7 +712,7 @@ async function open(o) {
   $('#gplace').textContent = o.title; $('#gsub').textContent = o.sub;
   try { await ensure(); } catch (e) { $('#gload').textContent = 'The 3D engine could not be loaded.'; return; }
   resize();
-  G.o = o; G.t = o.t; setRate(0); G.X0 = o.X; G.Y0 = o.Y; G.px = 0; G.pz = 0; G.yaw = (o.heading || 0) * Math.PI / 180; G.pitch = 0.02; G.fly = 0;
+  G.o = o; G.t = o.t; G.doom = o.doomGone ? o.doomGone(o.t) : 0; if (window.GEN && GEN.setDoom) GEN.setDoom(G.doom); setRate(0); G.X0 = o.X; G.Y0 = o.Y; G.px = 0; G.pz = 0; G.yaw = (o.heading || 0) * Math.PI / 180; G.pitch = 0.02; G.fly = 0;
   G.seaLevel = 0; G.nearH = null; G.farH = null; G.wx = null; G.grassAt = null; G.nearCanvas = null; if (G.grass) G.grass.count = 0; G.spawnX = 0; G.spawnZ = 0; G.camera.position.set(0, 0, 0);
   for (const k of ['far', 'sea', 'nearGroup', 'marks']) if (G[k]) { G.scene.remove(G[k]); G[k] = null; }
   closeHall(); G.nearOff = null; clearTravellers(); TRAV.last = -1e9;
@@ -728,6 +728,7 @@ async function open(o) {
   $('#gload').hidden = true;
 }
 function close() {
+  if (window.GEN && GEN.setDoom) GEN.setDoom(0);
   G.active = false; clearTravellers();
   $('#ground').classList.remove('open');
   if (G.o && G.o.onExit) G.o.onExit(G.t);
