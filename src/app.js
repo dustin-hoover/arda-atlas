@@ -161,7 +161,7 @@ function realmFeats(era) { return GEO.REALMS[era].map(r => ({ type: 'Feature', g
 function realmLabels(era) { return GEO.REALMS[era].map(r => { const c = r.circle ? r.circle : centroid(r.pts); return pt(c[0], c[1], { name: r.name }); }); }
 const adminFeats = GEO.ADMIN.map(a => ({ type: 'Feature', geometry: geom(a), properties: { name: a.name, parent: a.parent } }));
 const adminLabels = GEO.ADMIN.map(a => { const c = centroid(a.pts); return pt(c[0], c[1], { name: a.name }); });
-const peopleFeats = GEO.PEOPLES.map((p, i) => ({ type: 'Feature', geometry: geom(p), properties: { name: p.name, lang: p.lang, color: p.color, pat: 'hatch-' + i } }));
+const peopleFeats = GEO.PEOPLES.map((p, i) => ({ type: 'Feature', geometry: geom(p), properties: { name: p.name, lang: p.lang, color: p.color } }));
 const peopleLabels = GEO.PEOPLES.map(p => { const c = p.circle ? p.circle : centroid(p.pts); return pt(c[0], c[1], { name: p.name, lang: p.lang }); });
 function gridFeats() {
   const f = [];
@@ -237,8 +237,7 @@ const style = {
     { id: 'imagery', type: 'raster', source: 'imagery', paint: { 'raster-fade-duration': 180 } },
     { id: 'realms-fill', type: 'fill', source: 'realms', layout: { visibility: 'none' }, paint: { 'fill-color': ['get', 'color'], 'fill-opacity': 0.2 } },
     { id: 'realms-line', type: 'line', source: 'realms', layout: { visibility: 'none' }, paint: { 'line-color': ['get', 'color'], 'line-width': ['interpolate', ['linear'], ['zoom'], 3, 1, 8, 2.4], 'line-dasharray': [3, 1.5] } },
-    { id: 'peoples-fill', type: 'fill', source: 'peoples', layout: { visibility: 'none' }, paint: { 'fill-pattern': ['get', 'pat'], 'fill-opacity': 0.85 } },
-    { id: 'peoples-line', type: 'line', source: 'peoples', layout: { visibility: 'none' }, paint: { 'line-color': ['get', 'color'], 'line-width': 1.2, 'line-opacity': 0.8 } },
+    { id: 'peoples-line', type: 'line', source: 'peoples', layout: { visibility: 'none', 'line-join': 'round' }, paint: { 'line-color': ['get', 'color'], 'line-width': ['interpolate', ['linear'], ['zoom'], 3, 2, 8, 3.5], 'line-opacity': 0.5 } },   // each people's own colour, a solid outline at half opacity
     { id: 'admin-line', type: 'line', source: 'admin', layout: { visibility: 'none' }, paint: { 'line-color': '#f2e2b8', 'line-width': ['interpolate', ['linear'], ['zoom'], 5, 0.6, 10, 1.6], 'line-dasharray': [1, 2], 'line-opacity': 0.8 } },
     { id: 'grid-lines', type: 'line', source: 'grid', layout: { visibility: 'none' }, paint: { 'line-color': '#f0e0b0', 'line-opacity': ['case', ['==', ['get', 'k'], 1], 0.5, 0.22], 'line-width': ['case', ['==', ['get', 'k'], 1], 1.2, 0.6] } },
     { id: 'lights', type: 'circle', source: 'lights', layout: { visibility: 'none' }, paint: { 'circle-color': '#ffcf7a', 'circle-radius': ['interpolate', ['linear'], ['zoom'], 3, ['*', ['get', 's'], 1.5], 9, ['*', ['get', 's'], 9]], 'circle-blur': 1, 'circle-opacity': ['get', 'glow'] } },
@@ -299,22 +298,6 @@ const map = new maplibregl.Map({
   canvasContextAttributes: { antialias: true }, maxTileCacheZoomLevels: 5,
 });
 window.ARDA_MAP = map;
-map.on('styleimagemissing', e => {
-  const id = e.id;
-  if (id.startsWith('hatch-')) {
-    const p = GEO.PEOPLES[+id.slice(6)]; if (!p) return;
-    const s = 16, c = document.createElement('canvas'); c.width = c.height = s; const g = c.getContext('2d');
-    g.strokeStyle = p.color; g.globalAlpha = 0.65; g.lineWidth = 1.6;
-    const ang = (+id.slice(6) % 3);
-    g.beginPath();
-    if (ang === 0) { g.moveTo(0, s); g.lineTo(s, 0); g.moveTo(-s / 2, s / 2); g.lineTo(s / 2, -s / 2); g.moveTo(s / 2, s * 1.5); g.lineTo(s * 1.5, s / 2); }
-    else if (ang === 1) { g.moveTo(0, 0); g.lineTo(s, s); g.moveTo(-s / 2, s / 2); g.lineTo(s / 2, s * 1.5); g.moveTo(s / 2, -s / 2); g.lineTo(s * 1.5, s / 2); }
-    else { g.moveTo(0, s / 2); g.lineTo(s, s / 2); }
-    g.stroke();
-    g.globalAlpha = 0.14; g.fillStyle = p.color; g.fillRect(0, 0, s, s);
-    map.addImage(id, g.getImageData(0, 0, s, s));
-  }
-});
 
 let mapLoaded = false;
 await new Promise(res => map.on('load', res));
@@ -769,7 +752,7 @@ const LAYER_GROUPS = {
   forests: ['forests-label', 'marsh-label'],
   seas: ['seas'],
   places: ['places-1', 'places-2', 'places-3', 'places-4', 'places-5'],
-  peoples: ['peoples-fill', 'peoples-line', 'peoples-label'],
+  peoples: ['peoples-line', 'peoples-label'],
   realms: ['realms-fill', 'realms-line', 'realms-label'],
   admin: ['admin-line', 'admin-label'],
   roads: ['roads-case', 'roads-line', 'walls'],
