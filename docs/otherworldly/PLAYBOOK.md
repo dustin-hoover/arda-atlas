@@ -39,6 +39,7 @@ a commit and the user's go-ahead to merge. Read [LAWS.md](LAWS.md) before phase 
 2. `EVENTS[story]`: `[date, caption, X, Y]`, captions written by us.
 3. The slider is warped by activity (`warpOf`): days with travel, events or battles are wide; quiet spells
    shrink to a capped sliver however long. Check the share each phase gets.
+4. Playback speeds are the same in every world: 1 hour, 6 hours, 12 hours and 1 day per second (and 4 days).
 
 ## Phase 5: characters on the move
 1. `JOURNEYS[story]`: `{ name, color, pts: [[X, Y, 'date']], with: [[leader, from, to]], hide }`. Stationary
