@@ -553,7 +553,10 @@ function groupOf(ids, t) {
   const S = new Set(ids);
   return ids.length > 1 || S.has('nazgul') ? GROUPS.find(G => G.test(S) && (!G.when || (t >= P(G.when[0]) && t <= P(G.when[1])))) : null;
 }
+// folk who never sit a horse: in a riding party they go on foot beside it
+const ON_FOOT = new Set(['tom', 'goldberry', 'treebeard', 'gollum', 'ugluk', 'uruk', 'shelob', 'smaug', 'sauron']);
 function icon(ids, color, t, f = 0, mode = 'walk', flip = false) {
+  if (mode === 'ride' && ids.every(i => ON_FOOT.has(i))) mode = 'walk';
   const S = new Set(ids), grp = groupOf(ids, t);
   const key = (grp ? grp.name : '') + '|' + [...S].sort().join(',') + '|' + color + '|' + mode + (flip ? '|w' : '');
   if (ICACHE[key + f]) return ICACHE[key + f];
@@ -615,8 +618,9 @@ function mounted(ids, S, grp, color, f, mode, flip, key) {
   const show = (grp && grp.order ? grp.order.filter(i => S.has(i)).concat([...S].filter(i => !grp.order.includes(i))) : [...S]);
   let units = [];
   if (mode === 'ride') {
-    const rest = show.filter(i => i !== 'legolas' && i !== 'gimli'); if (S.has('legolas') && S.has('gimli')) units.push(['legolas', 'gimli']); else { if (S.has('legolas')) rest.push('legolas'); if (S.has('gimli')) rest.push('gimli'); }
-    units = units.concat(rest.map(i => [i])).map((u, k) => horseGrid(u, (f + k) % 4, k));
+    const walkers = show.filter(i => ON_FOOT.has(i));
+    const rest = show.filter(i => i !== 'legolas' && i !== 'gimli' && !ON_FOOT.has(i)); if (S.has('legolas') && S.has('gimli')) units.push(['legolas', 'gimli']); else { if (S.has('legolas')) rest.push('legolas'); if (S.has('gimli')) rest.push('gimli'); }
+    units = units.concat(rest.map(i => [i])).map((u, k) => horseGrid(u, (f + k) % 4, k)).concat(walkers.map((i, k) => Object.assign(figGrid(i, (f + k + 1) % 4).slice(), { walker: true })));
   } else if (S.has('smaug')) units = [dragonGrid(f, mode === 'fire')];
   else if (mode === 'fly') { for (let i = 0; i < show.length; i += 2) units.push(eagleGrid(show.slice(i, i + 2), (f + i / 2) % 4)); }
   else if (mode === 'boat') {
@@ -634,7 +638,7 @@ function mounted(ids, S, grp, color, f, mode, flip, key) {
   if (mode === 'ride') { g.fillStyle = grp ? grp.frame : color; g.strokeStyle = OUT; g.lineWidth = 3; g.beginPath(); g.ellipse(cx, by, cv.width / 2 - 4, 7, 0, 0, 7); g.fill(); g.stroke(); }
   if (mode === 'fly' || mode === 'fire') { g.fillStyle = 'rgba(0,0,0,0.28)'; g.beginPath(); g.ellipse(cx, by, cv.width * 0.3, 5, 0, 0, 7); g.fill(); g.fillStyle = color; g.beginPath(); g.arc(cx, by, 4, 0, 7); g.fill(); }
   g.save(); if (flip) { g.translate(cv.width, 0); g.scale(-1, 1); }
-  units.forEach((u, k) => { const j = units.length - 1 - k; drawGrid(g, u, 8 + j * step, by - (mode === 'fly' || mode === 'fire' ? 20 : 4) - hs[j] - (units.length - 1 - j) * lift + (mode === 'fly' || mode === 'fire' ? 0 : 6), s); });
+  units.forEach((_, k) => { const j = units.length - 1 - k; drawGrid(g, units[j], 8 + j * step, by - (mode === 'fly' || mode === 'fire' ? 20 : 4) - hs[j] - (units[j].walker ? 0 : (units.length - 1 - j) * lift) + (mode === 'fly' || mode === 'fire' ? 0 : 6), s); });
   g.restore();
   const name = grp ? grp.name : show.length === 1 ? C[show[0]].name : listNames(show);
   return { canvas: cv, name, key };
