@@ -23,7 +23,31 @@ const C = {
   arwen:   { name: 'Arwen',     skin: '#f6e0cf', hair: ['#231c22', '#110d10'], style: 'long', ears: 'elf', hat: 'circlet', hatC: ['#e8ecf4', '#b9c2d4'] },
   elrond:  { name: 'Elrond',    skin: '#efd2b9', hair: ['#2a2224', '#151012'], style: 'long', ears: 'elf', hat: 'circlet', hatC: ['#e8ecf4', '#b9c2d4'] },
   galadriel:{ name: 'Galadriel', skin: '#f8e4d2', hair: ['#f6de88', '#d6b65a'], style: 'long', ears: 'elf', hat: 'circlet', hatC: ['#fff6d8', '#d8c48a'] },
-  thorin:  { name: 'Thorin',    skin: '#efc19c', hair: ['#262021', '#141011'], style: 'none', beard: 'dwarf', beardC: ['#262021', '#141011'], hat: 'dwarfhood', hatC: ['#2f4f86', '#1e3560'], brows: 1 },
+  thorin:  { name: 'Thorin',    skin: '#efc19c', hair: ['#262021', '#141011'], style: 'none', beard: 'dwarf', beardC: ['#262021', '#141011'], hat: 'dwarfhood', hatC: ['#5a8ad8', '#3a68b0'], brows: 1, tassel: 1 },
+  dwalin: { name: 'Dwalin', skin: '#e8b48e', hair: ['#3a5aa8', '#26407e'], style: 'none', beard: 'dwarf', beardC: ['#3a5aa8', '#26407e'], hat: 'dwarfhood', hatC: ['#2e5a2e', '#1e3e1e'], brows: 1 },
+  balin: { name: 'Balin', skin: '#f0c4a0', hair: ['#f0f0ea', '#c8c8c0'], style: 'none', beard: 'dwarf', beardC: ['#f0f0ea', '#c8c8c0'], hat: 'dwarfhood', hatC: ['#b8261e', '#841a14'], brows: 1 },
+  fili: { name: 'Fíli', skin: '#f2c8a4', hair: ['#e8c04e', '#b8902a'], style: 'none', beard: 'dwarf', beardC: ['#e8c04e', '#b8902a'], hat: 'dwarfhood', hatC: ['#3a62b0', '#284a88'], brows: 1 },
+  kili: { name: 'Kíli', skin: '#f2c8a4', hair: ['#d8b040', '#a8822a'], style: 'none', beard: 'dwarf', beardC: ['#d8b040', '#a8822a'], hat: 'dwarfhood', hatC: ['#3a62b0', '#284a88'], brows: 1 },
+  dori: { name: 'Dori', skin: '#e8b892', hair: ['#8a6a4a', '#5e4630'], style: 'none', beard: 'dwarf', beardC: ['#8a6a4a', '#5e4630'], hat: 'dwarfhood', hatC: ['#6a3a8a', '#4a2864'], brows: 1 },
+  nori: { name: 'Nori', skin: '#e8b892', hair: ['#4a3424', '#2e2016'], style: 'none', beard: 'dwarf', beardC: ['#4a3424', '#2e2016'], hat: 'dwarfhood', hatC: ['#7a4a9a', '#563470'], brows: 1 },
+  ori: { name: 'Ori', skin: '#f0c4a0', hair: ['#a87a4a', '#7a5432'], style: 'none', beard: 'dwarf', beardC: ['#a87a4a', '#7a5432'], hat: 'dwarfhood', hatC: ['#8a8a90', '#5e5e66'], brows: 1 },
+  oin: { name: 'Óin', skin: '#e8b48e', hair: ['#a8a8ac', '#78787e'], style: 'none', beard: 'dwarf', beardC: ['#a8a8ac', '#78787e'], hat: 'dwarfhood', hatC: ['#7a5232', '#523620'], brows: 1 },
+  gloin: { name: 'Glóin', skin: '#e8b48e', hair: ['#a8482a', '#7a3018'], style: 'none', beard: 'dwarf', beardC: ['#a8482a', '#7a3018'], hat: 'dwarfhood', hatC: ['#e8e6de', '#b8b4a8'], brows: 1 },
+  bifur: { name: 'Bifur', skin: '#e8b48e', hair: ['#2a2020', '#140f0f'], style: 'none', beard: 'dwarf', beardC: ['#2a2020', '#140f0f'], hat: 'dwarfhood', hatC: ['#e0c040', '#a88e22'], brows: 1 },
+  bofur: { name: 'Bofur', skin: '#ecbc96', hair: ['#6a4a2a', '#4a321c'], style: 'none', beard: 'dwarf', beardC: ['#6a4a2a', '#4a321c'], hat: 'dwarfhood', hatC: ['#e8c84a', '#b0962a'], brows: 1 },
+  bombur: { name: 'Bombur', skin: '#f0c0a0', hair: ['#b8602a', '#844216'], style: 'none', beard: 'dwarf', beardC: ['#b8602a', '#844216'], hat: 'dwarfhood', hatC: ['#a8d098', '#78a068'], brows: 1 },
+  trolls:  { name: 'Bert, Tom and William', special: 'trolls' },
+  stonetrolls: { name: 'The Stone-trolls', special: 'stonetrolls' },
+  goblin:  { name: 'Goblins', skin: '#7a8a5a', hair: ['#2a2a20', '#1a1a14'], style: 'sparse', ears: 'gollum', eye: '#f0c040', fangs: 1 },
+  greatgoblin: { name: 'The Great Goblin', skin: '#6a7a4a', hair: ['#2a2a20', '#1a1a14'], style: 'none', ears: 'gollum', eye: '#f05030', fangs: 1, brows: 1, beardC: ['#2a2a20', '#1a1a14'], hat: 'crown' },
+  bolg:    { name: 'Bolg', skin: '#5a5a40', hair: ['#141010', '#0a0808'], style: 'none', hat: 'orchelm', eye: '#f05030', fangs: 1, brows: 1, beardC: ['#141010', '#0a0808'] },
+  warg:    { name: 'Wargs', special: 'warg' },
+  mirkspider: { name: 'The Spiders of Mirkwood', special: 'spider' },
+  beorn:   { name: 'Beorn', skin: '#e0a880', hair: ['#1a1414', '#0a0808'], style: 'shaggy', beard: 'short', beardC: ['#1a1414', '#0a0808'], brows: 1 },
+  thranduil:{ name: 'Thranduil', skin: '#f6dcc4', hair: ['#f0d070', '#c8a848'], style: 'long', ears: 'elf', hat: 'leafcrown' },
+  bard:    { name: 'Bard', skin: '#e8b892', hair: ['#1e1a1c', '#0e0c0e'], style: 'shaggy', beard: 'stubble', beardC: ['#3a3034', '#2a2226'] },
+  dain:    { name: 'Dáin', skin: '#e8b48e', hair: ['#b04020', '#7a2a14'], style: 'none', beard: 'dwarf', beardC: ['#b04020', '#7a2a14'], hat: 'helm', brows: 1 },
+  arkenstone: { name: 'The Arkenstone', special: 'gem' },
   nazgul:  { name: 'Nazgûl',    hood: 1 },
   faramir: { name: 'Faramir',   skin: '#efc4a0', hair: ['#2e2420', '#1a1412'], style: 'short' },
   eowyn:   { name: 'Éowyn',     skin: '#f6dcc4', hair: ['#f0d070', '#c8a848'], style: 'long' },
@@ -46,7 +70,7 @@ const JOURNEY = {
     'Frodo & Sam': ['frodo', 'sam'], 'Aragorn': ['aragorn'], 'Merry & Pippin': ['merry', 'pippin'], 'Pippin': ['pippin'],
     'Merry with Théoden': ['merry', 'theoden', ['eowyn', '3019 3 10', '3019 3 15.6']], 'Gandalf the Grey': ['gandalf'], 'The Black Riders': ['nazgul'], 'Boromir': ['boromir'],
     'Legolas': ['legolas'], 'Gimli': ['gimli'], 'Gandalf: to Orthanc': ['gandalf'], 'Gandalf the White': ['gandalfW'],
-    'Elrond': ['elrond'], 'Shelob': ['shelob'], 'Tom Bombadil': ['tom'], 'Goldberry': ['goldberry'], 'Galadriel': ['galadriel'], 'Sauron': ['sauron'], 'Saruman': ['saruman'], 'Gríma Wormtongue': ['grima'],
+    'Elrond': ['elrond'], 'The Stone-trolls': ['stonetrolls'], 'Shelob': ['shelob'], 'Tom Bombadil': ['tom'], 'Goldberry': ['goldberry'], 'Galadriel': ['galadriel'], 'Sauron': ['sauron'], 'Saruman': ['saruman'], 'Gríma Wormtongue': ['grima'],
     'Uglúk and the Uruk-hai': ['ugluk', 'uruk'], 'Treebeard': ['treebeard'], 'Gollum': ['gollum'], 'Faramir': ['faramir'],
   },
   return: {
@@ -55,7 +79,10 @@ const JOURNEY = {
     'Frodo\'s last journey': ['frodo'], 'Sam to the Havens and home': ['sam'], 'Merry & Pippin to the Havens': ['merry', 'pippin'],
     'Treebeard at Isengard': ['treebeard'], 'Tom Bombadil and Goldberry': ['tom', 'goldberry'], 'Faramir & Éowyn': ['faramir', 'eowyn'], 'Saruman and Wormtongue': ['saruman', 'grima'],
   },
-  hobbit: { 'Bilbo & Thorin\'s Company': ['bilbo', ['thorin', null, '2941 11 24'], ['gandalf', null, '2941 7 14'], ['gandalf', '2941 11 24', null]], 'Gandalf: the White Council at Dol Guldur': ['gandalf'], 'Gollum': ['gollum'], 'Smaug': ['smaug'] },
+  hobbit: { 'Bilbo & Thorin\'s Company': ['bilbo', ['thorin', null, '2941 11 24'], ['fili', null, '2941 11 24'], ['kili', null, '2941 11 24'], ...['dwalin', 'balin', 'dori', 'nori', 'ori', 'oin', 'gloin', 'bifur', 'bofur', 'bombur'].map(d => [d, null, '2941 11 26']), ['gandalf', null, '2941 7 14'], ['gandalf', '2941 11 24', null]],
+    'Elrond': ['elrond'], 'The Three Trolls': [['trolls', null, '2941 5 26.25'], ['stonetrolls', '2941 5 26.25', null]], 'The Great Goblin': ['greatgoblin', 'goblin'], 'Wargs and Goblins': ['warg', 'goblin'],
+    'Beorn': ['beorn'], 'The Spiders of Mirkwood': ['mirkspider'], 'Thranduil': ['thranduil'], 'Bard': ['bard'], 'Dáin Ironfoot': ['dain'], 'Bolg and the Goblins of the North': ['bolg', 'goblin', 'warg'],
+    'The Dwarves of Erebor': ['dwalin', 'balin', 'dori', 'nori', 'ori', 'oin', 'gloin', 'bifur', 'bofur', 'bombur'], 'The Arkenstone': ['arkenstone'], 'Gandalf: the White Council at Dol Guldur': ['gandalf'], 'Gollum': ['gollum'], 'Smaug': ['smaug'] },
 };
 const P = s => typeof s === 'string' ? WX.parse(s) : s;
 function charsOf(story, name, t) {
@@ -72,14 +99,24 @@ const GROUPS = [
   { name: 'Gandalf and the Three Hunters', frame: '#e8e6de', edge: '#ffffff', emblem: 'star', test: S => S.size === 4 && has(S, 'aragorn', 'legolas', 'gimli', 'gandalfW') },
   { name: 'The Four Hobbits', frame: '#2c3d1c', edge: '#e2c25a', emblem: 'leaf', test: S => S.size === 4 && has(S, ...HOBBITS) },
   { name: 'The Hobbits and Strider', frame: '#2c3d1c', edge: '#c9a14a', emblem: 'leaf', test: S => S.size === 5 && has(S, ...HOBBITS, 'aragorn') },
-  { name: 'In the House of Tom Bombadil', frame: '#1e3a5a', edge: '#f0c830', emblem: 'leaf', test: S => has(S, 'tom') && S.has('frodo') && S.has('goldberry'), order: ['tom', 'goldberry', 'frodo', 'sam', 'merry', 'pippin'] },
+  { name: 'In the House of Tom Bombadil', lead: ['tom', 'goldberry'], frame: '#1e3a5a', edge: '#f0c830', emblem: 'leaf', test: S => has(S, 'tom') && S.has('frodo') && S.has('goldberry'), order: ['tom', 'goldberry', 'frodo', 'sam', 'merry', 'pippin'] },
   { name: 'Tom Bombadil and the Hobbits', frame: '#1e3a5a', edge: '#f0c830', emblem: 'leaf', test: S => has(S, 'tom') && S.has('frodo'), order: ['tom', 'frodo', 'sam', 'merry', 'pippin'] },
   { name: 'Tom Bombadil and Goldberry', frame: '#1e3a5a', edge: '#f0c830', emblem: 'leaf', test: S => S.size === 2 && has(S, 'tom', 'goldberry') },
   { name: 'Gandalf comes to Bombadil', frame: '#1e3a5a', edge: '#ffffff', emblem: 'star', test: S => has(S, 'tom', 'gandalfW') },
   { name: 'In Shelob\'s Lair', frame: '#0c0b10', edge: '#c8c8d0', emblem: 'web', test: S => has(S, 'shelob') && (S.has('frodo') || S.has('sam')), order: ['shelob', 'sam', 'frodo'] },
   { name: 'There and Back Again', frame: '#2c3d1c', edge: '#e0b84e', emblem: 'key', test: S => S.size === 2 && has(S, 'bilbo', 'gandalf') },
-  { name: 'Riddles in the Dark', frame: '#101418', edge: '#b4bc9c', emblem: 'ring', test: S => has(S, 'bilbo', 'gollum') },
-  { name: 'Thorin and Company', frame: '#1e2c48', edge: '#e0b84e', emblem: 'key', test: S => has(S, 'bilbo', 'thorin') },
+  { name: 'Riddles in the Dark', lead: ['bilbo', 'gollum'], frame: '#101418', edge: '#b4bc9c', emblem: 'ring', test: S => has(S, 'bilbo', 'gollum') },
+  { name: 'Roast Mutton', lead: ['trolls', 'bilbo'], frame: '#2a1e14', edge: '#ff8a30', emblem: 'star', test: S => S.has('trolls') && S.has('bilbo'), order: ['trolls', 'bilbo', 'thorin', 'gandalf'] },
+  { name: 'Over Hill and Under Hill', lead: ['greatgoblin', 'thorin'], frame: '#141810', edge: '#7a8a5a', emblem: 'eye', test: S => S.has('greatgoblin') && S.has('thorin'), order: ['greatgoblin', 'goblin', 'thorin', 'dwalin', 'balin', 'fili', 'kili', 'gandalf'] },
+  { name: 'Out of the Frying-Pan', lead: ['warg', 'goblin', 'bilbo'], frame: '#2a1e14', edge: '#ff8a30', emblem: 'star', test: S => S.has('warg') && S.has('thorin'), order: ['warg', 'goblin', 'bilbo', 'thorin', 'gandalf', 'balin', 'dwalin'] },
+  { name: 'Queer Lodgings', lead: ['beorn', 'bilbo', 'gandalf'], frame: '#3a2a18', edge: '#c9a03c', emblem: 'leaf', test: S => S.has('beorn') && S.has('thorin'), order: ['beorn', 'bilbo', 'thorin', 'gandalf'] },
+  { name: 'Yule at Beorn\'s', lead: ['beorn', 'bilbo'], frame: '#3a2a18', edge: '#c9a03c', emblem: 'star', test: S => S.has('beorn') && S.has('bilbo') && !S.has('thorin') },
+  { name: 'Flies and Spiders', lead: ['mirkspider', 'bilbo'], frame: '#0c0b10', edge: '#c8c8d0', emblem: 'web', test: S => S.has('mirkspider') && S.has('bilbo'), order: ['mirkspider', 'bilbo', 'thorin'] },
+  { name: 'The Great Goblin', frame: '#141810', edge: '#7a8a5a', emblem: 'eye', test: S => S.size === 2 && has(S, 'greatgoblin', 'goblin'), show: ['goblin', 'greatgoblin', 'goblin'] },
+  { name: 'Wargs and Goblins', frame: '#141810', edge: '#7a7a82', emblem: 'eye', test: S => S.size === 2 && has(S, 'warg', 'goblin'), show: ['warg', 'goblin', 'warg'] },
+  { name: 'Bolg and the Goblins of the North', frame: '#141810', edge: '#a83020', emblem: 'eye', test: S => S.has('bolg'), show: ['goblin', 'warg', 'bolg', 'goblin', 'warg'] },
+  { name: 'The Dwarves of Erebor', frame: '#1e2c48', edge: '#c8ccd4', emblem: 'key', test: S => has(S, 'balin', 'dwalin', 'bombur') && !S.has('thorin') },
+  { name: 'Thorin and Company', lead: ['thorin', 'bilbo', 'gandalf'], frame: '#1e2c48', edge: '#e0b84e', emblem: 'key', test: S => has(S, 'bilbo', 'thorin'), order: ['dwalin', 'balin', 'fili', 'kili', 'dori', 'nori', 'ori', 'oin', 'gloin', 'thorin', 'bilbo', 'gandalf', 'bifur', 'bofur', 'bombur'] },
   { name: 'The Nine', frame: '#0c0b10', edge: '#7a1d24', emblem: 'eye', test: S => S.size === 1 && S.has('nazgul'), show: ['nazgul', 'nazgul', 'nazgul'] },
   { name: 'The Ring-bearers', frame: '#1b2433', edge: '#f2d06b', emblem: 'ring', test: S => S.size === 2 && has(S, 'frodo', 'bilboOld') },
   { name: 'Captives of the Uruk-hai', frame: '#1e1a18', edge: '#e8e4dc', emblem: 'hand', test: S => has(S, 'merry', 'pippin', 'ugluk'), order: ['uruk', 'merry', 'ugluk', 'pippin'] },
@@ -89,8 +126,8 @@ const GROUPS = [
   { name: 'Faramir and the Ring-bearer', frame: '#24361c', edge: '#7fa86a', emblem: 'star', test: S => has(S, 'frodo', 'sam', 'faramir') },
   { name: 'Théoden, Dernhelm and Merry', frame: '#1f3a24', edge: '#e6c04e', emblem: 'horse', test: S => S.size === 3 && has(S, 'theoden', 'eowyn', 'merry') },
   { name: 'Sharkey and Wormtongue', frame: '#2a2a2e', edge: '#d8d8e2', emblem: 'hand', test: S => S.size === 2 && has(S, 'saruman', 'grima') },
-  { name: 'In the House of Elrond', frame: '#1b2433', edge: '#b9c2d4', emblem: 'star', test: S => S.has('elrond') && S.size >= 3 },
-  { name: 'In Lothlórien', frame: '#2a3a1c', edge: '#f6de88', emblem: 'star', test: S => S.has('galadriel') && S.size >= 3 && !S.has('elrond') },
+  { name: 'In the House of Elrond', lead: ['elrond', 'frodo'], frame: '#1b2433', edge: '#b9c2d4', emblem: 'star', test: S => S.has('elrond') && S.size >= 3 },
+  { name: 'In Lothlórien', lead: ['galadriel'], frame: '#2a3a1c', edge: '#f6de88', emblem: 'star', test: S => S.has('galadriel') && S.size >= 3 && !S.has('elrond') },
   { name: 'Saruman and his prisoner', frame: '#2a2a2e', edge: '#d8d8e2', emblem: 'hand', test: S => S.size === 2 && has(S, 'saruman', 'gandalf') },
 ];
 
@@ -154,6 +191,7 @@ function grid(id) {
   if (c.hat === 'helm') { const m = '#9aa0a8', md = '#6b7078'; rect(5, 2, 8, 2, m); rect(4, 3, 9, 3, m); rect(3, 4, 10, 5, m); set(9, 3, md); set(10, 4, md); set(10, 5, md); rect(2, 6, 11, 6, '#c9a03c'); set(6, 7, md); set(7, 7, md); set(2, 7, b); set(11, 7, bd); set(2, 8, b); set(11, 8, bd); set(2, 9, b); set(11, 9, bd); }
   if (c.hat === 'crown') { const y1 = '#e6c04e', y2 = '#b08a2a'; rect(3, 4, 10, 4, y1); set(3, 3, y1); set(6, 2, y1); set(7, 2, y2); set(6, 3, y1); set(7, 3, y2); set(10, 3, y2); set(6, 4, '#3f8a5a'); set(7, 4, '#3f8a5a'); }
   if (c.hat === 'circlet') { const [a, d] = c.hatC; rect(3, 6, 10, 6, a); set(10, 6, d); set(6, 6, '#bfe3ff'); set(7, 6, '#ffffff'); }
+  if (c.hat === 'leafcrown') { for (let x = 3; x <= 10; x++) set(x, 5, x % 2 ? '#c85a1a' : '#e8a030'); for (const x of [3, 6, 9]) set(x, 4, '#a83a1a'); set(5, 4, '#7a1a3a'); set(8, 4, '#7a1a3a'); }
   if (c.hat === 'tomhat') {       // a tall battered hat with a long blue feather
     const a = '#6a5a4a', d = '#4a3e32'; rect(4, 1, 9, 4, a); set(9, 1, d); set(9, 2, d); set(4, 1, null); rect(2, 5, 11, 5, d); rect(4, 4, 9, 4, '#c9a03c');
     set(10, 3, '#3a7ae0'); set(11, 2, '#3a7ae0'); set(12, 1, '#5a9af0'); set(13, 0, '#5a9af0'); set(11, 3, '#2a5ab0');
@@ -164,7 +202,7 @@ function grid(id) {
   }
   if (c.hat === 'dwarfhood') {
     const [a, d] = c.hatC; rect(5, 2, 8, 2, a); rect(4, 3, 9, 3, a); rect(3, 4, 10, 4, a); rect(2, 5, 11, 6, a); for (let y = 7; y <= 13; y++) { set(2, y, a); set(11, y, d); }
-    set(9, 1, '#c8ccd4'); set(10, 0, '#c8ccd4'); for (let x = 2; x <= 11; x++) set(x, 6, x % 2 ? d : a);
+    if (c.tassel) { set(9, 1, '#c8ccd4'); set(10, 0, '#c8ccd4'); } else set(9, 1, a); for (let x = 2; x <= 11; x++) set(x, 6, x % 2 ? d : a);
   }
   return g;
 }
@@ -188,7 +226,7 @@ const B = {
   arwen:    { robe: '#5a4a7a' },
   elrond:   { robe: '#4a3a5a', belt: '#c8ccd4' },
   galadriel:{ robe: '#f8f6ee', belt: '#e6c04e' },
-  thorin:   { tunic: '#2f4f86', legs: '#3a3028', cloak: '#1e3560', boots: '#2a1f18', belt: '#c9a03c', gear: 'sword' },
+  thorin:   { tunic: '#2f4f86', legs: '#3a3028', cloak: '#5a8ad8', boots: '#2a1f18', belt: '#c9a03c', gear: 'sword' },
   nazgul:   { robe: '#1b1a20', rags: 1, gear: 'sword' },
   faramir:  { tunic: '#4a5a3a', legs: '#3a3428', cloak: '#3f5a34', boots: '#2a1f18', gear: 'sword' },
   eowyn:    { tunic: '#3f6a3a', legs: '#5a4a30', cloak: '#2a4a2a', boots: '#3a2a1a', belt: '#c9a03c', gear: 'sword', mail: 1 },
@@ -197,6 +235,25 @@ const B = {
   ugluk:    { tunic: '#2a2626', legs: '#2a2020', boots: '#141010', gear: 'handshield', mail: 1 },
   uruk:     { tunic: '#2e2a28', legs: '#2a2020', boots: '#141010', gear: 'handshield', mail: 1 },
   gollum:   { gollum: 1 },
+  dwalin: { tunic: '#6a5a46', legs: '#4a3e32', boots: '#2a1f18', cloak: '#2e5a2e', belt: '#c8ccd4', gear: 'axe', belt: '#c9a03c' },
+  balin: { tunic: '#6a5a46', legs: '#4a3e32', boots: '#2a1f18', cloak: '#b8261e', belt: '#c8ccd4' },
+  fili: { tunic: '#6a5a46', legs: '#4a3e32', boots: '#2a1f18', cloak: '#3a62b0', belt: '#c8ccd4', gear: 'bow' },
+  kili: { tunic: '#6a5a46', legs: '#4a3e32', boots: '#2a1f18', cloak: '#3a62b0', belt: '#c8ccd4', gear: 'bow' },
+  dori: { tunic: '#6a5a46', legs: '#4a3e32', boots: '#2a1f18', cloak: '#6a3a8a', belt: '#c8ccd4' },
+  nori: { tunic: '#6a5a46', legs: '#4a3e32', boots: '#2a1f18', cloak: '#7a4a9a', belt: '#c8ccd4' },
+  ori: { tunic: '#6a5a46', legs: '#4a3e32', boots: '#2a1f18', cloak: '#8a8a90', belt: '#c8ccd4' },
+  oin: { tunic: '#6a5a46', legs: '#4a3e32', boots: '#2a1f18', cloak: '#7a5232', belt: '#c8ccd4' },
+  gloin: { tunic: '#6a5a46', legs: '#4a3e32', boots: '#2a1f18', cloak: '#d8d4ca', belt: '#c8ccd4' },
+  bifur: { tunic: '#6a5a46', legs: '#4a3e32', boots: '#2a1f18', cloak: '#e0c040', belt: '#c8ccd4' },
+  bofur: { tunic: '#6a5a46', legs: '#4a3e32', boots: '#2a1f18', cloak: '#e8c84a', belt: '#c8ccd4' },
+  bombur: { tunic: '#6a5a46', legs: '#4a3e32', boots: '#2a1f18', cloak: '#a8d098', belt: '#c8ccd4', fat: 1 },
+  goblin:   { tunic: '#3a3a2e', legs: '#2a2a20', boots: '#1a1a14', gear: 'sword', rags: 0 },
+  greatgoblin: { tunic: '#4a3a2a', legs: '#2a2a20', boots: '#1a1a14', fat: 1, belt: '#7a6a3a' },
+  bolg:     { tunic: '#2a2826', legs: '#2a2020', boots: '#141010', gear: 'axe', mail: 1 },
+  beorn:    { tunic: '#7a5a3a', legs: '#5a4a30', boots: '#3a2a1a', gear: 'axe', fat: 1 },
+  thranduil:{ robe: '#5a7a3a', belt: '#c9a03c' },
+  bard:     { tunic: '#2a3a5a', legs: '#2a2a30', cloak: '#1e2a40', boots: '#1a1a1e', gear: 'bow' },
+  dain:     { tunic: '#8f969e', legs: '#4a3e32', boots: '#2a1f18', belt: '#c9a03c', gear: 'axe', mail: 1 },
   tom:      { tunic: '#2f5fae', legs: '#6a5a40', boots: '#f0c830', belt: '#c9a03c' },
   goldberry:{ robe: '#4a9a5a', belt: '#e6c04e', iris: 0 },
 };
@@ -306,7 +363,53 @@ function spiderGrid(f) {
   set(34, 17, '#e8e0c8'); set(35, 18, '#e8e0c8'); set(32, 18, '#e8e0c8'); set(33, 19, '#e8e0c8');      // fangs
   return g;
 }
+// Bert, Tom and William round their fire with mutton on the spit — or, after the dawn, three stones
+function trollsGrid(f, stone) {
+  const Wd = 64, Ht = 34, g = Array.from({ length: Ht }, () => Array(Wd).fill(null));
+  const set = (x, y, v) => { x = Math.round(x); y = Math.round(y); if (x >= 0 && x < Wd && y >= 0 && y < Ht && v) g[y][x] = v; };
+  const rect = (x0, y0, x1, y1, v) => { for (let y = y0; y <= y1; y++) for (let x = x0; x <= x1; x++) set(x, y, v); };
+  const troll = (x0, sk, sd, bob, face) => {
+    const b = stone ? 0 : bob;
+    rect(x0 + 3, 9 - b, x0 + 14, 26, sk); rect(x0 + 2, 12 - b, x0 + 15, 22, sk); for (let y = 10; y <= 26; y++) set(x0 + 14, y - b, sd);
+    rect(x0 + 5, 2 - b, x0 + 12, 9 - b, sk); set(x0 + 12, 4 - b, sd); rect(x0 + 8 + face, 5 - b, x0 + 9 + face, 8 - b, sd);          // head and great nose
+    set(x0 + 6 + face, 4 - b, stone ? sd : '#2a1a10'); set(x0 + 10 + face, 4 - b, stone ? sd : '#2a1a10'); set(x0 + 4, 4 - b, sk); set(x0 + 13, 4 - b, sd);
+    rect(x0 + 1, 12 - b, x0 + 2, 23 - b, sd); rect(x0 + 15, 12 - b, x0 + 16, 23 - b, sd);                                           // long arms
+    rect(x0 + 4, 27, x0 + 7, 32, sd); rect(x0 + 10, 27, x0 + 13, 32, sd); rect(x0 + 3, 33, x0 + 8, 33, sd); rect(x0 + 9, 33, x0 + 14, 33, sd);
+    if (stone) for (let k = 0; k < 9; k++) set(x0 + 3 + (k * 5) % 11, 6 + (k * 7) % 22, '#6a7a4a');                                // moss and a bird's perch
+    else { rect(x0 + 3, 16, x0 + 14, 17, '#5a3a22'); }
+  };
+  if (stone) { troll(1, '#8a8a88', '#6a6a68', 0, 0); troll(22, '#909090', '#6e6e6c', 0, 1); troll(44, '#868682', '#666664', 0, -1); set(9, 1, '#4a3a2a'); set(10, 0, '#4a3a2a'); return g; }
+  troll(22, '#7a7a5a', '#58583e', (f + 2) % 2, 0); troll(1, '#8a6a50', '#5e4634', f % 2, 1); troll(44, '#6a5a48', '#4a3e30', (f + 1) % 2, -1);
+  // the fire, the spit and the mutton between them
+  rect(24, 30, 39, 32, '#4a3220'); for (let i = 0; i < 6; i++) { const x = 26 + i * 2, h = 4 + ((i * 3 + f) % 4); for (let y = 0; y < h; y++) set(x + (y % 2) * (f % 2 ? 1 : -1) * 0, 29 - y, y < 2 ? '#ffb030' : y < 4 ? '#ff6a18' : '#c02010'); }
+  rect(22, 18, 41, 18, '#5a3a22'); rect(28, 16, 35, 21, '#a8584a'); rect(29, 17, 34, 20, '#c87a5a'); set(23, 19, '#5a3a22'); set(40, 19, '#5a3a22');
+  return g;
+}
+// a Warg: a great grey wolf with yellow eyes
+function wargGrid(f) {
+  const Wd = 30, Ht = 18, g = Array.from({ length: Ht }, () => Array(Wd).fill(null)), a = f % 2;
+  const set = (x, y, v) => { if (x >= 0 && x < Wd && y >= 0 && y < Ht) g[y][x] = v; };
+  const rect = (x0, y0, x1, y1, v) => { for (let y = y0; y <= y1; y++) for (let x = x0; x <= x1; x++) set(x, y, v); };
+  const w0 = '#5a5a62', w1 = '#3a3a42', w2 = '#7a7a82';
+  rect(5, 5, 21, 11, w0); rect(6, 4, 19, 4, w1); for (let x = 6; x <= 19; x += 2) set(x, 3, w1);
+  rect(20, 2, 27, 8, w0); rect(26, 6, 29, 8, w2); set(23, 1, w1); set(25, 1, w1); set(24, 4, '#f0d040'); rect(27, 9, 29, 9, '#f0ece0');
+  rect(0, 4, 5, 6, w1); set(0, 3, w1);
+  for (const [x, ph] of [[6, 0], [9, 1], [17, 1], [20, 0]]) rect(x + (ph === a ? 1 : 0), 12, x + 1 + (ph === a ? 1 : 0), 16 - (ph === a ? 1 : 0), w1);
+  return g;
+}
+// the Arkenstone: the Heart of the Mountain, a great white gem shot with many colours
+function gemGrid(f) {
+  const Wd = 14, Ht = 14, g = Array.from({ length: Ht }, () => Array(Wd).fill(null));
+  const P = ['#ffffff', '#e8f4ff', '#d0e8ff', '#f8e0ff', '#e0fff0', '#fff4d0'];
+  for (let y = 1; y <= 12; y++) { const w = 6 - Math.abs(y - 6.5) * 0.9; for (let x = Math.round(7 - w); x <= Math.round(6 + w); x++) g[y][x] = P[(x * 3 + y * 5 + f) % P.length]; }
+  g[3][5] = '#ffffff'; g[4][6] = '#ffffff'; g[2 + f % 3][8] = '#ffffff';
+  return g;
+}
 function figGrid(id, f) {
+  if (C[id].special === 'trolls') return trollsGrid(f, false);
+  if (C[id].special === 'stonetrolls') return trollsGrid(0, true);
+  if (C[id].special === 'warg') return wargGrid(f);
+  if (C[id].special === 'gem') return gemGrid(f);
   if (C[id].special === 'dragon') return hoardGrid(f);
   if (C[id].special === 'spider') return spiderGrid(f);
   if (C[id].special === 'ent') return entGrid(f);
@@ -356,8 +459,9 @@ function figGrid(id, f) {
       rect(5, R(12 - upL), 7, R(12 - upL), boot || '#3a2a1a'); rect(10, R(12 - upR), 12, R(12 - upR), boot || '#3a2a1a');
       if (boot) { set(6, R(11 - upL), boot); set(7, R(11 - upL), boot); set(10, R(11 - upR), boot); set(11, R(11 - upR), boot); }
     }
-    const t = b.tunic, td = shade(t, 0.8);
-    rect(6, R(0), 11, R(7), t); rect(5, R(1), 12, R(2), t); for (let r = 1; r <= 7; r++) set(11, R(r), td);
+    const t = b.tunic, td = shade(t, 0.8), fx = b.fat ? 1 : 0;
+    rect(6 - fx, R(0), 11 + fx, R(7), t); rect(5 - fx, R(1), 12 + fx, R(2), t); for (let r = 1; r <= 7; r++) set(11 + fx, R(r), td);
+    if (b.fat) rect(4, R(3), 13, R(5), t);
     if (b.mail) for (let r = 1; r <= 7; r++) for (let x = 6; x <= 11; x++) if ((x + r) % 2) set(x, R(r), shade(t, 0.82));
     rect(6, R(5), 11, R(5), b.belt || shade(t, 0.55));
     rect(4, R(2 + armL), 5, R(5 + armL), t); set(4, R(6 + armL), skin); set(5, R(6 + armL), skin);
@@ -505,7 +609,7 @@ function eagleGrid(ids, f) {
   if (fell) { for (let i = 0; i < 8; i++) rectp(g, 33 + i, by + 1 - i, 35 + i, by + 2 - i, b0); rectp(g, 41, by - 10, 46, by - 6, hd); setp(g, 44, by - 9, '#ff3b2f'); rectp(g, 47, by - 8, 48, by - 7, bk); }
   else { rectp(g, 32, by - 4, 39, by + 2, hd); rectp(g, 40, by - 3, 42, by - 1, bk); setp(g, 42, by, bk); setp(g, 37, by - 3, '#16110d'); rectp(g, 30, by - 2, 33, by + 3, hd); }
   rectp(g, 18, by + 8, 19, by + 9, bk); rectp(g, 26, by + 8, 27, by + 9, bk);                      // talons
-  ids.slice(0, 2).forEach((id, i) => paste(g, upper(id, 0), 9 + i * 8, by - (BY + 6) + 1));
+  ids.slice(0, 3).forEach((id, i) => paste(g, upper(id, 0), 6 + i * 7, by - (BY + 6) + 1 + (i === 2 ? 1 : 0)));
   wing(28, 3, up, fell ? '#3e3946' : '#946a3c', fell ? '#18151c' : '#4e3418');                    // near wing, over the riders' laps
   return g;
 }
@@ -514,15 +618,15 @@ function eagleGrid(ids, f) {
 function boatGrid(ids, f, kind) {
   const n = ids.length, bob = f === 1 ? -1 : f === 3 ? 1 : 0;
   if (kind === 'barrel') {
-    const W2 = 14 * n + 4, g = blank(W2, BY + 14);
-    ids.forEach((id, i) => {
-      const ox = 2 + i * 14, b = (i + f) % 2 ? 1 : 0;
-      paste(g, figGrid(id, 0).map((row, y) => y <= BY + 1 ? row : row.map(() => null)), ox - 2, b - 1);
-      rectp(g, ox, BY + 2 + b, ox + 13, BY + 10 + b, '#8a5a30'); rectp(g, ox + 1, BY + 2 + b, ox + 12, BY + 2 + b, '#6a4222');
-      for (const y of [BY + 4, BY + 8]) rectp(g, ox, y + b, ox + 13, y + b, '#4a4a50');
-      setp(g, ox + 12, BY + 5 + b, '#a8784a');
+    const rows = n > 7 ? 2 : 1, perRow = Math.ceil(n / rows), W2 = 14 * perRow + 10, g = blank(W2, BY + 14 + (rows - 1) * 6);
+    // the back row first, so the front row's barrels cover it
+    ids.map((id, i) => [id, i]).sort((p, q) => (q[1] < perRow) - (p[1] < perRow)).forEach(([id, i]) => {
+      const row = i < perRow ? 1 : 0, col = i % perRow, ox = 2 + col * 14 + (rows > 1 && !row ? 7 : 0), oy = rows > 1 ? row * 6 : 0, b = ((i + f) % 2 ? 1 : 0) + oy;
+      paste(g, figGrid(id, 0).map((row, y) => y <= BY + 1 ? row : row.map(() => null)), ox - 3, b - 1);
+      rectp(g, ox + 1, BY + 2 + b, ox + 10, BY + 10 + b, '#8a5a30'); rectp(g, ox, BY + 4 + b, ox + 11, BY + 8 + b, '#8a5a30'); rectp(g, ox + 2, BY + 2 + b, ox + 9, BY + 2 + b, '#6a4222'); for (const x of [ox + 3, ox + 7]) rectp(g, x, BY + 3 + b, x, BY + 10 + b, '#7a4e28');
+      for (const y of [BY + 4, BY + 8]) rectp(g, ox, y + b, ox + 11, y + b, '#4a4a50');
     });
-    rectp(g, 0, BY + 11, W2 - 1, BY + 11, '#9ac4e0'); for (let x = f % 2; x < W2; x += 3) setp(g, x, BY + 12, '#cfe6f4');
+    const wy = BY + 11 + (rows - 1) * 6; rectp(g, 0, wy, W2 - 1, wy, '#9ac4e0'); for (let x = f % 2; x < W2; x += 3) setp(g, x, wy + 1, '#cfe6f4');
     return g;
   }
   const big = kind !== 'boat', W2 = Math.max(30, 9 * n + 18) + (big ? 6 : 0), deck = BY + 6 + (big ? 6 : 0), g = blank(W2, deck + 9);
@@ -554,8 +658,17 @@ function groupOf(ids, t) {
   return ids.length > 1 || S.has('nazgul') ? GROUPS.find(G => G.test(S) && (!G.when || (t >= P(G.when[0]) && t <= P(G.when[1])))) : null;
 }
 // folk who never sit a horse: in a riding party they go on foot beside it
-const ON_FOOT = new Set(['tom', 'goldberry', 'treebeard', 'gollum', 'ugluk', 'uruk', 'shelob', 'smaug', 'sauron']);
+const ON_FOOT = new Set(['tom', 'goldberry', 'treebeard', 'gollum', 'ugluk', 'uruk', 'shelob', 'smaug', 'sauron', 'trolls', 'stonetrolls', 'goblin', 'greatgoblin', 'bolg', 'warg', 'mirkspider', 'arkenstone']);
 function icon(ids, color, t, f = 0, mode = 'walk', flip = false) {
+  if (ids.length > 1 && ids.includes('arkenstone')) {
+    const base = icon(ids.filter(i => i !== 'arkenstone'), color, t, f, mode, flip), k = base.key + '|ark' + f;
+    if (ICACHE[k]) return ICACHE[k];
+    const cv = document.createElement('canvas'), g = cv.getContext('2d'), gs = 3, gw = 16 * gs; cv.width = Math.max(base.canvas.width, gw + 8); cv.height = base.canvas.height + gw * 0.6;
+    g.drawImage(base.canvas, (cv.width - base.canvas.width) / 2, cv.height - base.canvas.height);
+    const rg = g.createRadialGradient(cv.width / 2, gw / 2, 2, cv.width / 2, gw / 2, gw * 0.75); rg.addColorStop(0, 'rgba(255,255,255,0.95)'); rg.addColorStop(1, 'rgba(210,225,255,0)'); g.fillStyle = rg; g.fillRect(0, 0, cv.width, gw * 1.2);
+    drawGrid(g, gemGrid(f), cv.width / 2 - gw / 2, 0, gs);
+    return ICACHE[k] = { canvas: cv, name: base.name, key: base.key + '|ark' };
+  }
   if (mode === 'ride' && ids.every(i => ON_FOOT.has(i))) mode = 'walk';
   const S = new Set(ids), grp = groupOf(ids, t);
   const key = (grp ? grp.name : '') + '|' + [...S].sort().join(',') + '|' + color + '|' + mode + (flip ? '|w' : '');
@@ -564,7 +677,7 @@ function icon(ids, color, t, f = 0, mode = 'walk', flip = false) {
   const cv = document.createElement('canvas'), g = cv.getContext('2d'), s = 3, fw = FIGW * s;
   const show = grp && grp.show ? grp.show : grp && grp.order ? grp.order.filter(i => S.has(i)).concat([...S].filter(i => !grp.order.includes(i))) : [...S];
   const hOf = id => (figGrid(id, 0).length + 2) * s, fh = Math.max(...show.map(hOf)), wOf = id => (figGrid(id, 0)[0].length + 2) * s;
-  if (show.length === 1 && (C[show[0]].special === 'dragon' || C[show[0]].special === 'spider')) {
+  if (show.length === 1 && ['dragon', 'spider', 'trolls', 'stonetrolls', 'warg', 'gem'].includes(C[show[0]].special)) {
     const id = show[0]; cv.width = wOf(id) + 8; cv.height = hOf(id) + 6;
     if (C[id].special === 'spider') {        // her web, fine silver strands behind her
       const cx = cv.width / 2, cy = cv.height * 0.45, rx = cv.width * 0.5, ry = cv.height * 0.5;
@@ -572,6 +685,7 @@ function icon(ids, color, t, f = 0, mode = 'walk', flip = false) {
       for (let k = 0; k < 10; k++) { const a = k / 10 * Math.PI * 2; g.beginPath(); g.moveTo(cx, cy); g.lineTo(cx + Math.cos(a) * rx, cy + Math.sin(a) * ry); g.stroke(); }
       for (const q of [0.3, 0.55, 0.8, 1]) { g.beginPath(); for (let k = 0; k <= 10; k++) { const a = k / 10 * Math.PI * 2; g.lineTo(cx + Math.cos(a) * rx * q, cy + Math.sin(a) * ry * q); } g.stroke(); }
     }
+    if (C[id].special === 'gem') { const rg = g.createRadialGradient(cv.width / 2, cv.height / 2, 2, cv.width / 2, cv.height / 2, cv.width * 0.7); rg.addColorStop(0, 'rgba(255,255,255,0.9)'); rg.addColorStop(1, 'rgba(200,220,255,0)'); g.fillStyle = rg; g.fillRect(0, 0, cv.width, cv.height); }
     drawFigure(g, id, 4, 2, s, f);
     return ICACHE[key + f] = { canvas: cv, name: C[id].name, key };
   }
@@ -581,7 +695,13 @@ function icon(ids, color, t, f = 0, mode = 'walk', flip = false) {
     g.fillStyle = rg; g.fillRect(0, 0, cv.width, cv.height); drawFigure(g, 'sauron', 15, 8, s, f);
     return ICACHE[key + f] = { canvas: cv, name: 'The Eye of Sauron', key };
   }
-  const two = show.length > 5, back = two ? show.slice(0, Math.floor(show.length / 2)) : [], front = two ? show.slice(back.length) : show;
+  let two = show.length > 5, back = two ? show.slice(0, Math.floor(show.length / 2)) : [], front = two ? show.slice(back.length) : show;
+  if (two && grp && grp.lead) {
+    // the scene's leading figures stand front and centre, the rest of the company behind and around them
+    const lead = grp.lead.filter(i => S.has(i)), rest = show.filter(i => !lead.includes(i)), nf = Math.max(lead.length, Math.ceil(show.length / 2));
+    const side = rest.slice(0, nf - lead.length), half = Math.floor(side.length / 2);
+    front = side.slice(0, half).concat(lead, side.slice(half)); back = rest.slice(nf - lead.length);
+  }
   // figures overlap their neighbours by a share of their own width (the great ones take more room)
   const xsOf = row => { const xs = [0]; for (let k = 1; k < row.length; k++) xs.push(xs[k - 1] + Math.round(wOf(row[k - 1]) * (C[row[k - 1]].special ? 0.8 : 0.56))); return xs; };
   const step = Math.round(fw * 0.56), rowW = row => row.length ? xsOf(row)[row.length - 1] + wOf(row[row.length - 1]) : 0;
@@ -622,23 +742,24 @@ function mounted(ids, S, grp, color, f, mode, flip, key) {
     const rest = show.filter(i => i !== 'legolas' && i !== 'gimli' && !ON_FOOT.has(i)); if (S.has('legolas') && S.has('gimli')) units.push(['legolas', 'gimli']); else { if (S.has('legolas')) rest.push('legolas'); if (S.has('gimli')) rest.push('gimli'); }
     units = units.concat(rest.map(i => [i])).map((u, k) => horseGrid(u, (f + k) % 4, k)).concat(walkers.map((i, k) => Object.assign(figGrid(i, (f + k + 1) % 4).slice(), { walker: true })));
   } else if (S.has('smaug')) units = [dragonGrid(f, mode === 'fire')];
-  else if (mode === 'fly') { for (let i = 0; i < show.length; i += 2) units.push(eagleGrid(show.slice(i, i + 2), (f + i / 2) % 4)); }
+  else if (mode === 'fly') { const per = show.length > 6 ? 3 : 2; for (let i = 0; i < show.length; i += per) units.push(eagleGrid(show.slice(i, i + per), (f + i / per) % 4)); }
   else if (mode === 'boat') {
     // the three grey boats of Lórien: Aragorn with Frodo and Sam, Boromir with Merry and Pippin, Legolas and Gimli
     const crews = [['aragorn', 'frodo', 'sam'], ['boromir', 'merry', 'pippin'], ['legolas', 'gimli']].map(c => c.filter(i => S.has(i))).filter(c => c.length);
-    const left = show.filter(i => !crews.flat().includes(i)); for (let i = 0; i < left.length; i += 3) crews.push(left.slice(i, i + 3));
+    const left = show.filter(i => !crews.flat().includes(i)), per = left.length > 8 ? 5 : 3; for (let i = 0; i < left.length; i += per) crews.push(left.slice(i, i + per));
     units = crews.map((c, k) => boatGrid(c, (f + k) % 4, 'boat'));
   } else units = [boatGrid(show, f, mode === 'barrel' ? 'barrel' : mode === 'sea' ? 'sea' : 'blackship')];
-  const s = 3, ws = units.map(u => (u[0].length + 2) * s), hs = units.map(u => (u.length + 2) * s);
-  const step = units.length > 1 ? Math.round(Math.max(...ws) * (mode === 'fly' ? 0.5 : 0.62)) : 0, lift = units.length > 1 ? 10 : 0;
+  const s = 3, ws = units.map(u => (u[0].length + 2) * s), hs = units.map(u => (u.length + 2) * s), many = units.length > 5;
+  const step = units.length > 1 ? Math.round(Math.max(...ws) * (many ? (mode === 'fly' ? 0.42 : 0.32) : mode === 'fly' ? 0.5 : 0.62)) : 0, lift = units.length > 1 ? (many ? 12 : 10) : 0;
+  const liftOf = j => units[j].walker ? 0 : many ? ((units.length - 1 - j) % 2) * lift : (units.length - 1 - j) * lift;
   const cv = document.createElement('canvas'), g = cv.getContext('2d');
-  cv.width = Math.max(...ws) + step * (units.length - 1) + 16; cv.height = Math.max(...hs) + lift * (units.length - 1) + (mode === 'fly' || mode === 'fire' ? 26 : 12);
+  cv.width = Math.max(...ws) + step * (units.length - 1) + 16; cv.height = Math.max(...hs) + (many ? lift : lift * (units.length - 1)) + (mode === 'fly' || mode === 'fire' ? 26 : 12);
   const cx = cv.width / 2, by = cv.height - 8;
   // ground under a rider: a small token; under a flyer: its shadow far below
   if (mode === 'ride') { g.fillStyle = grp ? grp.frame : color; g.strokeStyle = OUT; g.lineWidth = 3; g.beginPath(); g.ellipse(cx, by, cv.width / 2 - 4, 7, 0, 0, 7); g.fill(); g.stroke(); }
   if (mode === 'fly' || mode === 'fire') { g.fillStyle = 'rgba(0,0,0,0.28)'; g.beginPath(); g.ellipse(cx, by, cv.width * 0.3, 5, 0, 0, 7); g.fill(); g.fillStyle = color; g.beginPath(); g.arc(cx, by, 4, 0, 7); g.fill(); }
   g.save(); if (flip) { g.translate(cv.width, 0); g.scale(-1, 1); }
-  units.forEach((_, k) => { const j = units.length - 1 - k; drawGrid(g, units[j], 8 + j * step, by - (mode === 'fly' || mode === 'fire' ? 20 : 4) - hs[j] - (units[j].walker ? 0 : (units.length - 1 - j) * lift) + (mode === 'fly' || mode === 'fire' ? 0 : 6), s); });
+  units.forEach((_, k) => { const j = units.length - 1 - k; drawGrid(g, units[j], 8 + j * step, by - (mode === 'fly' || mode === 'fire' ? 20 : 4) - hs[j] - liftOf(j) + (mode === 'fly' || mode === 'fire' ? 0 : 6), s); });
   g.restore();
   const name = grp ? grp.name : show.length === 1 ? C[show[0]].name : listNames(show);
   return { canvas: cv, name, key };
@@ -707,6 +828,21 @@ function beast(k, f) {
     for (let y = 8; y <= 12; y++) { setp(g, 2 - (y > 10 ? 1 : 0), y + a - 1, b1); setp(g, 8 + (y > 10 ? 1 : 0), y - a, b1); }
     rectp(g, 2, 17, 4, 18 - a, b1); rectp(g, 6, 17, 8, 18 - (1 - a), b1);
     return g;
+  }
+  if (k === 'bat') {
+    const g = blank(10, 6), b0 = '#1a1418'; rectp(g, 4, 2, 5, 4, b0); setp(g, 4, 1, b0); setp(g, 5, 1, b0); setp(g, 4, 3, '#ff3b2f');
+    for (let x = 0; x <= 3; x++) { setp(g, x, a ? 1 + Math.abs(x - 2) : 4 - Math.abs(x - 2), b0); setp(g, 9 - x, a ? 1 + Math.abs(x - 2) : 4 - Math.abs(x - 2), b0); }
+    return g;
+  }
+  if (k === 'bolg') {           // Bolg of the North: a great black-mailed orc chieftain
+    const g = blank(13, 18), sk = '#4a4a34', ar = '#2a2a30';
+    rectp(g, 4, 0, 8, 2, ar); setp(g, 6, 0, '#a83020'); rectp(g, 4, 3, 8, 5, sk); setp(g, 7, 4, '#f05030'); setp(g, 5, 5, '#f0ece0'); setp(g, 8, 5, '#f0ece0');
+    rectp(g, 2, 6, 10, 12, ar); for (let y = 6; y <= 12; y++) for (let x = 2; x <= 10; x++) if ((x + y) % 2) setp(g, x, y, '#3a3a42');
+    rectp(g, 3, 13, 4, 17 - a, '#1a1a1e'); rectp(g, 8, 13, 9, 17 - (1 - a), '#1a1a1e'); rectp(g, 11, 2 + a, 11, 10 + a, '#6b4a2a'); rectp(g, 11, 1 + a, 12, 3 + a, '#9aa0a8');
+    return g;
+  }
+  if (k === 'thorin') {         // Thorin's charge from the Gate: the King under the Mountain in mail, with Orcrist
+    return Object.assign(soldier('dwarf', f, true), {}).map((row, y) => row.map((v, x) => y <= 3 && v === KIND.dwarf.helm ? '#5a8ad8' : v === KIND.dwarf.beard ? '#262021' : v));
   }
   if (k === 'eagle' || k === 'nazgul') {
     const g = blank(18, 10), ea = k === 'eagle', b0 = ea ? '#7a5430' : '#2c2832', b1 = ea ? '#4e3418' : '#18151c', hd = ea ? '#d0a252' : '#3a3540';
@@ -777,7 +913,7 @@ function battle(b, f) {
   b.sides.forEach((side, si) => {
     const dir = si === 0 ? 1 : -1, list = [];
     for (const [k, n] of side.units) for (let i = 0; i < n; i++) list.push(k);
-    const big = list.filter(k => ['mumak', 'troll', 'ent', 'huorn', 'beorn'].includes(k)), fly = list.filter(k => k === 'eagle' || k === 'nazgul'), foot = list.filter(k => !big.includes(k) && !fly.includes(k));
+    const big = list.filter(k => ['mumak', 'troll', 'ent', 'huorn', 'beorn', 'bolg'].includes(k)), fly = list.filter(k => k === 'eagle' || k === 'nazgul' || k === 'bat'), foot = list.filter(k => !big.includes(k) && !fly.includes(k));
     const place = [];
     // foot and riders in ranks, front rank nearest the clash
     foot.forEach((k, i) => { const col = Math.floor(i / 3), row = i % 3; place.push([k, mid - dir * (18 + col * 15 + (row % 2) * 7), ground - 30 + row * 9, i < 3]); });
@@ -787,7 +923,7 @@ function battle(b, f) {
     const reach = Math.max(30, ...place.map(p => Math.abs(p[1] - mid)));
     banner(g, side.banner, Math.max(8, Math.min(W2 - 8, mid - dir * (reach + 16))), 22, s, f + si, dir < 0);
     for (const [k, x, y, front] of place) {
-      const gr = ['mumak', 'troll', 'ent', 'huorn', 'beorn', 'rider', 'warg'].includes(k) ? beast(k, f + (x | 0) % 2) : soldier(k, f + (x | 0) % 2, front);
+      const gr = ['mumak', 'troll', 'ent', 'huorn', 'beorn', 'rider', 'warg', 'bolg', 'thorin'].includes(k) ? beast(k, f + (x | 0) % 2) : soldier(k, f + (x | 0) % 2, front);
       const w = (gr[0].length + 2) * s, h = (gr.length + 2) * s, bob = front && f % 2 ? dir * 2 : 0;
       g.save(); if (dir < 0) { g.translate(x + w / 2 + bob, 0); g.scale(-1, 1); g.translate(-w / 2, 0); } else g.translate(x - w / 2 + bob, 0);
       drawGrid(g, gr, 0, y - h + (gr.length > 14 ? 10 : 0), s); g.restore();
