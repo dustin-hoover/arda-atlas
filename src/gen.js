@@ -155,14 +155,31 @@ function peakAt(X, Y, pix) {
   for (let k = 0; k < PEAKS.length; k++) {
     const p = PEAKS[k];
     const dx = X - p.x, dy = Y - p.y;
-    if (dx > p.r || dx < -p.r || dy > p.r || dy < -p.r) continue;
+    const reach = p.reach || p.r;
+    if (dx > reach || dx < -reach || dy > reach || dy < -reach) continue;
     const d = Math.sqrt(dx * dx + dy * dy) / p.r;
-    if (d >= 1) continue;
+    if (d >= reach / p.r) continue;
     let prof;
     if (p.kind === 'volcano') {
-      prof = Math.pow(1 - d, 1.35);
-      if (d < 0.09) prof -= (0.09 - d) * 2.2;
-      prof *= 1 + 0.08 * noise(X * 3, Y * 3);
+      // Orodruin (LR VI.3): a huge base about two thirds of the mountain's height, its shoulders broad and
+      // scarred, and on it a steep ash-cone half as high again, with a fiery crater at the top
+      const base = 0.66 * Math.pow(sat((1 - d) / 0.62), 1.25), cone = 0.36 * Math.pow(Math.max(0, 1 - d / 0.2), 1.15);
+      prof = base + cone;
+      if (d < 0.035) prof -= (0.035 - d) * 4.5;
+      prof *= 1 + 0.06 * noise(X * 3, Y * 3) * sat(d * 4);
+    } else if (p.kind === 'knee') {
+      // the Hill of Guard: seven terraces, one under each circle of Minas Tirith, each a hundred feet above the
+      // last, on a shoulder of Mindolluin that runs back west into the mountain
+      const dm = d * p.r * MI, R0 = 60, step = 95, lift = p.h / 7.6, edge = R0 + 7 * step;
+      let terr = 0;
+      if (dm < edge) { terr = p.h - lift * 7; for (let k = 0; k < 7; k++) terr += lift * sstep(R0 + k * step + 16, R0 + k * step, dm); }
+      else terr = (p.h - lift * 7) * sstep(p.r * MI, edge, dm);
+      let ridge = 0;
+      if (p.to) {
+        const vx = p.to[0] - p.x, vy = p.to[1] - p.y, L = Math.hypot(vx, vy), t = (dx * vx + dy * vy) / (L * L);
+        if (t > -0.01 && t < 1) { const q = Math.abs(dx * vy - dy * vx) / L, w = 0.2 + 0.7 * Math.max(0, t); ridge = p.h * (1 + 2.2 * Math.max(0, t)) * Math.exp(-Math.pow(q / w, 2)); }
+      }
+      prof = Math.max(terr, ridge) / p.h;
     } else if (p.kind === 'lonely') {
       // the Lonely Mountain: a steep central massif and six great spurs; the River Running leaves the
       // Front Gate down the valley between the two southern spurs

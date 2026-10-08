@@ -437,7 +437,7 @@ function buildLabels() {
     if (p.kind === 'seamount') continue;
     const dx = (p.x - G.X0) * MI, dz = -(p.y - G.Y0) * MI, d = Math.hypot(dx, dz);
     if (d < 200 || d > 110000) continue;
-    list.push({ name: p.name, x: dx, z: dz, d, rank: 2, peak: p.h });
+    list.push({ name: p.name, x: dx, z: dz, d, rank: 2, peak: p.h, top: window.GEN ? GEN.evaluate(p.x, p.y, 0.05) : 0 });
   }
   list.sort((a, b) => a.rank - b.rank || a.d - b.d);
   G.labels = list.slice(0, 18);
@@ -451,7 +451,7 @@ const v3 = () => new THREE.Vector3();
 function updateLabels() {
   const els = $('#glabels').children, w = innerWidth, h = innerHeight, p = v3();
   G.labels.forEach((L, i) => {
-    const y = (G.farH ? (G.farH(L.x, L.z) ?? 0) : 0) + (L.peak ? 40 : 25) - (L.d * L.d) / (2 * 6371000);
+    const y = ((G.farH && G.farH(L.x, L.z)) ?? L.top ?? 0) + (L.peak ? 40 : 25) - (L.d * L.d) / (2 * 6371000);
     p.set(L.x, y, L.z).project(G.camera);
     const el = els[i];
     if (p.z > 1 || p.x < -1.1 || p.x > 1.1 || p.y < -1.1 || p.y > 1.1) { el.hidden = true; return; }
@@ -714,13 +714,14 @@ async function open(o) {
   resize();
   G.o = o; G.t = o.t; setRate(0); G.X0 = o.X; G.Y0 = o.Y; G.px = 0; G.pz = 0; G.yaw = (o.heading || 0) * Math.PI / 180; G.pitch = 0.02; G.fly = 0;
   G.seaLevel = 0; G.nearH = null; G.farH = null; G.wx = null; G.grassAt = null; G.nearCanvas = null; if (G.grass) G.grass.count = 0; G.spawnX = 0; G.spawnZ = 0; G.camera.position.set(0, 0, 0);
-  for (const k of ['far', 'sea', 'nearGroup']) if (G[k]) { G.scene.remove(G[k]); G[k] = null; }
+  for (const k of ['far', 'sea', 'nearGroup', 'marks']) if (G[k]) { G.scene.remove(G[k]); G[k] = null; }
   closeHall(); G.nearOff = null; clearTravellers(); TRAV.last = -1e9;
   G.active = true;
   if (o.interior) { openHall(o); $('#gload').hidden = true; loop(); return; }
   loop();
   $('#gload').textContent = 'Surveying the horizon…';
   await loadFar(o.X, o.Y);
+  G.marks = W3far(o); G.scene.add(G.marks);
   updateAtmos(true); buildLabels();
   $('#gload').textContent = 'Growing the grass…';
   await loadNear(o.X, o.Y, 0, 0);
@@ -756,7 +757,8 @@ function loop(ts = 0) {
   const lim = 55000; G.px = Math.max(-lim, Math.min(lim, G.px)); G.pz = Math.max(-lim, Math.min(lim, G.pz));
   const gy = groundAt(G.px, G.pz);
   const eye = gy + (G.hall ? 1.45 : 1.7) + G.fly;
-  G.camera.position.set(G.px, G.camera.position.y ? G.camera.position.y + (eye - G.camera.position.y) * Math.min(1, dt * 12) : eye, G.pz);
+  const cy0 = G.camera.position.y;   // ease over small steps; jump when the ground under us changes a lot (new patch, slow device)
+  G.camera.position.set(G.px, cy0 && Math.abs(eye - cy0) < 40 ? cy0 + (eye - cy0) * Math.min(1, dt * 12) : eye, G.pz);
   const cp = Math.cos(G.pitch);
   G.camera.lookAt(G.px + Math.sin(G.yaw) * cp, G.camera.position.y + Math.sin(G.pitch), G.pz - Math.cos(G.yaw) * cp);
   G.sky.position.copy(G.camera.position);
@@ -767,6 +769,7 @@ function loop(ts = 0) {
   if (!G.hall && G.wx) G.t += realDt * RATES[G.rateI] / 86400;
   G.skyMat.uniforms.time.value += dt;
   if (G.nearGroup && G.nearGroup.userData.update) G.nearGroup.userData.update(dt, ts / 1000);
+  if (G.marks && !G.hall) G.marks.userData.update(dt, ts / 1000);
   if (G.hall) G.hall.update(dt, ts / 1000);
   G.grassTime.value += dt;
   if (!G.hall && G.grassAt && Math.hypot(G.px - G.grassAt.x, G.pz - G.grassAt.z) > 12) placeGrass();

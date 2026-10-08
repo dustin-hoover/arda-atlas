@@ -121,7 +121,7 @@ function build(GEO) {
   return {
     main: { W, H, x0: X0, y1: Y1, res: RES, ch },
     glob: { W: GW, H: GH, ch: [boxBlur(G0, GW, GH, 1, 1), G1, boxBlur(G2, GW, GH, 1, 1), boxBlur(G3, GW, GH, 1, 1)] },
-    peaks: GEO.PEAKS.map(p => ({ x: p.x, y: p.y, h: p.h, r: p.r, kind: p.kind, gate: p.gate })),
+    peaks: GEO.PEAKS.map(p => ({ x: p.x, y: p.y, h: p.h, r: p.r, kind: p.kind, gate: p.gate, to: p.to, reach: p.reach })),
     flats: GEO.PLACES.filter(p => p[7] && p[7].r >= 0.3 && p[7].culture !== 'minastirith').map(p => ({ x: p[2], y: p[3], r: p[7].r * 1.6 + 0.3, lift: p[7].culture === 'hobbit' ? 30 : 20, sea: p[1] === 'port' ? 1 : 0 })),
     numenor: GEO.NUMENOR,
     vectors: {

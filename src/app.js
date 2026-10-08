@@ -230,7 +230,7 @@ const style = {
     src('roads', FC(roadFeats)), src('walls', FC(wallFeats)), src('palantiri', FC(palFeats)), src('beacons', FC([beaconLine])),
     src('realms', FC(realmFeats('TA3018'))), src('realm-labels', FC(realmLabels('TA3018'))), src('admin', FC(adminFeats)), src('admin-labels', FC(adminLabels)),
     src('peoples', FC(peopleFeats)), src('people-labels', FC(peopleLabels)), src('grid', GRID.lines), src('grid-labels', GRID.labels),
-    src('buildings', FC(buildingFeats())), src('journeys', FC([])), src('journey-pos', FC([])), src('battles', FC([])), src('measure', FC([])), src('isobars', FC([])), src('hl', FC([])), src('lights', FC([])),
+    src('buildings', FC(buildingFeats())), src('journeys', FC([])), src('journey-pos', FC([])), src('battles', FC([])), src('landmarks', FC([])), src('measure', FC([])), src('isobars', FC([])), src('hl', FC([])), src('lights', FC([])),
   ]),
   layers: [
     { id: 'bg', type: 'background', paint: { 'background-color': '#0b1a2a' } },
@@ -270,6 +270,8 @@ const style = {
     { id: 'palantiri-pts', type: 'symbol', source: 'palantiri', filter: ['==', ['geometry-type'], 'Point'], layout: { visibility: 'none', 'icon-image': 'i-stone', 'icon-allow-overlap': true, 'text-field': ['get', 'name'], 'text-font': TXT_IT, 'text-size': 12, 'text-offset': [0, 1.1], 'text-anchor': 'top', 'text-optional': true }, paint: { 'text-color': '#d9d0ff', 'text-halo-color': HALO, 'text-halo-width': 1.2 } },
     { id: 'hl', type: 'symbol', source: 'hl', layout: { visibility: 'none', 'text-field': ['get', 't'], 'text-font': TXT_UIB, 'text-size': 26, 'text-allow-overlap': true }, paint: { 'text-color': ['match', ['get', 't'], 'L', '#ff8a6a', '#8ecbff'], 'text-halo-color': 'rgba(0,0,0,0.6)', 'text-halo-width': 1.5 } },
     { id: 'isobar-labels', type: 'symbol', source: 'isobars', layout: { visibility: 'none', 'symbol-placement': 'line', 'symbol-spacing': 300, 'text-field': ['to-string', ['get', 'p']], 'text-font': TXT_UI, 'text-size': 11 }, paint: { 'text-color': '#e6f2f7', 'text-halo-color': 'rgba(0,0,0,0.6)', 'text-halo-width': 1.2 } },
+    // Orodruin and Minas Tirith drawn large: the Mountain's fire follows the story (updateLandmarks)
+    { id: 'landmarks-art', type: 'symbol', source: 'landmarks', minzoom: 3.2, layout: { 'icon-image': ['get', 'icon'], 'icon-size': ['interpolate', ['linear'], ['zoom'], 3.2, 0.8, 6, 1.3, 9, 2, 12, 2.6], 'icon-anchor': 'bottom', 'icon-allow-overlap': true, 'icon-ignore-placement': true } },
   ].concat([1, 2, 3, 4, 5].map(r => ({
     id: 'places-' + r, type: 'symbol', source: 'places', minzoom: RANK_MINZ[r], filter: ['all', ['==', ['get', 'rank'], r], ['!', ['in', ['get', 'type'], ['literal', ['bridge', 'ford', 'beacon']]]]],
     layout: { 'icon-image': ['concat', 'i-', ['get', 'type']], 'icon-size': r === 1 ? 0.8 : r === 2 ? 0.72 : 0.62, 'icon-allow-overlap': r <= 2, 'text-field': ['get', 'name'], 'text-font': r === 1 ? TXT_UIB : r === 2 ? TXT_UIM : TXT_UI, 'text-size': r === 1 ? 16 : r === 2 ? 14.5 : 13, 'text-anchor': 'left', 'text-offset': [0.85, 0], 'text-optional': true, 'symbol-sort-key': r },
@@ -550,6 +552,31 @@ function nearestPlace(X, Y) {
   return { p: best, d: bd };
 }
 const BATTLES = GEO.BATTLES.map((b, i) => ({ ...b, i, t0: WX.parse(b.from), t1: WX.parse(b.to) }));
+// The slider is weighted by what happens: each party on the road, each event and each battle widens a
+// day, so the crowded last month gets room and the months of rest in Rivendell or Lórien shrink. Playback keeps an even pace in slider
+// terms, so it hurries through the quiet months and slows for the road and the battles.
+const WARP = {};
+function warpOf(story) {
+  if (WARP[story]) return WARP[story];
+  const st = GEO.STORIES[story], a = WX.parse(st.start), b = WX.parse(st.end), n = Math.ceil(b - a), w = new Float64Array(n);
+  const moved = new Float64Array(n);
+  for (const j of JOURNEYS[story] || []) for (let d = 0; d < n; d++) {
+    const p = partyAt(j, a + d), q = partyAt(j, a + d + 1);
+    if (p && q) moved[d] += Math.min(1, Math.hypot(q.X - p.X, q.Y - p.Y) / 8);
+  }
+  for (const e of EVENTS[story] || []) { const d = Math.floor(WX.parse(e[0]) - a); if (d >= 0 && d < n) moved[d] += 0.6; }
+  for (const bt of BATTLES) if (bt.story === story) for (let d = Math.max(0, Math.floor(bt.t0 - a)); d < Math.min(n, Math.ceil(bt.t1 - a)); d++) moved[d] += 1;
+  for (let d = 0; d < n; d++) w[d] = 0.15 + Math.min(5, moved[d]);
+  const C = new Float64Array(n + 1); for (let d = 0; d < n; d++) C[d + 1] = C[d] + w[d];
+  return WARP[story] = { a, b, n, w, C, total: C[n] };
+}
+const warpTo = (story, t) => { const W = warpOf(story), x = Math.max(0, Math.min(W.n, t - W.a)), d = Math.min(W.n - 1, Math.floor(x)); return (W.C[d] + W.w[d] * (x - d)) / W.total; };
+function warpFrom(story, v) {
+  const W = warpOf(story), c = Math.max(0, Math.min(1, v)) * W.total; let lo = 0, hi = W.n;
+  while (hi - lo > 1) { const m = (lo + hi) >> 1; if (W.C[m] <= c) lo = m; else hi = m; }
+  return Math.min(W.b, W.a + lo + (c - W.C[lo]) / W.w[lo]);
+}
+const warpRate = (story, t) => { const W = warpOf(story), d = Math.max(0, Math.min(W.n - 1, Math.floor(t - W.a))); return W.total / W.n / W.w[d]; };
 const battleOn = () => BATTLES.filter(b => b.story === S.story && S.t >= b.t0 - 0.15 && S.t <= b.t1 + 0.15);
 function updateBattles() {
   if (!mapLoaded || !window.AVATARS) return;
@@ -561,6 +588,24 @@ function updateBattles() {
   }
   S.battles = feats.length; map.getSource('battles').setData(FC(feats));
 }
+// Mount Doom: dormant in Bilbo's day (it woke in 2954), burning through the War, erupting as the Ring is unmade
+function doomHeat(t) {
+  if (S.story === 'hobbit') return 0;
+  const end = WX.parse('3019 3 25.4');
+  return t >= end && t < end + 2 ? 2 : t < end + 12 ? 1 : 0;
+}
+const LANDMARK_ART = [['doom', 840.1, -554], ['city', 725.1, -599.1]];
+function updateLandmarks() {
+  if (!mapLoaded || !window.AVATARS) return;
+  const f = Math.floor(performance.now() / 260) % 4, heat = doomHeat(S.t), feats = [];
+  for (const [kind, X, Y] of LANDMARK_ART) {
+    const fr = kind === 'doom' ? f : f >> 1, id = 'lm:' + kind + fr + ':' + heat;
+    if (!map.hasImage(id)) { const cv = AVATARS.landmark(kind, fr, heat); map.addImage(id, cv.getContext('2d').getImageData(0, 0, cv.width, cv.height), { pixelRatio: 2 }); }
+    feats.push(pt(X, Y, { icon: id }));
+  }
+  map.getSource('landmarks').setData(FC(feats));
+}
+setInterval(() => { if (!document.hidden) updateLandmarks(); }, 260);
 // battles, flyers and the Eye keep moving while the clock is stopped
 setInterval(() => { if (document.hidden || S.playing) return; if (S.battles) updateBattles(); if (S.idleAnim) updateJourneys(true); }, 170);
 function showBattle(b) {
@@ -643,7 +688,7 @@ function setTime(t, fromSlider) {
   S.t = Math.max(a, Math.min(b, t));
   const P = WX.parts(S.t);
   $('#tdate').innerHTML = `${esc(P.name)} <em>S.R. ${P.sr} · T.A. ${P.ta} · ${WX.fmtTime(P.hour)}</em>`;
-  if (!fromSlider) $('#slider').value = ((S.t - a) / (b - a) * 1000).toFixed(1);
+  if (!fromSlider) $('#slider').value = (warpTo(S.story, S.t) * 1000).toFixed(1);
   // ticker: latest event and where the Ring-bearer is
   const evs = EVENTS[S.story].map(e => ({ t: WX.parse(e[0]), text: e[1] })).filter(e => e.t <= S.t + 0.5);
   const ev = evs[evs.length - 1];
@@ -661,12 +706,10 @@ function setTime(t, fromSlider) {
   if (cardState && cardState.kind === 'place') refreshCardWeather();
 }
 function buildTicks() {
-  const st = GEO.STORIES[S.story], a = WX.parse(st.start), b = WX.parse(st.end);
-  $('#ticks').innerHTML = EVENTS[S.story].map(e => `<i style="left:${((WX.parse(e[0]) - a) / (b - a) * 100).toFixed(2)}%" title="${esc(e[1])}"></i>`).join('');
+  $('#ticks').innerHTML = EVENTS[S.story].map(e => `<i style="left:${(warpTo(S.story, WX.parse(e[0])) * 100).toFixed(2)}%" title="${esc(e[1])}"></i>`).join('');
 }
 $('#slider').addEventListener('input', e => {
-  const st = GEO.STORIES[S.story], a = WX.parse(st.start), b = WX.parse(st.end);
-  setTime(a + (b - a) * (+e.target.value / 1000), true);
+  setTime(warpFrom(S.story, +e.target.value / 1000), true);
 });
 $('#story').addEventListener('change', e => { S.story = e.target.value; buildTicks(); setTime(WX.parse(GEO.STORIES[S.story].start)); if (panelName === 'journeys') openPanel('journeys'); });
 $('#speed').addEventListener('change', e => { S.speed = +e.target.value; });
@@ -677,7 +720,7 @@ function tick(ts) {
   const dt = Math.min(0.1, (ts - lastFrame) / 1000); lastFrame = ts;
   const st = GEO.STORIES[S.story];
   if (S.t >= WX.parse(st.end)) { togglePlay(false); return; }
-  setTime(S.t + dt * S.speed);
+  setTime(S.t + dt * S.speed * warpRate(S.story, S.t));
   if (S.follow) { const j = (JOURNEYS[S.story] || []).find(j => j.name === S.follow); const p = j && partyAt(j, S.t); if (p) map.easeTo({ center: ll(p.X, p.Y), duration: 0 }); }
 }
 requestAnimationFrame(tick);
@@ -1154,7 +1197,7 @@ async function openGround(X, Y, name, opt = {}) {
     heading = (Math.atan2(p.X - X, p.Y - Y) * 180 / Math.PI + 360) % 360;
   }
   if (opt.heading != null) heading = opt.heading;
-  window.GROUND.open({ X, Y, heading, t: S.t, title: opt.title || name || (np.d < 3 ? 'Near ' + np.p.name : biomeAt(X, Y).name), sub: fmtXY(X, Y) + ' of Hobbiton', run, weatherAt, staticAt, places: PL, peaks: GEO.PEAKS, travellers: window.AVATARS ? travellersAt : null, battles: battlesAt, onExit: t => { if (t) setTime(t); } });
+  window.GROUND.open({ X, Y, heading, t: S.t, title: opt.title || name || (np.d < 3 ? 'Near ' + np.p.name : biomeAt(X, Y).name), sub: fmtXY(X, Y) + ' of Hobbiton', run, weatherAt, staticAt, places: PL, peaks: GEO.PEAKS, travellers: window.AVATARS ? travellersAt : null, battles: battlesAt, heat: doomHeat, onExit: t => { if (t) setTime(t); } });
 }
 function hashAng(s) { let h = 0; for (const c of s) h = (h * 31 + c.charCodeAt(0)) | 0; return (h % 628) / 100; }
 
@@ -1232,7 +1275,7 @@ setTimeout(() => $('#loader').remove(), 1200);
 await sleep(1600);
 if (map.getZoom() < 2) map.flyTo({ center: ll(451, -315), zoom: 4.0, pitch: 25, bearing: 0, duration: 6500, curve: 1.3, essential: true });
 
-window.ARDA = { map, S, setTime, GEO, showPlace, openGround, openHalls, travellersAt, PL, PLN, flyToXY, setWx, setGroup, setBase, openPanel, playTour, TOURS };
+window.ARDA = { map, S, setTime, GEO, showPlace, openGround, openHalls, travellersAt, PL, PLN, flyToXY, setWx, setGroup, setBase, openPanel, playTour, TOURS, warpTo };
 document.title = document.title;
 })().catch(e => {
   console.error(e);

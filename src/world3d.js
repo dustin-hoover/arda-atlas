@@ -838,3 +838,102 @@ function ereborMore(o) {
   spawns.door = { x: px1 - 4, z: (pz0 + pz1) / 2, yaw: -Math.PI / 2 };
   return o;
 }
+
+/* ---------------- landmarks seen from afar ----------------
+   Orodruin's fire and smoke, and Minas Tirith beyond the near patch: both stand over the plains for scores of
+   miles. Heights come from the same generator as the terrain, less the earth's curve like the far terrain. */
+function smokeTexture() {
+  const cv = document.createElement('canvas'); cv.width = cv.height = 128; const g = cv.getContext('2d');
+  for (let k = 0; k < 9; k++) {
+    const x = 64 + Math.cos(k * 2.4) * 22 * (k % 3) / 2, y = 64 + Math.sin(k * 2.4) * 18 * (k % 3) / 2, r = 30 + (k % 4) * 6;
+    const gr = g.createRadialGradient(x, y, 0, x, y, r); gr.addColorStop(0, 'rgba(255,255,255,0.55)'); gr.addColorStop(1, 'rgba(255,255,255,0)');
+    g.fillStyle = gr; g.fillRect(0, 0, 128, 128);
+  }
+  const t = new THREE.CanvasTexture(cv); t.colorSpace = THREE.SRGBColorSpace; return t;
+}
+function W3far(o) {
+  const grp = new THREE.Group(), ups = [], R = 6371000, GN = window.GEN;
+  const rel = (X, Y) => ({ x: (X - G.X0) * MI, z: -(Y - G.Y0) * MI });
+  const drop = (x, z) => (x * x + z * z) / (2 * R);
+  const hAt = (X, Y) => GN.evaluate(X, Y, 0.01);
+  const heatAt = () => (o.heat ? o.heat(G.t) : 1);
+  // ---- Orodruin ----
+  const DX = 840.1, DY = -554, dp = rel(DX, DY), dd = Math.hypot(dp.x, dp.z);
+  if (dd < 230000) {
+    let top = 0; for (let k = 0; k < 8; k++) top = Math.max(top, hAt(DX + Math.cos(k) * 0.12, DY + Math.sin(k) * 0.12));
+    const y0 = top - drop(dp.x, dp.z);
+    // beyond the far terrain the mountain itself is drawn from its true profile
+    if (Math.max(Math.abs(dp.x), Math.abs(dp.z)) > 52000) {
+      const pts = [];
+      for (let i = 0; i <= 26; i++) { const r = i / 26 * 7; pts.push(new THREE.Vector2(r * MI, Math.max(...[0, 1, 2, 3].map(a => hAt(DX + Math.cos(a * 1.57) * r, DY + Math.sin(a * 1.57) * r))) - 25 - drop(dp.x, dp.z))); }
+      const m = new THREE.Mesh(new THREE.LatheGeometry(pts, 32), new THREE.MeshStandardMaterial({ color: 0x2c2420, roughness: 1 }));
+      m.position.set(dp.x, 0, dp.z); grp.add(m);
+    }
+    const fire = glow('rgba(255,210,110,1)', 'rgba(255,60,10,0)', 900); fire.position.set(dp.x, y0 + 160, dp.z); grp.add(fire);
+    const naurP = rel(840.3, -552.6), naur = glow('rgba(255,170,80,1)', 'rgba(255,60,10,0)', 160);
+    naur.position.set(naurP.x, hAt(840.3, -552.6) - drop(naurP.x, naurP.z) + 15, naurP.z); grp.add(naur);
+    // rivers of fire down the cone and over the shoulders
+    const lavaMat = new THREE.MeshBasicMaterial({ color: 0xff6a1a, side: THREE.DoubleSide }), streams = [];
+    for (let k = 0; k < 7; k++) {
+      const a0 = k * 0.9 + 0.4, len = (k < 3 ? 2.4 : 4.6) + (k % 2) * 0.8, P = [], N = 44;
+      for (let i = 0; i <= N; i++) {
+        const r = 0.14 + i / N * len, a = a0 + Math.sin(i * 0.37 + k) * 0.12, X = DX + Math.cos(a) * r, Y = DY + Math.sin(a) * r, q = rel(X, Y);
+        P.push(new THREE.Vector3(q.x, hAt(X, Y) - drop(q.x, q.z) + 6, q.z));
+      }
+      const pos = [], w = 45 + k * 6;
+      for (let i = 0; i < N; i++) {
+        const a = P[i], b = P[i + 1], nx = -(b.z - a.z), nz = b.x - a.x, l = Math.hypot(nx, nz) || 1, ox = nx / l * w / 2, oz = nz / l * w / 2;
+        pos.push(a.x - ox, a.y, a.z - oz, a.x + ox, a.y, a.z + oz, b.x + ox, b.y, b.z + oz, a.x - ox, a.y, a.z - oz, b.x + ox, b.y, b.z + oz, b.x - ox, b.y, b.z - oz);
+      }
+      const geo = new THREE.BufferGeometry(); geo.setAttribute('position', new THREE.Float32BufferAttribute(pos, 3));
+      const m = new THREE.Mesh(geo, lavaMat); m.userData.big = k >= 3; grp.add(m); streams.push(m);
+    }
+    // the plume: puffs rising from the crater, drifting west, taller and darker in the War and vast in the eruption
+    const tex = smokeTexture(), puffs = [];
+    for (let i = 0; i < 72; i++) { const s = new THREE.Sprite(new THREE.SpriteMaterial({ map: tex, transparent: true, depthWrite: false, fog: false, color: 0x4a4440 })); s.userData.ph = (i * 0.618) % 1; s.userData.j = Math.sin(i * 12.9) ; grp.add(s); puffs.push(s); }
+    // seen from afar the plume is drawn larger and kept dark, so the Mountain marks the east wherever you stand in Mordor
+    const fogMix = Math.min(0.35, dd / 220000), boost = 1 + dd / 30000, cLow = new THREE.Color(), cHigh = new THREE.Color();
+    ups.push((dt, t) => {
+      const heat = heatAt(), H = [1400, 5000, 12000][heat] * Math.pow(boost, 0.75), spread = [3000, 9000, 9000][heat], night = 1 - Math.min(1, G.hemi.intensity / 0.9);
+      cHigh.set(0x4a443e).lerp(G.scene.fog.color, fogMix).multiplyScalar(0.35 + 0.65 * (1 - night));
+      cLow.set(heat ? 0x8a3418 : 0x4a4440).lerp(cHigh, 0.35);
+      const shown = [16, 44, 72][heat];
+      puffs.forEach((s, i) => { s.visible = i < shown; });
+      for (const s of puffs) {
+        if (!s.visible) continue;
+        // a column first, then bending away on the wind (in the eruption it towers straight up before it spreads)
+        const age = (s.userData.ph + t * (heat === 2 ? 0.02 : 0.008)) % 1, j = s.userData.j, bend = Math.pow(age, heat === 2 ? 2.4 : 1.4);
+        const cap = heat === 2 ? Math.pow(Math.max(0, age - 0.6) / 0.4, 1.5) * 9000 : 0;      // the eruption's column spreads into a cloud at the top
+        s.position.set(dp.x - bend * spread + j * 600 * age + Math.cos(j * 9) * cap, y0 + 80 + age * H - cap * 0.15, dp.z - bend * spread * 0.25 + j * 900 * age + Math.sin(j * 9) * cap);
+        s.scale.setScalar((350 + age * (heat === 2 ? 6500 : 2600)) * (0.8 + 0.3 * Math.abs(j)) * boost);
+        s.material.opacity = Math.pow(Math.sin(Math.PI * Math.min(1, age * 1.15)), 0.6) * (heat ? 0.85 : 0.45);
+        s.material.color.copy(cLow).lerp(cHigh, Math.min(1, age * (heat ? 2.2 : 1)));
+      }
+      const fl = 0.75 + 0.25 * Math.sin(t * 7) * Math.sin(t * 3.1);
+      fire.visible = heat > 0; fire.scale.setScalar((heat === 2 ? 3200 : 900) * fl * (1 + night) * Math.sqrt(boost));
+      fire.material.opacity = heat === 2 ? 1 : Math.min(1, 0.35 + night);
+      naur.visible = heat > 0; naur.material.opacity = 0.5 + 0.5 * fl;
+      lavaMat.color.setRGB(1, 0.35 + 0.15 * fl, 0.08); for (const m of streams) m.visible = heat > 0 && (heat === 2 || !m.userData.big);
+    });
+  }
+  // ---- Minas Tirith, when it lies beyond the near patch ----
+  const CX = 725.1, CY = -599.1, cp = rel(CX, CY), cd = Math.hypot(cp.x, cp.z);
+  if (cd > 1500 && cd < 140000) {
+    const city = new THREE.Group(), white = new THREE.MeshStandardMaterial({ color: 0xeeebe4, roughness: 0.6, side: THREE.DoubleSide }), roofs = new THREE.MeshStandardMaterial({ color: 0xd8d4cc, roughness: 0.8, side: THREE.DoubleSide });
+    const lvl = k => hAt(CX + (60 + k * 95 - 20) / MI, CY), d0 = drop(cp.x, cp.z), a0 = Math.PI / 2 - 0.62 * Math.PI, aL = 1.24 * Math.PI;
+    for (let k = 0; k < 7; k++) {
+      const r = 60 + k * 95, y = lvl(k), below = k < 6 ? lvl(k + 1) : y - 25, h = y - below + 18 + k * 2;
+      const wall = new THREE.Mesh(new THREE.CylinderGeometry(r, r, h, 48, 1, true, a0, aL), white); wall.position.set(0, below + h / 2 - d0, 0); city.add(wall);
+      const ring = new THREE.Mesh(new THREE.RingGeometry(k ? r - 95 : 0.1, r, 48, 1, -0.62 * Math.PI, aL).rotateX(-Math.PI / 2), roofs); ring.position.y = y + 9 - d0; city.add(ring);
+    }
+    const ytop = lvl(0);
+    const tower = new THREE.Mesh(new THREE.CylinderGeometry(7, 9, 92, 12).translate(0, 46, 0), white); tower.position.set(-16, ytop + 10 - d0, 0); city.add(tower);
+    const cit = new THREE.Mesh(new THREE.BoxGeometry(60, 16, 44).translate(0, 8, 0), white); cit.position.set(-10, ytop - d0, 0); city.add(cit);
+    const pr = new THREE.Shape([new THREE.Vector2(0, ytop + 8), new THREE.Vector2(600, lvl(6) + 14), new THREE.Vector2(600, lvl(6) - 10), new THREE.Vector2(0, lvl(6) - 10)]);
+    const prow = new THREE.Mesh(new THREE.ExtrudeGeometry(pr, { depth: 18, bevelEnabled: false }).translate(0, -d0, -9), white); city.add(prow);
+    city.position.set(cp.x, 0, cp.z); grp.add(city);
+    ups.push(() => { city.visible = !G.nearOff || Math.max(Math.abs(cp.x - G.nearOff.x), Math.abs(cp.z - G.nearOff.z)) > 2100; });
+  }
+  grp.userData.update = (dt, t) => ups.forEach(f => f(dt, t));
+  return grp;
+}

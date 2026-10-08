@@ -133,3 +133,17 @@ Phase 1 is porting `gen.js` to run server-side and caching tiles as PMTiles.
   story time follows the real clock (uncapped dt), travellers glide on their velocities between 170 ms refreshes, and the
   map takes the time back on exit (`onExit(t)`).
 - Stories open at their `start` (the slider begins at the left).
+- Battles within ARMY_NEAR raise their units as sprite ranks (`buildArmy`); the Muster adds tents. Special towers
+  (Orthanc, Barad-dûr, Morgul, Ecthelion) are `solids`: travellers and the camera are pushed to their foot.
+- The slider is warped by activity (`warpOf`: parties moving, events, battles per day), so rests in Rivendell and
+  Lórien take little track; playback runs at an even slider pace (`warpRate`). Ticks use the same warp.
+
+## Orodruin and Minas Tirith
+- Terrain: PEAKS kind 'volcano' is base (2/3 of h) + steep ash-cone; kind 'knee' (Hill of Guard) is seven terraces
+  at the city's arc radii (60 + 95k m) plus a ridge `to` Mindolluin (`reach` widens the peak's search box; rasters.js
+  passes `to`/`reach` to the worker).
+- Map: `landmarks-art` layer (AVATARS.landmark 'doom' / 'city'); `doomHeat(t)` is 0 in The Hobbit (dormant until
+  2954), 1 in the War, 2 for two days from the Ring's end (3019 3 25.4).
+- Ground: `W3far` (world3d.js) adds the crater fire, lava ribbons, the plume (scaled up with distance so it marks the
+  east from all over Mordor), a lathe of the true profile when Orodruin lies beyond the far terrain, and a far model
+  of Minas Tirith shown while the city is outside the near patch. GROUND.open takes `heat`.

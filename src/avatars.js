@@ -960,6 +960,61 @@ function unitCanvas(kind, f, flip) {
   const g = cv.getContext('2d'); if (flip) { g.translate(cv.width, 0); g.scale(-1, 1); } drawGrid(g, gr, 0, 0, s);
   return UCACHE[key] = cv;
 }
-return { C, B, JOURNEY, GROUPS, charsOf, icon, dataURL, drawHead, drawFigure, battle, unitCanvas };
+/* ---- landmarks drawn on the map: Orodruin smoking (its fire follows the story) and Minas Tirith ---- */
+// Mount Doom, f = frame 0..3, heat 0 (dormant) .. 1 (the War) .. 2 (erupting as the Ring is unmade)
+function doomGrid(f, heat) {
+  const Wd = 46, Ht = 44, g = blank(Wd, Ht), cx = 23;
+  const ash = ['#4d3f36', '#3b302a', '#2a221e'], hot = f % 2 ? '#ffb040' : '#ff7a1c';
+  // the smoke: puffs rising from the crater and drifting away west, more and darker as the fire wakes
+  const puffs = heat < 0.5 ? 3 : heat < 1.5 ? 6 : 9;
+  for (let k = 0; k < puffs; k++) {
+    const age = ((k + f / 4) / puffs), y = 15 - age * (heat > 1.5 ? 15 : 12), x = cx - age * (heat > 1.5 ? 6 : 14) + Math.sin(k * 2.1) * 2, r = 2 + age * (heat > 1.5 ? 5 : 3.5);
+    const col = heat > 1.5 && age < 0.35 ? '#7a2a12' : age < 0.5 ? '#4a423c' : '#625a52';
+    for (let yy = -r; yy <= r; yy++) for (let xx = -r * 1.3; xx <= r * 1.3; xx++) if ((xx / 1.3) ** 2 + yy * yy <= r * r) setp(g, x + xx, y + yy, col);
+  }
+  // the ash-cone on its great base: steep above, broad scarred shoulders below
+  for (let y = 15; y < Ht; y++) {
+    const hw = y < 29 ? 2.5 + (y - 15) * 0.55 : 10.2 + (y - 29) * 0.85 + (y > 31 ? 1.5 : 0);
+    for (let x = Math.round(cx - hw); x <= Math.round(cx + hw); x++) setp(g, x, y, x < cx - hw * 0.35 ? ash[0] : x > cx + hw * 0.4 ? ash[2] : ash[1]);
+  }
+  rectp(g, cx - 2, 14, cx + 2, 15, heat > 0.3 ? '#ffd060' : '#5a4a40');
+  if (heat > 0.3) {
+    setp(g, cx - 1, 13, hot); setp(g, cx + 1, 13, hot); if (heat > 1.5) { rectp(g, cx - 1, 9, cx + 1, 12, f % 2 ? '#ffe080' : '#ff9a30'); setp(g, cx - 3, 11 - f % 2, '#ffb040'); setp(g, cx + 3, 10 + f % 2, '#ff7a1c'); }
+    // rivers of fire down the flanks
+    const streams = heat > 1.5 ? [[-1, 0.9], [1, 0.7], [0.3, 1.4], [-0.6, 1.6]] : [[1, 0.7], [-0.4, 1.3]];
+    for (const [dir, slope] of streams) { let x = cx + dir; for (let y = 16; y < Ht - 2; y++) { x += dir * slope * 0.5 + Math.sin(y * 0.9 + dir) * 0.4; setp(g, x, y, (y + f) % 5 === 0 ? '#ffd060' : y > 34 ? '#c03a10' : hot); } }
+    // the Sammath Naur: a red mouth in the cone's eastern side
+    rectp(g, cx + 5, 22, cx + 6, 23, f % 2 ? '#ff9a30' : '#e05010');
+  }
+  return g;
+}
+// Minas Tirith: seven white circles stepped up the knee of Mindolluin, the prow of rock and the White Tower
+function cityGrid(f) {
+  const Wd = 46, Ht = 40, g = blank(Wd, Ht), cx = 24;
+  // Mindolluin behind, snow on its head
+  for (let y = 2; y < Ht - 4; y++) { const t = y - 2; for (let x = Math.round(11 - t * 0.28 - (t > 14 ? (t - 14) * 0.2 : 0)); x <= Math.round(11 + t * 0.9); x++) setp(g, x, y, y < 6 + (x % 3 === 0 ? 1 : 0) ? '#eef2f6' : x < 11 - t * 0.05 ? '#6c7480' : '#56606c'); }
+  for (let k = 0; k < 7; k++) {
+    const y1 = Ht - 1 - k * 3.6, y0 = y1 - 3, hw = 20 - k * 2.5;
+    for (let y = Math.round(y0); y <= Math.round(y1); y++) for (let x = Math.round(cx - hw); x <= Math.round(cx + hw); x++) setp(g, x, y, y === Math.round(y0) ? '#ffffff' : (x + k) % 4 === 0 && y === Math.round(y0) + 2 ? '#8a8478' : '#e8e4da');
+    rectp(g, Math.round(cx + hw), Math.round(y0), Math.round(cx + hw), Math.round(y1), '#b8b2a6');
+  }
+  // the prow of rock that cleaves the circles, and the Great Gate below it
+  for (let y = 15; y < Ht - 1; y++) { setp(g, cx, y, '#cfcac0'); setp(g, cx + 1, y, '#b0aa9e'); }
+  rectp(g, cx - 1, Ht - 3, cx + 2, Ht - 1, '#2e2a24');
+  // the Citadel and the White Tower of Ecthelion, its pinnacle shining
+  rectp(g, cx - 4, 12, cx + 4, 14, '#f4f2ec');
+  rectp(g, cx - 1, 2, cx + 1, 12, '#fbfaf6'); setp(g, cx + 1, 6, '#c8c4ba'); setp(g, cx + 1, 9, '#c8c4ba'); setp(g, cx, 1, '#ffffff'); setp(g, cx, 0, f % 2 ? '#ffffff' : '#e8f0ff');
+  // the banner of the Stewards (a plain white standard) above the tower
+  rectp(g, cx + 2, 0, cx + 4 + (f % 2), 1, '#f6f6f2');
+  return g;
+}
+const LCACHE = {};
+function landmark(kind, f, heat = 1) {
+  const key = kind + f + ':' + heat; if (LCACHE[key]) return LCACHE[key];
+  const gr = kind === 'doom' ? doomGrid(f, heat) : cityGrid(f), s = 3, cv = document.createElement('canvas');
+  cv.width = (gr[0].length + 2) * s; cv.height = (gr.length + 2) * s; drawGrid(cv.getContext('2d'), gr, 0, 0, s);
+  return LCACHE[key] = cv;
+}
+return { C, B, JOURNEY, GROUPS, charsOf, icon, dataURL, drawHead, drawFigure, battle, unitCanvas, landmark };
 })();
 if (typeof self !== 'undefined') self.AVATARS = AVATARS;
