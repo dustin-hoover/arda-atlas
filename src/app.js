@@ -347,7 +347,8 @@ await callWorker(WXW, { type: 'wxinit', ...WXB });
 
 /* ---------------- state ---------------- */
 const S = {
-  story: 'war', t: WX.parse(GEO.STORIES.war.now) + 0.5 / 24 * 24 * 0 + 0.083, playing: false, speed: 0.25,
+  story: 'war', t: WX.parse(GEO.STORIES.war.start),   // every story opens at its beginning
+  playing: false, speed: 0.25,
   wxMaster: true, era: 'TA3018', base: 0, layers: {}, wx: { clouds: true, radar: false, temp: false, pressure: false, wind: false, night: false },
   measure: null, pick: null,
 };
@@ -667,7 +668,7 @@ $('#slider').addEventListener('input', e => {
   const st = GEO.STORIES[S.story], a = WX.parse(st.start), b = WX.parse(st.end);
   setTime(a + (b - a) * (+e.target.value / 1000), true);
 });
-$('#story').addEventListener('change', e => { S.story = e.target.value; buildTicks(); setTime(WX.parse(GEO.STORIES[S.story].now)); if (panelName === 'journeys') openPanel('journeys'); });
+$('#story').addEventListener('change', e => { S.story = e.target.value; buildTicks(); setTime(WX.parse(GEO.STORIES[S.story].start)); if (panelName === 'journeys') openPanel('journeys'); });
 $('#speed').addEventListener('change', e => { S.speed = +e.target.value; });
 let lastFrame = 0;
 function tick(ts) {
@@ -1153,7 +1154,7 @@ async function openGround(X, Y, name, opt = {}) {
     heading = (Math.atan2(p.X - X, p.Y - Y) * 180 / Math.PI + 360) % 360;
   }
   if (opt.heading != null) heading = opt.heading;
-  window.GROUND.open({ X, Y, heading, t: S.t, title: opt.title || name || (np.d < 3 ? 'Near ' + np.p.name : biomeAt(X, Y).name), sub: fmtXY(X, Y) + ' of Hobbiton', run, weatherAt, staticAt, places: PL, peaks: GEO.PEAKS, travellers: window.AVATARS ? travellersAt : null, battles: battlesAt, onExit: () => {} });
+  window.GROUND.open({ X, Y, heading, t: S.t, title: opt.title || name || (np.d < 3 ? 'Near ' + np.p.name : biomeAt(X, Y).name), sub: fmtXY(X, Y) + ' of Hobbiton', run, weatherAt, staticAt, places: PL, peaks: GEO.PEAKS, travellers: window.AVATARS ? travellersAt : null, battles: battlesAt, onExit: t => { if (t) setTime(t); } });
 }
 function hashAng(s) { let h = 0; for (const c of s) h = (h * 31 + c.charCodeAt(0)) | 0; return (h % 628) / 100; }
 

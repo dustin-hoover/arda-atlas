@@ -129,3 +129,7 @@ Phase 1 is porting `gen.js` to run server-side and caching tiles as PMTiles.
   name tags are DOM (#gtrav) like the place labels. Tapping a traveller on the map opens a card whose Ground view
   sets you down ~15 m south of them, facing north.
 - Group `lead` lists the figures a scene puts front and centre when the company is drawn in two rows.
+- The ground view keeps its own clock: `RATES` (stopped, ×1, ×10 default, 1 min/s, 10 min/s, 1 h/s) via [ ] or the « » buttons;
+  story time follows the real clock (uncapped dt), travellers glide on their velocities between 170 ms refreshes, and the
+  map takes the time back on exit (`onExit(t)`).
+- Stories open at their `start` (the slider begins at the left).

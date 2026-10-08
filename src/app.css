@@ -228,3 +228,8 @@ input[type=range] { accent-color: var(--gold); }
 #gtrav { position: absolute; inset: 0; pointer-events: none; overflow: hidden; }
 #gtrav div { position: absolute; transform: translate(-50%, -100%); font: 600 13px/1.1 var(--font-ui, system-ui); color: #f3d89a; text-shadow: 0 1px 3px rgba(0, 0, 0, 0.9); white-space: nowrap; text-align: center; }
 #gtrav div small { display: block; font: 10.5px var(--font-data); color: #fff; opacity: 0.8; }
+
+/* the pace of time in the ground view */
+#gclock { display: flex; align-items: center; gap: 6px; margin-top: 6px; pointer-events: auto; font: 11px var(--font-data); color: var(--muted, #cbd); }
+#gclock button { min-width: 30px; height: 24px; border-radius: 6px; border: 1px solid rgba(255,255,255,0.18); background: rgba(255,255,255,0.08); color: #fff; font: 14px/1 var(--font-data); cursor: pointer; }
+#gclock span { min-width: 64px; text-align: center; }

@@ -939,9 +939,9 @@ const BATTLES = [
 ];
 
 const STORIES = {
-  war: { title:'The War of the Ring', start:'3018 6 20', end:'3019 3 30', now:'3018 9 30' },
-  return: { title:'The Return of the King & the Grey Havens', start:'3019 3 25', end:'3021 10 6', now:'3021 9 29' },
-  hobbit: { title:'There and Back Again', start:'2941 4 25', end:'2942 6 30', now:'2941 7 7' },
+  war: { title:'The War of the Ring', start:'3018 6 20', end:'3019 3 30' },
+  return: { title:'The Return of the King & the Grey Havens', start:'3019 3 25', end:'3021 10 6' },
+  hobbit: { title:'There and Back Again', start:'2941 4 25', end:'2942 6 30' },
 };
 
 const LORE_WEATHER = [

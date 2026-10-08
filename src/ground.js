@@ -99,6 +99,7 @@ function bindInput() {
     keys[e.key.toLowerCase()] = true;
     if (e.key === 'Escape') close();
     if (e.key.toLowerCase() === 't' && !G.hall) { G.t += 1 / 24; updateAtmos(true); }
+    if (e.key === '[' || e.key === ']') setRate(e.key === ']' ? 1 : -1);
     if (['w', 'a', 's', 'd', ' ', 'arrowup', 'arrowdown', 'arrowleft', 'arrowright'].includes(e.key.toLowerCase())) e.preventDefault();
   });
   addEventListener('keyup', e => { keys[e.key.toLowerCase()] = false; });
@@ -107,6 +108,7 @@ function bindInput() {
     ['pointerup', 'pointerleave', 'pointercancel'].forEach(ev => b.addEventListener(ev, () => { keys[b.dataset.k] = false; }));
   });
   $('#gexit').onclick = close;
+  document.querySelectorAll('#gclock button').forEach(b => b.onclick = () => setRate(+b.dataset.r));
 }
 
 /* ---------------- data ---------------- */
@@ -490,11 +492,11 @@ function updateTravellers(ts) {
       const mounted = c.mode !== 'walk' && c.mode !== 'under', idle = c.mode === 'fly' || c.mode === 'fire' || c.ids.some(i => i === 'sauron' || i === 'smaug' || i === 'shelob');
       const flip = mounted && (c.vx * MI * rx + -c.vy * MI * rz) < 0;
       const ic = A.icon(c.ids, c.color, G.t, c.moving || idle ? f : 0, c.mode, flip);
-      want.push({ key: 'p:' + ic.key.split('|').slice(0, 2).join('|'), x, z, canvas: ic.canvas, tkey: ic.key + (c.moving || idle ? f : 0) + (flip ? 'w' : ''), name: ic.name, air: c.mode === 'fly' || c.mode === 'fire' ? 120 : 0 });
+      want.push({ key: 'p:' + ic.key.split('|').slice(0, 2).join('|'), x, z, vx: c.vx * MI, vz: -c.vy * MI, t0: G.t, canvas: ic.canvas, tkey: ic.key + (c.moving || idle ? f : 0) + (flip ? 'w' : ''), name: ic.name, air: c.mode === 'fly' || c.mode === 'fire' ? 120 : 0 });
     }
     if (o.battles) for (const b of o.battles(G.t)) {
       const x = (b.at[0] - G.X0) * MI, z = -(b.at[1] - G.Y0) * MI; if (Math.hypot(x - G.px, z - G.pz) > 30000) continue;
-      const f2 = Math.floor(ts / 170) % 4; want.push({ key: 'b:' + b.name, x, z, canvas: A.battle(b, f2), tkey: 'b:' + b.name + f2, name: b.name, air: 0, k: 1.8 });
+      const f2 = Math.floor(ts / 170) % 4; want.push({ key: 'b:' + b.name, x, z, vx: 0, vz: 0, t0: G.t, canvas: A.battle(b, f2), tkey: 'b:' + b.name + f2, name: b.name, air: 0, k: 1.8 });
     }
     for (const w of want) {
       let it = TRAV.items.get(w.key);
@@ -513,10 +515,11 @@ function updateTravellers(ts) {
   // every frame: stand them on the ground, grow the far ones, and place the name tags
   const w = innerWidth, h = innerHeight, p = new THREE.Vector3();
   for (const it of TRAV.items.values()) {
-    const d = Math.hypot(it.x - G.px, it.z - G.pz), boost = Math.min(60, Math.max(1, d / 220)), k = PX_M * (it.k || 1) * boost;
-    const sw = it.canvas.width * k, sh = it.canvas.height * k, y = groundAt(it.x, it.z) - 0.2 + it.air * Math.min(1, boost);
-    it.sprite.position.set(it.x, y, it.z); it.sprite.scale.set(sw, sh, 1);
-    p.set(it.x, y + sh * 1.04, it.z).project(G.camera);
+    const ex = it.x + it.vx * (G.t - it.t0), ez = it.z + it.vz * (G.t - it.t0);       // glide on between refreshes
+    const d = Math.hypot(ex - G.px, ez - G.pz), boost = Math.min(60, Math.max(1, d / 220)), k = PX_M * (it.k || 1) * boost;
+    const sw = it.canvas.width * k, sh = it.canvas.height * k, y = groundAt(ex, ez) - 0.2 + it.air * Math.min(1, boost);
+    it.sprite.position.set(ex, y, ez); it.sprite.scale.set(sw, sh, 1);
+    p.set(ex, y + sh * 1.04, ez).project(G.camera);
     if (p.z > 1 || p.x < -1.1 || p.x > 1.1 || p.y < -1.1 || p.y > 1.1) { it.el.hidden = true; continue; }
     it.el.hidden = false; it.el.style.left = ((p.x + 1) / 2 * w) + 'px'; it.el.style.top = ((1 - p.y) / 2 * h) + 'px';
     const label = `${it.name}<small>${d > 1000 ? (d / 1000).toFixed(d > 10000 ? 0 : 1) + ' km' : Math.round(d) + ' m'}</small>`;
@@ -619,6 +622,13 @@ function closeHall() {
   G.hemi.groundColor.set(0x5a5040); $('#ghelp').innerHTML = G.helpHTML;
 }
 
+// the pace of story time while you walk: travellers move along their roads, the sun goes over
+const RATES = [0, 1, 10, 60, 600, 3600];
+G.rateI = 2;
+function setRate(d) {
+  G.rateI = Math.max(0, Math.min(RATES.length - 1, G.rateI + d));
+  const r = RATES[G.rateI]; $('#grate').textContent = r === 0 ? 'time stopped' : r >= 3600 ? '1 hour / s' : r >= 60 ? (r / 60) + ' min / s' : '×' + r;
+}
 async function open(o) {
   const root = $('#ground');
   root.classList.add('open');
@@ -626,7 +636,7 @@ async function open(o) {
   $('#gplace').textContent = o.title; $('#gsub').textContent = o.sub;
   try { await ensure(); } catch (e) { $('#gload').textContent = 'The 3D engine could not be loaded.'; return; }
   resize();
-  G.o = o; G.t = o.t; G.X0 = o.X; G.Y0 = o.Y; G.px = 0; G.pz = 0; G.yaw = (o.heading || 0) * Math.PI / 180; G.pitch = 0.02; G.fly = 0;
+  G.o = o; G.t = o.t; setRate(0); G.X0 = o.X; G.Y0 = o.Y; G.px = 0; G.pz = 0; G.yaw = (o.heading || 0) * Math.PI / 180; G.pitch = 0.02; G.fly = 0;
   G.seaLevel = 0; G.nearH = null; G.farH = null; G.wx = null; G.grassAt = null; G.nearCanvas = null; if (G.grass) G.grass.count = 0; G.spawnX = 0; G.spawnZ = 0; G.camera.position.set(0, 0, 0);
   for (const k of ['far', 'sea', 'nearGroup']) if (G[k]) { G.scene.remove(G[k]); G[k] = null; }
   closeHall(); G.nearOff = null; clearTravellers(); TRAV.last = -1e9;
@@ -643,13 +653,13 @@ async function open(o) {
 function close() {
   G.active = false; clearTravellers();
   $('#ground').classList.remove('open');
-  if (G.o && G.o.onExit) G.o.onExit();
+  if (G.o && G.o.onExit) G.o.onExit(G.t);
 }
 let lastT = 0, streaming = false;
 function loop(ts = 0) {
   if (!G.active) return;
   requestAnimationFrame(loop);
-  const dt = Math.min(0.05, (ts - lastT) / 1000 || 0.016); lastT = ts;
+  const realDt = Math.min(1, (ts - lastT) / 1000 || 0.016), dt = Math.min(0.05, realDt); lastT = ts;   // walking steps are capped; story time follows the clock
   const run = keys.shift ? 26 : 5.2;
   let f = 0, s = 0;
   if (keys.w || keys.arrowup) f += 1; if (keys.s || keys.arrowdown) f -= 1;
@@ -678,6 +688,7 @@ function loop(ts = 0) {
     G.sun.position.set(G.px + G.sunDir.x * 1200, G.camera.position.y + G.sunDir.y * 1200, G.pz + G.sunDir.z * 1200);
     G.sun.target.position.set(G.px, G.camera.position.y, G.pz); G.sun.target.updateMatrixWorld();
   }
+  if (!G.hall && G.wx) G.t += realDt * RATES[G.rateI] / 86400;
   G.skyMat.uniforms.time.value += dt;
   if (G.nearGroup && G.nearGroup.userData.update) G.nearGroup.userData.update(dt, ts / 1000);
   if (G.hall) G.hall.update(dt, ts / 1000);
