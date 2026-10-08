@@ -223,3 +223,8 @@ input[type=range] { accent-color: var(--gold); }
 
 /* pixel-art traveller heads in the journeys panel */
 .row img.av { height: 40px; width: auto; max-width: 72px; image-rendering: pixelated; flex: none; margin-right: 2px; }
+
+/* travellers' name tags in the ground view */
+#gtrav { position: absolute; inset: 0; pointer-events: none; overflow: hidden; }
+#gtrav div { position: absolute; transform: translate(-50%, -100%); font: 600 13px/1.1 var(--font-ui, system-ui); color: #f3d89a; text-shadow: 0 1px 3px rgba(0, 0, 0, 0.9); white-space: nowrap; text-align: center; }
+#gtrav div small { display: block; font: 10.5px var(--font-data); color: #fff; opacity: 0.8; }

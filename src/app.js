@@ -568,6 +568,38 @@ function showBattle(b) {
     ${b.sides.map(sd => `<p><b>${esc(sd.name)}</b>: ${esc(sd.note)}.</p>`).join('')}<p>${esc(b.outcome)}</p>
     <dl><dt>Source</dt><dd>${esc(b.src)}</dd></dl>`, { kind: 'battle', X: b.at[0], Y: b.at[1], name: b.name, zoom: 9 });
 }
+// parties travelling together (within a couple of miles) share one avatar: a head, or a company's badge
+function clusterLive(live) {
+  const grp = live.map((_, i) => i), root = i => grp[i] === i ? i : (grp[i] = root(grp[i]));
+  for (let a = 0; a < live.length; a++) for (let b = a + 1; b < live.length; b++)
+    if (Math.hypot(live[a].p.X - live[b].p.X, live[a].p.Y - live[b].p.Y) < 2) grp[root(b)] = root(a);
+  const clusters = {};
+  live.forEach((l, i) => (clusters[root(i)] = clusters[root(i)] || []).push(l));
+  return Object.values(clusters);
+}
+// everyone abroad at time t, for the ground view: position, who, how they travel and which way they go
+function travellersAt(t) {
+  const live = [];
+  for (const j of JOURNEYS[S.story] || []) { const p = partyAt(j, t); if (p && !(p.done && j.hide)) live.push({ j, p }); }
+  const out = [];
+  for (const m of clusterLive(live)) {
+    const ids = [...new Set(m.flatMap(l => AVATARS.charsOf(S.story, l.j.name, t)))]; if (!ids.length) continue;
+    const X = m.reduce((a, l) => a + l.p.X, 0) / m.length, Y = m.reduce((a, l) => a + l.p.Y, 0) / m.length;
+    const q = partyAt(m[0].j, t + 0.03) || m[0].p, vx = (q.X - m[0].p.X) / 0.03, vy = (q.Y - m[0].p.Y) / 0.03;
+    out.push({ X, Y, ids, color: m[0].j.color, mode: modeAt(S.story, m[0].j.name, t), moving: !m[0].p.done && Math.hypot(vx, vy) > 0.5, vx, vy });
+  }
+  return out;
+}
+const battlesAt = t => BATTLES.filter(b => b.story === S.story && t >= b.t0 - 0.15 && t <= b.t1 + 0.15);
+function showParty(pr) {
+  const T = travellersAt(S.t).find(c => Math.hypot(c.X - pr.X, c.Y - pr.Y) < 0.05);
+  const who = T ? [...new Set(T.ids.map(i => AVATARS.C[i].name))] : [];
+  const np = nearestPlace(pr.X, pr.Y);
+  openCard(`<div class="kind">Travellers</div><h1>${esc(pr.name)}</h1>${who.length > 1 ? `<p>${esc(who.join(', '))}</p>` : ''}
+    <dl><dt>Where</dt><dd>${np.d < 4 ? 'at ' : 'near '}${esc(np.p.name)}</dd><dt>When</dt><dd>${esc(WX.parts(S.t).name)} ${WX.fmtTime(WX.parts(S.t).hour)}</dd></dl>
+    <div class="btns" style="margin-top:12px"><button class="btn primary" data-act="meet">Ground view</button><button class="btn" data-act="fly">Fly over</button></div>`,
+    { kind: 'party', X: pr.X, Y: pr.Y, name: pr.name, zoom: 11 });
+}
 function updateJourneys(posOnly) {
   const js = JOURNEYS[S.story] || [];
   const feats = [], pos = [], live = []; let idleAnim = false;
@@ -581,13 +613,7 @@ function updateJourneys(posOnly) {
     if (done.length > 1) feats.push({ type: 'Feature', geometry: { type: 'LineString', coordinates: lineLL(done) }, properties: { part: 'done', color: j.color } });
     if (!gone) live.push({ j, p });
   }
-  // parties travelling together (within a couple of miles) share one avatar: a head, or a company's badge
-  const grp = live.map((_, i) => i), root = i => grp[i] === i ? i : (grp[i] = root(grp[i]));
-  for (let a = 0; a < live.length; a++) for (let b = a + 1; b < live.length; b++)
-    if (Math.hypot(live[a].p.X - live[b].p.X, live[a].p.Y - live[b].p.Y) < 2) grp[root(b)] = root(a);
-  const clusters = {};
-  live.forEach((l, i) => (clusters[root(i)] = clusters[root(i)] || []).push(l));
-  for (const m of Object.values(clusters)) {
+  for (const m of clusterLive(live)) {
     const ids = [...new Set(m.flatMap(l => window.AVATARS ? AVATARS.charsOf(S.story, l.j.name, S.t) : []))];
     const X = m.reduce((a, l) => a + l.p.X, 0) / m.length, Y = m.reduce((a, l) => a + l.p.Y, 0) / m.length, color = m[0].j.color;
     if (!ids.length || !mapLoaded) { m.forEach(l => pos.push(pt(l.p.X, l.p.Y, { name: l.j.name, color: l.j.color }))); continue; }
@@ -604,7 +630,7 @@ function updateJourneys(posOnly) {
     const f = moving || idle || (mode !== 'walk' && mode !== 'under' && mode !== 'ride' && S.playing) ? Math.floor(performance.now() / (mode === 'fly' ? 120 : 150)) % 4 : 0;
     const ic = AVATARS.icon(ids, color, S.t, f, mode, flip), id = 'av:' + ic.key + ':' + f;
     if (!map.hasImage(id)) map.addImage(id, ic.canvas.getContext('2d').getImageData(0, 0, ic.canvas.width, ic.canvas.height), { pixelRatio: 2 });
-    pos.push(pt(X, Y, { name: m.length > 1 || ids.length > 1 ? ic.name : m[0].j.name, color, icon: id, n: m.length }));
+    pos.push(pt(X, Y, { name: m.length > 1 || ids.length > 1 ? ic.name : m[0].j.name, color, icon: id, n: m.length, X, Y }));
   }
   S.idleAnim = idleAnim;
   if (mapLoaded) { if (!posOnly) map.getSource('journeys').setData(FC(feats)); map.getSource('journey-pos').setData(FC(pos)); }
@@ -982,6 +1008,7 @@ function openCard(html, state) {
 const ACTIONS = {
   fly: s => flyToXY(s.X, s.Y, s.zoom || 13, 65, map.getBearing() + 30, 4500),
   ground: s => openGround(s.X, s.Y, s.name),
+  meet: s => openGround(s.X, s.Y - 0.009, null, { heading: 0, title: s.name }),
   halls: s => openHalls(HALLS[s.name], s.name),
   measure: s => { if (!S.measure) toggleMeasure(); S.measure.push([s.X, s.Y]); drawMeasure(); },
 };
@@ -1038,6 +1065,8 @@ map.on('click', e => {
   const [X, Y] = GEN.toXY(e.lngLat.lng, e.lngLat.lat);
   if (S.pick === 'ground') { toggleGroundPick(false); openGround(X, Y); return; }
   if (S.measure) { S.measure.push([X, Y]); drawMeasure(); return; }
+  const tf = map.getLayer('journeys-av') ? map.queryRenderedFeatures([[e.point.x - 8, e.point.y - 8], [e.point.x + 8, e.point.y + 8]], { layers: ['journeys-av'] }) : [];
+  if (tf.length) { showParty(tf[0].properties); return; }
   const bf = map.getLayer('battles-av') ? map.queryRenderedFeatures([[e.point.x - 10, e.point.y - 10], [e.point.x + 10, e.point.y + 10]], { layers: ['battles-av'] }) : [];
   if (bf.length) { showBattle(BATTLES[bf[0].properties.i]); return; }
   const f = map.queryRenderedFeatures([[e.point.x - 6, e.point.y - 6], [e.point.x + 6, e.point.y + 6]], { layers: ['places-1', 'places-2', 'places-3', 'places-4', 'places-5', 'places-infra', 'places-beacons', 'peaks'].filter(id => map.getLayer(id)) });
@@ -1111,7 +1140,7 @@ function toggleGroundPick(on) {
   document.querySelector('[data-p="ground"]').classList.toggle('on', want);
   if (want) toast('Click any spot on land to stand there.', 0); else $('#toast').classList.remove('open');
 }
-async function openGround(X, Y, name) {
+async function openGround(X, Y, name, opt = {}) {
   if (!window.GROUND) { toast('The ground view is still loading. Try again in a moment.'); return; }
   const np = nearestPlace(X, Y);
   togglePlay(false);
@@ -1123,7 +1152,8 @@ async function openGround(X, Y, name) {
     X = p.X + Math.cos(a) * off; Y = p.Y + Math.sin(a) * off;
     heading = (Math.atan2(p.X - X, p.Y - Y) * 180 / Math.PI + 360) % 360;
   }
-  window.GROUND.open({ X, Y, heading, t: S.t, title: name || (np.d < 3 ? 'Near ' + np.p.name : biomeAt(X, Y).name), sub: fmtXY(X, Y) + ' of Hobbiton', run, weatherAt, staticAt, places: PL, peaks: GEO.PEAKS, onExit: () => {} });
+  if (opt.heading != null) heading = opt.heading;
+  window.GROUND.open({ X, Y, heading, t: S.t, title: opt.title || name || (np.d < 3 ? 'Near ' + np.p.name : biomeAt(X, Y).name), sub: fmtXY(X, Y) + ' of Hobbiton', run, weatherAt, staticAt, places: PL, peaks: GEO.PEAKS, travellers: window.AVATARS ? travellersAt : null, battles: battlesAt, onExit: () => {} });
 }
 function hashAng(s) { let h = 0; for (const c of s) h = (h * 31 + c.charCodeAt(0)) | 0; return (h % 628) / 100; }
 
@@ -1201,7 +1231,7 @@ setTimeout(() => $('#loader').remove(), 1200);
 await sleep(1600);
 if (map.getZoom() < 2) map.flyTo({ center: ll(451, -315), zoom: 4.0, pitch: 25, bearing: 0, duration: 6500, curve: 1.3, essential: true });
 
-window.ARDA = { map, S, setTime, GEO, showPlace, openGround, openHalls, PL, PLN, flyToXY, setWx, setGroup, setBase, openPanel, playTour, TOURS };
+window.ARDA = { map, S, setTime, GEO, showPlace, openGround, openHalls, travellersAt, PL, PLN, flyToXY, setWx, setGroup, setBase, openPanel, playTour, TOURS };
 document.title = document.title;
 })().catch(e => {
   console.error(e);

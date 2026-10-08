@@ -120,3 +120,12 @@ Phase 1 is porting `gen.js` to run server-side and caching tiles as PMTiles.
   their point and travellers stand above theirs. A 170 ms loop animates battles, flyers and the Eye while paused.
 - Group rows lay figures out by their own widths (`xsOf`), so wide sprites (Shelob, Treebeard) don't overlap.
 - WX.parse('… 16.0') is noon like '… 16': use a fraction such as 15.99 for the night before.
+
+## Travellers in the ground view
+- app.js `travellersAt(t)` (shared clustering in `clusterLive`) and `battlesAt(t)` are passed to GROUND.open as
+  `travellers`/`battles`. ground.js `updateTravellers` keeps one THREE.Sprite per party (icon canvases from
+  AVATARS as Nearest-filtered CanvasTextures, cached), standing on `groundAt`, ~man-high near and scaled up with
+  distance (to 30 km), fliers 120 m up, mounts mirrored by travel direction against the camera's right vector;
+  name tags are DOM (#gtrav) like the place labels. Tapping a traveller on the map opens a card whose Ground view
+  sets you down ~15 m south of them, facing north.
+- Group `lead` lists the figures a scene puts front and centre when the company is drawn in two rows.

@@ -462,6 +462,67 @@ function updateLabels() {
   const cw = $('#gcomp').clientWidth;
   $('#gstrip').style.left = (cw / 2 - (72 * 20 + deg * 4) - 10) + 'px';
 }
+/* ---- travellers and battles: the map's pixel-art avatars as billboards standing on the land ----
+   About man-high close by; far ones are drawn larger so a party on the horizon can still be found. */
+const TRAV = { items: new Map(), tex: new Map(), last: -1e9, list: [] };
+const PX_M = 0.028;                       // metres per canvas pixel (the icons are drawn at 2×)
+function travTexture(canvas, key) {
+  let t = TRAV.tex.get(key);
+  if (!t) {
+    t = new THREE.CanvasTexture(canvas); t.magFilter = THREE.NearestFilter; t.minFilter = THREE.LinearMipmapLinearFilter; t.colorSpace = THREE.SRGBColorSpace;
+    TRAV.tex.set(key, t); if (TRAV.tex.size > 400) { const [k0, t0] = TRAV.tex.entries().next().value; t0.dispose(); TRAV.tex.delete(k0); }
+  }
+  return t;
+}
+function clearTravellers() {
+  for (const it of TRAV.items.values()) { G.scene.remove(it.sprite); it.sprite.material.dispose(); it.el.remove(); }
+  TRAV.items.clear(); TRAV.list = [];
+}
+function updateTravellers(ts) {
+  const A = window.AVATARS, o = G.o;
+  if (!A || !o || !o.travellers || G.hall) { if (TRAV.items.size) clearTravellers(); return; }
+  let box = $('#gtrav'); if (!box) { box = document.createElement('div'); box.id = 'gtrav'; $('#ground').appendChild(box); }
+  if (ts - TRAV.last > 170) {
+    TRAV.last = ts;
+    const f = Math.floor(ts / 150) % 4, rx = Math.cos(G.yaw), rz = Math.sin(G.yaw), seen = new Set(), want = [];
+    for (const c of o.travellers(G.t)) {
+      const x = (c.X - G.X0) * MI, z = -(c.Y - G.Y0) * MI, d = Math.hypot(x - G.px, z - G.pz); if (d > 30000) continue;
+      const mounted = c.mode !== 'walk' && c.mode !== 'under', idle = c.mode === 'fly' || c.mode === 'fire' || c.ids.some(i => i === 'sauron' || i === 'smaug' || i === 'shelob');
+      const flip = mounted && (c.vx * MI * rx + -c.vy * MI * rz) < 0;
+      const ic = A.icon(c.ids, c.color, G.t, c.moving || idle ? f : 0, c.mode, flip);
+      want.push({ key: 'p:' + ic.key.split('|').slice(0, 2).join('|'), x, z, canvas: ic.canvas, tkey: ic.key + (c.moving || idle ? f : 0) + (flip ? 'w' : ''), name: ic.name, air: c.mode === 'fly' || c.mode === 'fire' ? 120 : 0 });
+    }
+    if (o.battles) for (const b of o.battles(G.t)) {
+      const x = (b.at[0] - G.X0) * MI, z = -(b.at[1] - G.Y0) * MI; if (Math.hypot(x - G.px, z - G.pz) > 30000) continue;
+      const f2 = Math.floor(ts / 170) % 4; want.push({ key: 'b:' + b.name, x, z, canvas: A.battle(b, f2), tkey: 'b:' + b.name + f2, name: b.name, air: 0, k: 1.8 });
+    }
+    for (const w of want) {
+      let it = TRAV.items.get(w.key);
+      if (!it) {
+        const sp = new THREE.Sprite(new THREE.SpriteMaterial({ transparent: true, alphaTest: 0.35, depthWrite: true }));
+        sp.center.set(0.5, 0); G.scene.add(sp);
+        const el = document.createElement('div'); box.appendChild(el);
+        it = { sprite: sp, el }; TRAV.items.set(w.key, it);
+      }
+      const tex = travTexture(w.canvas, w.tkey);
+      if (it.sprite.material.map !== tex) { it.sprite.material.map = tex; it.sprite.material.needsUpdate = true; }
+      Object.assign(it, w); seen.add(w.key);
+    }
+    for (const [k, it] of TRAV.items) if (!seen.has(k)) { G.scene.remove(it.sprite); it.sprite.material.dispose(); it.el.remove(); TRAV.items.delete(k); }
+  }
+  // every frame: stand them on the ground, grow the far ones, and place the name tags
+  const w = innerWidth, h = innerHeight, p = new THREE.Vector3();
+  for (const it of TRAV.items.values()) {
+    const d = Math.hypot(it.x - G.px, it.z - G.pz), boost = Math.min(60, Math.max(1, d / 220)), k = PX_M * (it.k || 1) * boost;
+    const sw = it.canvas.width * k, sh = it.canvas.height * k, y = groundAt(it.x, it.z) - 0.2 + it.air * Math.min(1, boost);
+    it.sprite.position.set(it.x, y, it.z); it.sprite.scale.set(sw, sh, 1);
+    p.set(it.x, y + sh * 1.04, it.z).project(G.camera);
+    if (p.z > 1 || p.x < -1.1 || p.x > 1.1 || p.y < -1.1 || p.y > 1.1) { it.el.hidden = true; continue; }
+    it.el.hidden = false; it.el.style.left = ((p.x + 1) / 2 * w) + 'px'; it.el.style.top = ((1 - p.y) / 2 * h) + 'px';
+    const label = `${it.name}<small>${d > 1000 ? (d / 1000).toFixed(d > 10000 ? 0 : 1) + ' km' : Math.round(d) + ' m'}</small>`;
+    if (it.el._l !== label) { it.el.innerHTML = label; it.el._l = label; }
+  }
+}
 function drawMini() {
   const c = $('#gmini'), g = c.getContext('2d'), W = c.width;
   if (!G.nearCanvas) return;
@@ -568,7 +629,7 @@ async function open(o) {
   G.o = o; G.t = o.t; G.X0 = o.X; G.Y0 = o.Y; G.px = 0; G.pz = 0; G.yaw = (o.heading || 0) * Math.PI / 180; G.pitch = 0.02; G.fly = 0;
   G.seaLevel = 0; G.nearH = null; G.farH = null; G.wx = null; G.grassAt = null; G.nearCanvas = null; if (G.grass) G.grass.count = 0; G.spawnX = 0; G.spawnZ = 0; G.camera.position.set(0, 0, 0);
   for (const k of ['far', 'sea', 'nearGroup']) if (G[k]) { G.scene.remove(G[k]); G[k] = null; }
-  closeHall(); G.nearOff = null;
+  closeHall(); G.nearOff = null; clearTravellers(); TRAV.last = -1e9;
   G.active = true;
   if (o.interior) { openHall(o); $('#gload').hidden = true; loop(); return; }
   loop();
@@ -580,7 +641,7 @@ async function open(o) {
   $('#gload').hidden = true;
 }
 function close() {
-  G.active = false;
+  G.active = false; clearTravellers();
   $('#ground').classList.remove('open');
   if (G.o && G.o.onExit) G.o.onExit();
 }
@@ -634,6 +695,7 @@ function loop(ts = 0) {
     loadNear(G.X0 + ox / MI, G.Y0 - oz / MI, ox, oz).then(() => { streaming = false; }).catch(() => { streaming = false; });
   }
   if (G.labels) updateLabels();
+  updateTravellers(ts);
   if (!G.hall) drawMini();
   if (!G.hall && G.wx && Math.floor(ts / 1000) !== G.lastSec) { G.lastSec = Math.floor(ts / 1000); updateAtmos(G.lastSec % 10 === 0); }
   G.renderer.render(G.scene, G.camera);
