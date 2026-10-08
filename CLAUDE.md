@@ -132,7 +132,9 @@ Phase 1 is porting `gen.js` to run server-side and caching tiles as PMTiles.
 - The ground view keeps its own clock: `RATES` (stopped, ×1, ×10 default, 1 min/s, 10 min/s, 1 h/s) via [ ] or the « » buttons;
   story time follows the real clock (uncapped dt), travellers glide on their velocities between 170 ms refreshes, and the
   map takes the time back on exit (`onExit(t)`).
-- Stories open at their `start` (the slider begins at the left).
+- Stories open at their `start` (the slider begins at the left). The War opens at the Long-expected Party (3001 9 22);
+  `warpOf` shrinks spells with no movement within ±30 days to a sliver (weight 0.0005), and `warpRate` keeps the
+  pace of the eventful days, so the seventeen quiet years pass in seconds.
 - Battles within ARMY_NEAR raise their units as sprite ranks (`buildArmy`); the Muster adds tents. Special towers
   (Orthanc, Barad-dûr, Morgul, Ecthelion) are `solids`: travellers and the camera are pushed to their foot.
 - The slider is warped by activity (`warpOf`: parties moving, events, battles per day), so rests in Rivendell and

@@ -67,7 +67,7 @@ const C = {
 // which characters travel in each journey; [id, from, to] limits a companion to part of the journey
 const JOURNEY = {
   war: {
-    'Frodo & Sam': ['frodo', 'sam'], 'Bilbo in Rivendell': ['bilboOld'], 'Aragorn': ['aragorn'], 'Merry & Pippin': ['merry', 'pippin'], 'Pippin': ['pippin'],
+    'Frodo & Sam': ['frodo', 'sam'], 'Bilbo': [['bilbo', null, '3001 10 21'], ['bilboOld', '3001 10 21', null]], 'Frodo at Bag End': ['frodo'], 'Gandalf at the Party': ['gandalf'], 'Aragorn': ['aragorn'], 'Merry & Pippin': ['merry', 'pippin'], 'Pippin': ['pippin'],
     'Merry with Théoden': ['merry', 'theoden', ['eowyn', '3019 3 10', '3019 3 15.6']], 'Gandalf the Grey': ['gandalf'], 'The Black Riders': ['nazgul'], 'Boromir': ['boromir'],
     'Legolas': ['legolas'], 'Gimli': ['gimli'], 'Gandalf: to Orthanc': ['gandalf'], 'Gandalf the White': ['gandalfW'],
     'Elrond': ['elrond'], 'The Stone-trolls': ['stonetrolls'], 'Shelob': ['shelob'], 'Tom Bombadil': ['tom'], 'Goldberry': ['goldberry'], 'Galadriel': ['galadriel'], 'Sauron': ['sauron'], 'Saruman': ['saruman'], 'Gríma Wormtongue': ['grima'],
