@@ -35,6 +35,8 @@ const C = {
   treebeard:{ name: 'Treebeard', special: 'ent' },
   sauron:  { name: 'Sauron',    special: 'eye' },
   smaug:   { name: 'Smaug',     special: 'dragon' },
+  tom:     { name: 'Tom Bombadil', skin: '#f0b088', hair: ['#6a4a2a', '#4a321c'], style: 'short', beard: 'wizard', beardC: ['#7a5530', '#55391e'], hat: 'tomhat', blush: 1 },
+  goldberry:{ name: 'Goldberry', skin: '#f8e4d2', hair: ['#f6d860', '#d8b440'], style: 'long', hat: 'circlet', hatC: ['#f4f8ff', '#c8e0ff'] },
   shelob:  { name: 'Shelob',    special: 'spider' },
 };
 
@@ -44,14 +46,14 @@ const JOURNEY = {
     'Frodo & Sam': ['frodo', 'sam'], 'Aragorn': ['aragorn'], 'Merry & Pippin': ['merry', 'pippin'], 'Pippin': ['pippin'],
     'Merry with Théoden': ['merry', 'theoden', ['eowyn', '3019 3 10', '3019 3 15.6']], 'Gandalf the Grey': ['gandalf'], 'The Black Riders': ['nazgul'], 'Boromir': ['boromir'],
     'Legolas': ['legolas'], 'Gimli': ['gimli'], 'Gandalf: to Orthanc': ['gandalf'], 'Gandalf the White': ['gandalfW'],
-    'Elrond': ['elrond'], 'Shelob': ['shelob'], 'Galadriel': ['galadriel'], 'Sauron': ['sauron'], 'Saruman': ['saruman'], 'Gríma Wormtongue': ['grima'],
+    'Elrond': ['elrond'], 'Shelob': ['shelob'], 'Tom Bombadil': ['tom'], 'Goldberry': ['goldberry'], 'Galadriel': ['galadriel'], 'Sauron': ['sauron'], 'Saruman': ['saruman'], 'Gríma Wormtongue': ['grima'],
     'Uglúk and the Uruk-hai': ['ugluk', 'uruk'], 'Treebeard': ['treebeard'], 'Gollum': ['gollum'], 'Faramir': ['faramir'],
   },
   return: {
     'Frodo & Sam homeward': ['frodo', 'sam'], 'Merry & Pippin homeward': ['merry', 'pippin'], 'Aragorn & Arwen': ['aragorn', ['arwen', '3019 6 31']],
     'Arwen comes to the City': ['arwen', 'elrond'], 'Gandalf to Bombadil': ['gandalfW'], 'Bilbo, Elrond & Galadriel': ['bilboOld', 'elrond', 'galadriel'],
     'Frodo\'s last journey': ['frodo'], 'Sam to the Havens and home': ['sam'], 'Merry & Pippin to the Havens': ['merry', 'pippin'],
-    'Treebeard at Isengard': ['treebeard'], 'Faramir & Éowyn': ['faramir', 'eowyn'], 'Saruman and Wormtongue': ['saruman', 'grima'],
+    'Treebeard at Isengard': ['treebeard'], 'Tom Bombadil and Goldberry': ['tom', 'goldberry'], 'Faramir & Éowyn': ['faramir', 'eowyn'], 'Saruman and Wormtongue': ['saruman', 'grima'],
   },
   hobbit: { 'Bilbo & Thorin\'s Company': ['bilbo', ['thorin', null, '2941 11 24'], ['gandalf', null, '2941 7 14'], ['gandalf', '2941 11 24', null]], 'Gandalf: the White Council at Dol Guldur': ['gandalf'], 'Gollum': ['gollum'], 'Smaug': ['smaug'] },
 };
@@ -70,6 +72,10 @@ const GROUPS = [
   { name: 'Gandalf and the Three Hunters', frame: '#e8e6de', edge: '#ffffff', emblem: 'star', test: S => S.size === 4 && has(S, 'aragorn', 'legolas', 'gimli', 'gandalfW') },
   { name: 'The Four Hobbits', frame: '#2c3d1c', edge: '#e2c25a', emblem: 'leaf', test: S => S.size === 4 && has(S, ...HOBBITS) },
   { name: 'The Hobbits and Strider', frame: '#2c3d1c', edge: '#c9a14a', emblem: 'leaf', test: S => S.size === 5 && has(S, ...HOBBITS, 'aragorn') },
+  { name: 'In the House of Tom Bombadil', frame: '#1e3a5a', edge: '#f0c830', emblem: 'leaf', test: S => has(S, 'tom') && S.has('frodo') && S.has('goldberry'), order: ['tom', 'goldberry', 'frodo', 'sam', 'merry', 'pippin'] },
+  { name: 'Tom Bombadil and the Hobbits', frame: '#1e3a5a', edge: '#f0c830', emblem: 'leaf', test: S => has(S, 'tom') && S.has('frodo'), order: ['tom', 'frodo', 'sam', 'merry', 'pippin'] },
+  { name: 'Tom Bombadil and Goldberry', frame: '#1e3a5a', edge: '#f0c830', emblem: 'leaf', test: S => S.size === 2 && has(S, 'tom', 'goldberry') },
+  { name: 'Gandalf comes to Bombadil', frame: '#1e3a5a', edge: '#ffffff', emblem: 'star', test: S => has(S, 'tom', 'gandalfW') },
   { name: 'In Shelob\'s Lair', frame: '#0c0b10', edge: '#c8c8d0', emblem: 'web', test: S => has(S, 'shelob') && (S.has('frodo') || S.has('sam')), order: ['shelob', 'sam', 'frodo'] },
   { name: 'There and Back Again', frame: '#2c3d1c', edge: '#e0b84e', emblem: 'key', test: S => S.size === 2 && has(S, 'bilbo', 'gandalf') },
   { name: 'Riddles in the Dark', frame: '#101418', edge: '#b4bc9c', emblem: 'ring', test: S => has(S, 'bilbo', 'gollum') },
@@ -148,6 +154,10 @@ function grid(id) {
   if (c.hat === 'helm') { const m = '#9aa0a8', md = '#6b7078'; rect(5, 2, 8, 2, m); rect(4, 3, 9, 3, m); rect(3, 4, 10, 5, m); set(9, 3, md); set(10, 4, md); set(10, 5, md); rect(2, 6, 11, 6, '#c9a03c'); set(6, 7, md); set(7, 7, md); set(2, 7, b); set(11, 7, bd); set(2, 8, b); set(11, 8, bd); set(2, 9, b); set(11, 9, bd); }
   if (c.hat === 'crown') { const y1 = '#e6c04e', y2 = '#b08a2a'; rect(3, 4, 10, 4, y1); set(3, 3, y1); set(6, 2, y1); set(7, 2, y2); set(6, 3, y1); set(7, 3, y2); set(10, 3, y2); set(6, 4, '#3f8a5a'); set(7, 4, '#3f8a5a'); }
   if (c.hat === 'circlet') { const [a, d] = c.hatC; rect(3, 6, 10, 6, a); set(10, 6, d); set(6, 6, '#bfe3ff'); set(7, 6, '#ffffff'); }
+  if (c.hat === 'tomhat') {       // a tall battered hat with a long blue feather
+    const a = '#6a5a4a', d = '#4a3e32'; rect(4, 1, 9, 4, a); set(9, 1, d); set(9, 2, d); set(4, 1, null); rect(2, 5, 11, 5, d); rect(4, 4, 9, 4, '#c9a03c');
+    set(10, 3, '#3a7ae0'); set(11, 2, '#3a7ae0'); set(12, 1, '#5a9af0'); set(13, 0, '#5a9af0'); set(11, 3, '#2a5ab0');
+  }
   if (c.hat === 'orchelm') {      // black iron of Isengard, the white S-rune on the brow
     const m = '#2a2a30', md = '#16161a'; rect(4, 3, 9, 3, m); rect(3, 4, 10, 6, m); set(10, 4, md); set(10, 5, md); set(10, 6, md); set(2, 6, m); set(11, 6, md);
     set(6, 4, '#f0f0ea'); set(7, 5, '#f0f0ea'); set(6, 6, '#f0f0ea'); for (let y = 7; y <= 9; y++) { set(2, y, m); set(11, y, md); }
@@ -187,6 +197,8 @@ const B = {
   ugluk:    { tunic: '#2a2626', legs: '#2a2020', boots: '#141010', gear: 'handshield', mail: 1 },
   uruk:     { tunic: '#2e2a28', legs: '#2a2020', boots: '#141010', gear: 'handshield', mail: 1 },
   gollum:   { gollum: 1 },
+  tom:      { tunic: '#2f5fae', legs: '#6a5a40', boots: '#f0c830', belt: '#c9a03c' },
+  goldberry:{ robe: '#4a9a5a', belt: '#e6c04e', iris: 0 },
 };
 const FW = W + 4, FH = H + 14, BY = H - 1;   // figure grid: head at (2, 0), body from row BY
 // Treebeard: an Ent half again as tall as a Man, with a leafy crown, bark grain, mossy beard, branch arms and root feet
@@ -746,6 +758,18 @@ function battle(b, f) {
   cv.width = W2; cv.height = H2; const mid = W2 / 2, ground = H2 - 14;
   // dust of the field
   g.fillStyle = 'rgba(70,52,30,0.35)'; g.beginPath(); g.ellipse(mid, ground - 6, half + 4, 16, 0, 0, 7); g.fill();
+  if (b.muster) {
+    // tents on the Firienfeld behind, then the Riders in ranks facing east, the banner and a horn-blower
+    for (let i = 0; i < 6; i++) { const tx = 40 + i * 44 + (i % 2) * 10, ty = ground - 44 - (i % 2) * 8;
+      g.fillStyle = OUT; g.beginPath(); g.moveTo(tx - 15, ty + 17); g.lineTo(tx, ty - 3); g.lineTo(tx + 15, ty + 17); g.closePath(); g.fill();
+      g.fillStyle = i % 2 ? '#e8e2d0' : '#d8d0b8'; g.beginPath(); g.moveTo(tx - 12, ty + 15); g.lineTo(tx, ty); g.lineTo(tx + 12, ty + 15); g.closePath(); g.fill();
+      g.fillStyle = '#2a5a2a'; g.fillRect(tx - 1, ty - 9, 2, 8); g.fillRect(tx + 1, ty - 9, 6, 3 + (f + i) % 2); }
+    const side = b.sides[0], list = []; for (const [k, n] of side.units) for (let i = 0; i < n; i++) list.push(k);
+    list.forEach((k, i) => { const col = i % 7, row = Math.floor(i / 7), gr = k === 'rider' ? beast('rider', f + i) : soldier(k, f + i, false);
+      const w = (gr[0].length + 2) * s, h = (gr.length + 2) * s; drawGrid(g, gr, 30 + col * 36 + row * 14 - w / 2, ground - 8 + row * 8 - h, s); });
+    banner(g, side.banner, W2 - 30, 22, s, f, false);
+    return BCACHE2[key] = cv;
+  }
   b.sides.forEach((side, si) => {
     const dir = si === 0 ? 1 : -1, list = [];
     for (const [k, n] of side.units) for (let i = 0; i < n; i++) list.push(k);
