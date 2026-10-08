@@ -67,7 +67,7 @@ const C = {
 // which characters travel in each journey; [id, from, to] limits a companion to part of the journey
 const JOURNEY = {
   war: {
-    'Frodo & Sam': ['frodo', 'sam'], 'Aragorn': ['aragorn'], 'Merry & Pippin': ['merry', 'pippin'], 'Pippin': ['pippin'],
+    'Frodo & Sam': ['frodo', 'sam'], 'Bilbo in Rivendell': ['bilboOld'], 'Aragorn': ['aragorn'], 'Merry & Pippin': ['merry', 'pippin'], 'Pippin': ['pippin'],
     'Merry with Théoden': ['merry', 'theoden', ['eowyn', '3019 3 10', '3019 3 15.6']], 'Gandalf the Grey': ['gandalf'], 'The Black Riders': ['nazgul'], 'Boromir': ['boromir'],
     'Legolas': ['legolas'], 'Gimli': ['gimli'], 'Gandalf: to Orthanc': ['gandalf'], 'Gandalf the White': ['gandalfW'],
     'Elrond': ['elrond'], 'The Stone-trolls': ['stonetrolls'], 'Shelob': ['shelob'], 'Tom Bombadil': ['tom'], 'Goldberry': ['goldberry'], 'Galadriel': ['galadriel'], 'Sauron': ['sauron'], 'Saruman': ['saruman'], 'Gríma Wormtongue': ['grima'],
@@ -75,11 +75,11 @@ const JOURNEY = {
   },
   return: {
     'Frodo & Sam homeward': ['frodo', 'sam'], 'Merry & Pippin homeward': ['merry', 'pippin'], 'Aragorn & Arwen': ['aragorn', ['arwen', '3019 6 31']],
-    'Arwen comes to the City': ['arwen', 'elrond'], 'Gandalf to Bombadil': ['gandalfW'], 'Bilbo, Elrond & Galadriel': ['bilboOld', 'elrond', 'galadriel'],
+    'Arwen comes to the City': ['arwen', 'elrond'], 'Gandalf to Bombadil': ['gandalfW'], 'Bilbo, Elrond & Galadriel': ['bilboOld', 'elrond', 'galadriel'], 'Bilbo in Rivendell': ['bilboOld'],
     'Frodo\'s last journey': ['frodo'], 'Sam to the Havens and home': ['sam'], 'Merry & Pippin to the Havens': ['merry', 'pippin'],
     'Treebeard at Isengard': ['treebeard'], 'Tom Bombadil and Goldberry': ['tom', 'goldberry'], 'Faramir & Éowyn': ['faramir', 'eowyn'], 'Saruman and Wormtongue': ['saruman', 'grima'],
   },
-  hobbit: { 'Bilbo & Thorin\'s Company': ['bilbo', ['thorin', null, '2941 11 24'], ['fili', null, '2941 11 24'], ['kili', null, '2941 11 24'], ...['dwalin', 'balin', 'dori', 'nori', 'ori', 'oin', 'gloin', 'bifur', 'bofur', 'bombur'].map(d => [d, null, '2941 11 26']), ['gandalf', null, '2941 7 14'], ['gandalf', '2941 11 24', null]],
+  hobbit: { 'Bilbo at Bag End': ['bilbo'], 'Bilbo & Thorin\'s Company': ['bilbo', ['thorin', null, '2941 11 24'], ['fili', null, '2941 11 24'], ['kili', null, '2941 11 24'], ...['dwalin', 'balin', 'dori', 'nori', 'ori', 'oin', 'gloin', 'bifur', 'bofur', 'bombur'].map(d => [d, null, '2941 11 26']), ['gandalf', null, '2941 7 14'], ['gandalf', '2941 11 24', null]],
     'Elrond': ['elrond'], 'The Three Trolls': [['trolls', null, '2941 5 26.25'], ['stonetrolls', '2941 5 26.25', null]], 'The Great Goblin': ['greatgoblin', 'goblin'], 'Wargs and Goblins': ['warg', 'goblin'],
     'Beorn': ['beorn'], 'The Spiders of Mirkwood': ['mirkspider'], 'Thranduil': ['thranduil'], 'Bard': ['bard'], 'Dáin Ironfoot': ['dain'], 'Bolg and the Goblins of the North': ['bolg', 'goblin', 'warg'],
     'The Dwarves of Erebor': ['dwalin', 'balin', 'dori', 'nori', 'ori', 'oin', 'gloin', 'bifur', 'bofur', 'bombur'], 'The Arkenstone': ['arkenstone'], 'Gandalf: the White Council at Dol Guldur': ['gandalf'], 'Gollum': ['gollum'], 'Smaug': ['smaug'] },
