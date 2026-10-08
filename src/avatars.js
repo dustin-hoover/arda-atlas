@@ -62,12 +62,13 @@ const C = {
   tom:     { name: 'Tom Bombadil', skin: '#f0b088', hair: ['#6a4a2a', '#4a321c'], style: 'short', beard: 'wizard', beardC: ['#7a5530', '#55391e'], hat: 'tomhat', blush: 1 },
   goldberry:{ name: 'Goldberry', skin: '#f8e4d2', hair: ['#f6d860', '#d8b440'], style: 'long', hat: 'circlet', hatC: ['#f4f8ff', '#c8e0ff'] },
   shelob:  { name: 'Shelob',    special: 'spider' },
+  balrog:  { name: 'Durin\'s Bane', special: 'balrog' },
 };
 
 // which characters travel in each journey; [id, from, to] limits a companion to part of the journey
 const JOURNEY = {
   war: {
-    'Frodo & Sam': ['frodo', 'sam'], 'Bilbo': [['bilbo', null, '3001 10 21'], ['bilboOld', '3001 10 21', null]], 'Frodo at Bag End': ['frodo'], 'Gandalf at the Party': ['gandalf'], 'Aragorn': ['aragorn'], 'Merry & Pippin': ['merry', 'pippin'], 'Pippin': ['pippin'],
+    'Frodo & Sam': ['frodo', 'sam'], 'Bilbo': [['bilbo', null, '3001 10 21'], ['bilboOld', '3001 10 21', null]], 'Frodo at Bag End': ['frodo'], 'Gandalf at the Party': ['gandalf'], 'Durin\'s Bane': ['balrog'], 'Gandalf and Durin\'s Bane': ['gandalf'], 'Aragorn': ['aragorn'], 'Merry & Pippin': ['merry', 'pippin'], 'Pippin': ['pippin'],
     'Merry with Théoden': ['merry', 'theoden', ['eowyn', '3019 3 10', '3019 3 15.6']], 'Gandalf the Grey': ['gandalf'], 'The Black Riders': ['nazgul'], 'Boromir': ['boromir'],
     'Legolas': ['legolas'], 'Gimli': ['gimli'], 'Gandalf: to Orthanc': ['gandalf'], 'Gandalf the White': ['gandalfW'],
     'Elrond': ['elrond'], 'The Stone-trolls': ['stonetrolls'], 'Shelob': ['shelob'], 'Tom Bombadil': ['tom'], 'Goldberry': ['goldberry'], 'Galadriel': ['galadriel'], 'Sauron': ['sauron'], 'Saruman': ['saruman'], 'Gríma Wormtongue': ['grima'],
@@ -79,7 +80,7 @@ const JOURNEY = {
     'Frodo\'s last journey': ['frodo'], 'Sam to the Havens and home': ['sam'], 'Merry & Pippin to the Havens': ['merry', 'pippin'],
     'Treebeard at Isengard': ['treebeard'], 'Tom Bombadil and Goldberry': ['tom', 'goldberry'], 'Faramir & Éowyn': ['faramir', 'eowyn'], 'Saruman and Wormtongue': ['saruman', 'grima'],
   },
-  hobbit: { 'Bilbo at Bag End': ['bilbo'], 'Bilbo & Thorin\'s Company': ['bilbo', ['thorin', null, '2941 11 24'], ['fili', null, '2941 11 24'], ['kili', null, '2941 11 24'], ...['dwalin', 'balin', 'dori', 'nori', 'ori', 'oin', 'gloin', 'bifur', 'bofur', 'bombur'].map(d => [d, null, '2941 11 26']), ['gandalf', null, '2941 7 14'], ['gandalf', '2941 11 24', null]],
+  hobbit: { 'Bilbo at Bag End': ['bilbo'], 'Durin\'s Bane': ['balrog'], 'Bilbo & Thorin\'s Company': ['bilbo', ['thorin', null, '2941 11 24'], ['fili', null, '2941 11 24'], ['kili', null, '2941 11 24'], ...['dwalin', 'balin', 'dori', 'nori', 'ori', 'oin', 'gloin', 'bifur', 'bofur', 'bombur'].map(d => [d, null, '2941 11 26']), ['gandalf', null, '2941 7 14'], ['gandalf', '2941 11 24', null]],
     'Elrond': ['elrond'], 'The Three Trolls': [['trolls', null, '2941 5 26.25'], ['stonetrolls', '2941 5 26.25', null]], 'The Great Goblin': ['greatgoblin', 'goblin'], 'Wargs and Goblins': ['warg', 'goblin'],
     'Beorn': ['beorn'], 'The Spiders of Mirkwood': ['mirkspider'], 'Thranduil': ['thranduil'], 'Bard': ['bard'], 'Dáin Ironfoot': ['dain'], 'Bolg and the Goblins of the North': ['bolg', 'goblin', 'warg'],
     'The Dwarves of Erebor': ['dwalin', 'balin', 'dori', 'nori', 'ori', 'oin', 'gloin', 'bifur', 'bofur', 'bombur'], 'The Arkenstone': ['arkenstone'], 'Gandalf: the White Council at Dol Guldur': ['gandalf'], 'Gollum': ['gollum'], 'Smaug': ['smaug'] },
@@ -94,6 +95,8 @@ function charsOf(story, name, t) {
 const has = (S, ...ids) => ids.every(i => S.has(i));
 const HOBBITS = ['frodo', 'sam', 'merry', 'pippin'];
 const GROUPS = [
+  { name: 'The Bridge of Khazad-dûm', lead: ['gandalf', 'balrog'], frame: '#1a0e0a', edge: '#ff7a24', emblem: 'star', when: ['3019 1 14.99', '3019 1 22.9'], test: S => has(S, 'gandalf', 'balrog'), order: ['balrog', 'gandalf'] },
+  { name: 'The Battle of the Peak', lead: ['gandalf', 'balrog'], frame: '#2a3040', edge: '#e8eef8', emblem: 'star', when: ['3019 1 22.95', '3019 1 26'], test: S => has(S, 'gandalf', 'balrog'), order: ['balrog', 'gandalf'] },
   { name: 'The Fellowship of the Ring', frame: '#1c2a20', edge: '#d9ac52', emblem: 'ring', when: ['3018 12 25', '3019 2 26.6'], test: S => has(S, 'frodo', 'sam', 'aragorn', 'legolas', 'gimli') && S.size >= 7, order: ['gandalf', 'aragorn', 'boromir', 'legolas', 'gimli', 'frodo', 'sam', 'merry', 'pippin'] },
   { name: 'The Three Hunters', frame: '#1f3a24', edge: '#9bc27a', emblem: 'horse', test: S => S.size === 3 && has(S, 'aragorn', 'legolas', 'gimli') },
   { name: 'Gandalf and the Three Hunters', frame: '#e8e6de', edge: '#ffffff', emblem: 'star', test: S => S.size === 4 && has(S, 'aragorn', 'legolas', 'gimli', 'gandalfW') },
@@ -370,6 +373,40 @@ function spiderGrid(f) {
   set(34, 17, '#e8e0c8'); set(35, 18, '#e8e0c8'); set(32, 18, '#e8e0c8'); set(33, 19, '#e8e0c8');      // fangs
   return g;
 }
+// Durin's Bane: a Balrog of Morgoth, a great shadow with a mane of fire, horned, its wings of shadow spread;
+// a flaming sword in its right hand and a whip of many thongs in its left (LR II.5)
+function balrogGrid(f) {
+  const Wd = 44, Ht = 42, g = Array.from({ length: Ht }, () => Array(Wd).fill(null));
+  const set = (x, y, v) => { x = Math.round(x); y = Math.round(y); if (x >= 0 && x < Wd && y >= 0 && y < Ht && v) g[y][x] = v; };
+  const rect = (x0, y0, x1, y1, v) => { for (let y = y0; y <= y1; y++) for (let x = x0; x <= x1; x++) set(x, y, v); };
+  const sh = '#1c1216', sh2 = '#2a1a1e', ember = '#ff6a18', fl = ['#c02010', '#ff5a14', '#ff9a24', '#ffd060'], up = f % 2;
+  // wings of shadow: a leading edge rising to a claw-tip, bony spars, and a scalloped trailing edge; they beat slowly
+  for (const d of [-1, 1]) {
+    for (let i = 0; i <= 16; i++) {
+      const x = 22 + d * (6 + i), top = 12 - i * 0.68 - up * i * 0.12, sc = i % 5, bot = top + Math.max(2, (17 - i) * 0.95) - (sc === 2 || sc === 3 ? 2.5 : 0);
+      for (let y = Math.round(top); y <= Math.round(bot); y++) set(x, y, (y - top < 1) ? '#3a2a2e' : sh2);
+    }
+    for (const end of [[16, 1], [11, 6], [6, 10]]) { const [ii, dy] = end; for (let t = 0; t <= 1; t += 0.08) set(22 + d * (6 + ii * t), 12 - ii * 0.68 * t - up * ii * 0.12 * t + dy * t * 0.4, '#3e2c30'); }
+    set(22 + d * 23, 12 - 16 * 0.68 - up * 2 - 1, '#5a4a40');
+  }
+  // body, legs and the arms
+  rect(16, 12, 28, 28, sh); rect(15, 15, 29, 24, sh); rect(17, 29, 20, 39, sh); rect(24, 29, 27, 39, sh); rect(15, 40, 21, 41, sh); rect(23, 40, 29, 41, sh);
+  rect(12, 14, 15, 22, sh); rect(29, 14, 32, 21, sh);
+  for (const [x, y] of [[19, 16], [22, 19], [25, 17], [20, 23], [24, 25], [18, 31], [26, 33]]) set(x, y, (x + f) % 3 ? ember : '#ffb040');   // fire within
+  // head and horns, eyes like coals
+  rect(18, 5, 26, 12, sh); for (let k = 0; k < 5; k++) { set(18 - k * 0.6, 5 - k, '#3a2a22'); set(26 + k * 0.6, 5 - k, '#3a2a22'); }
+  set(20, 8, '#ffd040'); set(24, 8, '#ffd040'); rect(21, 10, 23, 10, '#ff5a14');
+  // the mane of fire: uneven tongues rising from its head and streaming back over the shoulders, gold at the root
+  for (let x = 14; x <= 30; x++) {
+    const centre = x >= 18 && x <= 26, root = centre ? 5 : 10 + Math.abs(x - 22) * 0.2, h = (centre ? 4 : 2) + ((x * 7 + f * 5) % 6) + ((x + f) % 3 === 0 ? 2 : 0);
+    for (let k = 0; k < h; k++) set(x + (k > h * 0.6 ? ((x + f) % 2 ? 1 : -1) : 0), root - k, fl[3 - Math.min(3, Math.floor(k / h * 4))]);
+  }
+  // the sword of flame, raised in the right hand
+  rect(32, 12, 33, 14, '#3a2a22'); for (let y = 0; y < 12; y++) { set(33, y, y % 3 === f % 3 ? '#fff0a0' : '#ffb040'); set(34, y + 1, fl[(y + f) % 3 + 1]); }
+  // the many-thonged whip, cracking from the left hand
+  for (let k = 0; k < 3; k++) { let x = 12, y = 22; for (let t = 0; t < 16; t++) { x -= 0.7; y += 0.9 + k * 0.15; set(x + Math.sin(t * 0.8 + f + k) * 1.5, y, t % 2 ? '#ff9a24' : '#ff5a14'); } }
+  return g;
+}
 // Bert, Tom and William round their fire with mutton on the spit — or, after the dawn, three stones
 function trollsGrid(f, stone) {
   const Wd = 64, Ht = 34, g = Array.from({ length: Ht }, () => Array(Wd).fill(null));
@@ -421,6 +458,7 @@ function figGrid(id, f) {
   if (C[id].special === 'spider') return spiderGrid(f);
   if (C[id].special === 'ent') return entGrid(f);
   if (C[id].special === 'eye') return eyeGrid(f);
+  if (C[id].special === 'balrog') return balrogGrid(f);
   const g = Array.from({ length: FH }, () => Array(FW).fill(null)), b = B[id] || {}, c = C[id];
   const set = (x, y, v) => { if (x >= 0 && x < FW && y >= 0 && y < FH && v) g[y][x] = v; };
   const rect = (x0, y0, x1, y1, v) => { for (let y = y0; y <= y1; y++) for (let x = x0; x <= x1; x++) set(x, y, v); };
@@ -665,7 +703,7 @@ function groupOf(ids, t) {
   return ids.length > 1 || S.has('nazgul') ? GROUPS.find(G => G.test(S) && (!G.when || (t >= P(G.when[0]) && t <= P(G.when[1])))) : null;
 }
 // folk who never sit a horse: in a riding party they go on foot beside it
-const ON_FOOT = new Set(['tom', 'goldberry', 'treebeard', 'gollum', 'ugluk', 'uruk', 'shelob', 'smaug', 'sauron', 'trolls', 'stonetrolls', 'goblin', 'greatgoblin', 'bolg', 'warg', 'mirkspider', 'arkenstone']);
+const ON_FOOT = new Set(['tom', 'goldberry', 'treebeard', 'gollum', 'ugluk', 'uruk', 'shelob', 'smaug', 'sauron', 'trolls', 'stonetrolls', 'goblin', 'greatgoblin', 'bolg', 'warg', 'mirkspider', 'arkenstone', 'balrog']);
 function icon(ids, color, t, f = 0, mode = 'walk', flip = false) {
   if (ids.length > 1 && ids.includes('arkenstone')) {
     const base = icon(ids.filter(i => i !== 'arkenstone'), color, t, f, mode, flip), k = base.key + '|ark' + f;
@@ -695,6 +733,12 @@ function icon(ids, color, t, f = 0, mode = 'walk', flip = false) {
     if (C[id].special === 'gem') { const rg = g.createRadialGradient(cv.width / 2, cv.height / 2, 2, cv.width / 2, cv.height / 2, cv.width * 0.7); rg.addColorStop(0, 'rgba(255,255,255,0.9)'); rg.addColorStop(1, 'rgba(200,220,255,0)'); g.fillStyle = rg; g.fillRect(0, 0, cv.width, cv.height); }
     drawFigure(g, id, 4, 2, s, f);
     return ICACHE[key + f] = { canvas: cv, name: C[id].name, key };
+  }
+  if (show.length === 1 && C[show[0]].special === 'balrog') {
+    cv.width = wOf('balrog') + 10; cv.height = hOf('balrog') + 6;
+    const rg = g.createRadialGradient(cv.width / 2, cv.height * 0.35, 4, cv.width / 2, cv.height * 0.35, cv.width * 0.65); rg.addColorStop(0, 'rgba(255,110,30,0.7)'); rg.addColorStop(1, 'rgba(255,50,10,0)');
+    g.fillStyle = rg; g.fillRect(0, 0, cv.width, cv.height); drawFigure(g, 'balrog', 5, 2, s, f);
+    return ICACHE[key + f] = { canvas: cv, name: C.balrog.name, key };
   }
   if (show.length === 1 && C[show[0]].special === 'eye') {
     const gh = hOf('sauron'); cv.width = wOf('sauron') + 30; cv.height = gh + 20;
@@ -1008,10 +1052,34 @@ function cityGrid(f) {
   rectp(g, cx + 2, 0, cx + 4 + (f % 2), 1, '#f6f6f2');
   return g;
 }
+// Gandalf's fireworks over the Party Field: eight frames of rockets rising and bursting; at the last, the dragon
+function fireworksGrid(f, dragon) {
+  const Wd = 60, Ht = 46, g = blank(Wd, Ht);
+  const P = [['#ff5a5a', '#ffd0d0'], ['#5ad0ff', '#d8f4ff'], ['#ffe060', '#fff8d0'], ['#7aff7a', '#e0ffe0'], ['#e080ff', '#f6e0ff'], ['#ffffff', '#ffe8b0']];
+  const bursts = [[12, 12], [30, 7], [47, 13], [21, 21], [40, 22], [30, 15]];
+  bursts.forEach(([cx, cy], k) => {
+    const ph = (f + k * 3) % 8, [c1, c2] = P[k % P.length];
+    if (ph < 2) { for (let y = Ht - 2; y > cy + (2 - ph) * 8; y -= 2) setp(g, cx + (y % 4 ? 0 : 1) * 0, y, y % 4 ? '#ffd890' : null); setp(g, cx, cy + (2 - ph) * 8, '#ffffff'); }   // the rocket's trail
+    else if (ph < 6) {
+      const r = (ph - 1) * 2.4, n = 12;
+      for (let i = 0; i < n; i++) { const a = i / n * Math.PI * 2 + k; for (let q = 0.4; q <= 1; q += 0.3) setp(g, cx + Math.cos(a) * r * q, cy + Math.sin(a) * r * q + (ph - 2) * q * 0.6, q > 0.9 ? c2 : c1); }
+      if (ph === 2) setp(g, cx, cy, '#ffffff');
+    } else for (let i = 0; i < 8; i++) setp(g, cx + Math.cos(i * 0.8 + k) * 9, cy + Math.sin(i * 0.8 + k) * 7 + (ph - 5) * 3, i % 2 ? c1 : null);   // falling sparks
+  });
+  if (dragon) {
+    // a dragon of fire, wings spread, sweeping across with a trail of sparks
+    const x0 = 6 + f * 6, y0 = 28 - Math.abs(f - 3.5) * 1.2, rd = '#ff4a20', gd = '#ffc040';
+    for (let x = 0; x < 16; x++) setp(g, x0 + x, y0 + Math.sin(x * 0.5) * 1.2, x > 11 ? gd : rd);                   // body and tail
+    for (let k = 0; k < 7; k++) { setp(g, x0 + 7 + k * 0.4, y0 - 1 - k, rd); setp(g, x0 + 9 + k * 0.6, y0 - 1 - k, gd); setp(g, x0 + 7 + k * 0.5, y0 + 1 + k * 0.6 * (f % 2), rd); }
+    rectp(g, x0 + 15, y0 - 2, x0 + 17, y0, rd); setp(g, x0 + 18, y0 - 1, '#ffffff'); setp(g, x0 + 19, y0 - 1, '#ffe080');   // head, and fire
+    for (let t = 1; t < 10; t++) setp(g, x0 - t * 1.4, y0 + Math.sin(t + f) * 1.5, t % 2 ? gd : '#ff8a30');
+  }
+  return g;
+}
 const LCACHE = {};
 function landmark(kind, f, heat = 1) {
   const key = kind + f + ':' + heat; if (LCACHE[key]) return LCACHE[key];
-  const gr = kind === 'doom' ? doomGrid(f, heat) : cityGrid(f), s = 3, cv = document.createElement('canvas');
+  const gr = kind === 'doom' ? doomGrid(f, heat) : kind === 'fireworks' ? fireworksGrid(f, heat) : cityGrid(f), s = 3, cv = document.createElement('canvas');
   cv.width = (gr[0].length + 2) * s; cv.height = (gr.length + 2) * s; drawGrid(cv.getContext('2d'), gr, 0, 0, s);
   return LCACHE[key] = cv;
 }

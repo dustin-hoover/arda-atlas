@@ -149,3 +149,12 @@ Phase 1 is porting `gen.js` to run server-side and caching tiles as PMTiles.
 - Ground: `W3far` (world3d.js) adds the crater fire, lava ribbons, the plume (scaled up with distance so it marks the
   east from all over Mordor), a lathe of the true profile when Orodruin lies beyond the far terrain, and a far model
   of Minas Tirith shown while the city is outside the near patch. GROUND.open takes `heat`.
+- Durin's Bane (`balrog` special, `balrogGrid`): in Moria in the War and The Hobbit; in the War it follows
+  'Gandalf and Durin's Bane' from the Bridge (15 Jan) up the Endless Stair to Zirakzigil (fight 23-25 Jan). Groups
+  'The Bridge of Khazad-dûm' / 'The Battle of the Peak' come before the Fellowship. Group windows: a bare date means
+  noon, so windows that must include the morning start at the day before (e.g. '3019 1 14.99').
+- Map image ids must be ASCII (MapLibre silently skips 'Khazad-dûm', 'Sméagol', 'Lothlórien' in icon-image); app.js
+  strips accents from avatar ids.
+- GEO.FIREWORKS (Gandalf's at the Party, 3001 9 22 evening, the dragon at the end): map art via
+  AVATARS.landmark('fireworks', frame, dragon) in the landmarks layer (offset above the party with `off`), and particle
+  bursts plus a flying dragon glow in the ground view (W3far, `o.fireworks`).

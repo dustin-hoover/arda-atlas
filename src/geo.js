@@ -828,10 +828,14 @@ const JOURNEYS = {
     { name:'Faramir', color:'#7fa86a', with:[['Frodo & Sam','3019 3 7','3019 3 8.3']], pts:[[739.3,-548.8,'3019 3 7'],[744.3,-565.9,'3019 3 8.3'],[711.3,-563.2,'3019 3 9.4'],[725.1,-599.1,'3019 3 10.75'],[725.1,-599.1,'3019 3 11.3'],[738.9,-604.6,'3019 3 11.9'],[738.9,-604.6,'3019 3 12.8'],[731.5,-602.3,'3019 3 13.4'],[725.1,-599.1,'3019 3 13.75'],[725.1,-599.1,'3019 3 30']] },
     // the Long-expected Party (22 Sep 3001, LR I.1): Bilbo vanishes and walks out of the Shire that night; he goes to
     // Rivendell (the day he arrived is not recorded; about a month, like Frodo) and is there throughout the War
-    { name:'Bilbo', color:'#e8e2c8', pts:[[0.3,0.5,'3001 9 20'],[0.3,0.5,'3001 9 22.85'],[6.3,-2.2,'3001 9 23.2'],[72,4.9,'3001 9 26'],[127.9,7.4,'3001 9 30'],[208,11,'3001 10 8'],[318,12,'3001 10 15'],[400.3,3.7,'3001 10 20'],[420.5,17.5,'3001 10 21'],[420.5,17.5,'3019 3 30']] },
+    { name:'Bilbo', color:'#e8e2c8', pts:[[0.3,0.5,'3001 9 20'],[0.3,0.5,'3001 9 22.93'],[6.3,-2.2,'3001 9 23.2'],[72,4.9,'3001 9 26'],[127.9,7.4,'3001 9 30'],[208,11,'3001 10 8'],[318,12,'3001 10 15'],[400.3,3.7,'3001 10 20'],[420.5,17.5,'3001 10 21'],[420.5,17.5,'3019 3 30']] },
     // Frodo keeps Bag End from the Party until he sets out; Gandalf comes for the Party and leaves soon after
     { name:'Frodo at Bag End', hide:true, color:'#f2d06b', pts:[[0.3,0.5,'3001 9 20'],[0.3,0.5,'3018 9 23']] },
     { name:'Gandalf at the Party', hide:true, color:'#c8c8d8', pts:[[0.3,0.5,'3001 9 20'],[0.3,0.5,'3001 9 23.4']] },
+    // Durin's Bane wakes to the Company in Moria and meets Gandalf on the Bridge; they fall together to the deep waters,
+    // fight up the Endless Stair to the peak of Zirakzigil, and there Gandalf throws it down (LR II.5, III.5; AppB 15-25 Jan)
+    { name:'Durin\'s Bane', hide:true, color:'#ff6a24', with:[['Gandalf and Durin\'s Bane','3019 1 15.3','3019 1 25.4']], pts:[[408,-161,'3001 9 20'],[408,-161,'3019 1 15.05'],[420.7,-184.8,'3019 1 15.3'],[423.1,-178,'3019 1 23'],[423.1,-178,'3019 1 25.4']] },
+    { name:'Gandalf and Durin\'s Bane', hide:true, color:'#c8c8d8', pts:[[420.7,-184.8,'3019 1 15.3'],[421.6,-182.5,'3019 1 18'],[423.1,-178,'3019 1 23'],[423.1,-178,'3019 1 25.4']] },
   ],
   'return': [
     { name:'Frodo & Sam homeward', color:'#f2d06b', pts:[[738,-556,'3019 3 26'],[738,-556,'3019 4 8'],[725.1,-599.1,'3019 5 1'],[725.1,-599.1,'3019 7 19'],[675,-575,'3019 7 23'],[588,-540,'3019 7 30'],[506,-500,'3019 8 4'],[438,-479.4,'3019 8 7'],[438,-479.4,'3019 8 10'],[377.3,-451.8,'3019 8 14'],[334,-379.1,'3019 8 22'],[320,-330,'3019 8 26'],[289,-290.6,'3019 8 29'],[350,-230,'3019 9 3'],[370,-140,'3019 9 8'],[400,-60,'3019 9 14'],[420.5,17.5,'3019 9 21'],[420.5,17.5,'3019 10 5'],[400.3,3.7,'3019 10 6'],[318,12,'3019 10 9'],[208,11,'3019 10 15'],[127.9,7.4,'3019 10 28'],[72,4.9,'3019 10 30'],[40,1,'3019 11 1'],[6.3,-2.2,'3019 11 3'],[0.3,0.5,'3019 11 3.5']] },
@@ -871,6 +875,7 @@ const JOURNEYS = {
     { name:'Smaug', color:'#d8462a', hide:true, pts:[[768.4,138,'2941 4 25'],[768.4,138,'2941 10 15.8'],[763.4,136.7,'2941 10 15.85'],[766.5,97.5,'2941 10 15.97'],[766.5,97.5,'2941 10 16.05']] },
     // Bilbo at home before the dwarves come; he joins the Company when it sets out
     { name:'Bilbo at Bag End', hide:true, color:'#f2d06b', pts:[[0.3,0.5,'2941 4 25'],[0.3,0.5,'2941 4 28.1']] },
+    { name:'Durin\'s Bane', color:'#ff6a24', pts:[[408,-161,'2941 4 25'],[408,-161,'2942 6 30']] },   // the Balrog, deep in Moria since it woke in 1980
   ],
 };
 
@@ -883,7 +888,8 @@ const MODES = [
   ['Bilbo & Thorin', '2941 9 21', '2941 9 23', 'barrel'],                                            // barrels down the Forest River
   ['Bilbo & Thorin', '2941 7 7', '2941 7 8', 'fly'],                                                 // the Eagles to the Carrock
   ['Gandalf the Grey|Gandalf: to Orthanc', '3018 9 17.9', '3018 9 20', 'fly'],                        // Gwaihir from Orthanc
-  ['Gandalf the White', '3019 2 14', '3019 2 15', 'fly'],                                            // Gwaihir from Zirakzigil
+  ['Gandalf the White', '3019 2 14', '3019 2 15', 'fly'],
+  ['Durin\'s Bane|Gandalf and Durin', '3019 1 15.05', '3019 1 23', 'under'],                       // the abyss and the Endless Stair                                            // Gwaihir from Zirakzigil
   ['Gandalf the White', '3019 3 25', '3019 3 26', 'fly'],                                            // to Orodruin and Cormallen
   ['Frodo & Sam', '3019 3 25', '3019 3 26', 'fly'],
   ['Bilbo, Elrond|Frodo\'s last', '3021 9 29.75', '3021 10 3', 'sea'],                               // the ship from Mithlond
@@ -954,6 +960,12 @@ const STORIES = {
   hobbit: { title:'There and Back Again', start:'2941 4 25', end:'2942 6 30' },
 };
 
+// Gandalf's fireworks at the Long-expected Party (LR I.1): after the afternoon's feasting, rockets, fountains and
+// starbursts over the Party Field below Bag End, and to finish a dragon that roared low over the hobbits' heads
+const FIREWORKS = [
+  { name:'Gandalf\'s fireworks', story:'war', x:0.6, y:0.1, from:'3001 9 22.77', to:'3001 9 22.865', dragon:'3001 9 22.85' },
+];
+
 const LORE_WEATHER = [
   { name:'Blizzard on Caradhras', x:413.8, y:-159.4, r:40, from:'3019 1 11', to:'3019 1 12.8', kind:'snow' },
   { name:'Storm out of Isengard', x:373.6, y:-440.2, r:80, from:'3019 3 3', to:'3019 3 4.3', kind:'storm' },
@@ -962,6 +974,6 @@ const LORE_WEATHER = [
 ];
 
 return { MODES, BATTLES, COAST, ISLANDS, RANGES, HILLS, RELIEF, PEAKS, RIVERS, LAKES, FORESTS, MARSHES, ARID, FARMS, GRASS, ASH, UPLIFT, ICE, NUMENOR,
-  PLACES, REGION_LABELS, SEA_LABELS, REALMS, ADMIN, PEOPLES, ROADS, WALLS, PALANTIRI, BEACONS, JOURNEYS, STORIES, LORE_WEATHER };
+  PLACES, REGION_LABELS, SEA_LABELS, REALMS, ADMIN, PEOPLES, ROADS, WALLS, PALANTIRI, BEACONS, JOURNEYS, STORIES, LORE_WEATHER, FIREWORKS };
 })();
 if (typeof self !== 'undefined') self.GEO = GEO;

@@ -934,6 +934,48 @@ function W3far(o) {
     city.position.set(cp.x, 0, cp.z); grp.add(city);
     ups.push(() => { city.visible = !G.nearOff || Math.max(Math.abs(cp.x - G.nearOff.x), Math.abs(cp.z - G.nearOff.z)) > 2100; });
   }
+  // ---- the Party's fireworks: rockets and starbursts over the Party Field, and the dragon at the end ----
+  for (const fw of o.fireworks || []) {
+    const fp = rel(fw.x, fw.y), fd = Math.hypot(fp.x, fp.z); if (fd > 30000) continue;
+    const t0 = window.WX.parse(fw.from), t1 = window.WX.parse(fw.to), tDragon = window.WX.parse(fw.dragon);
+    const base = hAt(fw.x, fw.y) - drop(fp.x, fp.z), N = 1400;
+    const pos = new Float32Array(N * 3), col = new Float32Array(N * 3), vel = new Float32Array(N * 3), life = new Float32Array(N);
+    const geo = new THREE.BufferGeometry(); geo.setAttribute('position', new THREE.BufferAttribute(pos, 3)); geo.setAttribute('color', new THREE.BufferAttribute(col, 3));
+    const pts = new THREE.Points(geo, new THREE.PointsMaterial({ size: 4.5, map: glowTexture('rgba(255,255,255,1)', 'rgba(255,255,255,0)'), vertexColors: true, transparent: true, depthWrite: false, blending: THREE.AdditiveBlending, fog: false }));
+    pts.frustumCulled = false; grp.add(pts);
+    const PAL = [[1, 0.35, 0.3], [0.35, 0.8, 1], [1, 0.85, 0.35], [0.5, 1, 0.5], [0.85, 0.5, 1], [1, 1, 1]];
+    let next = 0, wait = 0, rockets = [], lastBurst = -1;
+    const spawn = (x, y, z, vx, vy, vz, c, l) => { const i = next; next = (next + 1) % N; pos[i * 3] = x; pos[i * 3 + 1] = y; pos[i * 3 + 2] = z; vel[i * 3] = vx; vel[i * 3 + 1] = vy; vel[i * 3 + 2] = vz; col.set(c, i * 3); life[i] = l; };
+    const dragon = glow('rgba(255,200,90,1)', 'rgba(255,60,10,0)', 60), dl = new THREE.PointLight(0xff8a30, 0, 600, 1.2); grp.add(dragon, dl);
+    ups.push((dt, t) => {
+      const on = G.t >= t0 && G.t <= t1; pts.visible = on || life.some(v => v > 0);
+      dragon.visible = on && G.t >= tDragon;
+      if (!pts.visible) return;
+      const d = Math.min(dt, 0.05);
+      if (on && (wait -= d) <= 0) { wait = 0.35 + Math.random() * 0.5; rockets.push({ x: fp.x + (Math.random() - 0.5) * 220, y: base + 4, z: fp.z + (Math.random() - 0.5) * 220, vy: 55 + Math.random() * 20, top: base + 110 + Math.random() * 120 }); }
+      rockets = rockets.filter(r => {
+        r.y += r.vy * d; spawn(r.x, r.y, r.z, 0, -2, 0, [1, 0.8, 0.5], 0.5);
+        if (r.y < r.top) return true;
+        const c = PAL[Math.floor(Math.random() * PAL.length)], c2 = PAL[Math.floor(Math.random() * PAL.length)], n = 110 + Math.floor(Math.random() * 70), sp = 30 + Math.random() * 22;
+        for (let k = 0; k < n; k++) { const u = Math.random() * 2 - 1, a = Math.random() * 6.283, q = Math.sqrt(1 - u * u); spawn(r.x, r.y, r.z, Math.cos(a) * q * sp, u * sp, Math.sin(a) * q * sp, k % 3 ? c : c2, 1.6 + Math.random() * 1.2); }
+        return false;
+      });
+      for (let i = 0; i < N; i++) {
+        if (life[i] <= 0) { pos[i * 3 + 1] = -1e5; continue; }
+        life[i] -= d; vel[i * 3 + 1] -= 9 * d; vel[i * 3] *= 1 - 0.9 * d; vel[i * 3 + 1] *= 1 - 0.9 * d; vel[i * 3 + 2] *= 1 - 0.9 * d;
+        pos[i * 3] += vel[i * 3] * d; pos[i * 3 + 1] += vel[i * 3 + 1] * d; pos[i * 3 + 2] += vel[i * 3 + 2] * d;
+        const fade = Math.min(1, life[i] / 0.8); if (fade < 1) { col[i * 3] *= 0.97; col[i * 3 + 1] *= 0.96; col[i * 3 + 2] *= 0.95; }
+      }
+      geo.attributes.position.needsUpdate = true; geo.attributes.color.needsUpdate = true;
+      if (dragon.visible) {
+        // the dragon sweeps low over the field from the Hill, turns, and bursts overhead; again and again until the end
+        const ph = (t * 0.12) % 1, a = ph * Math.PI * 2, x = fp.x + Math.cos(a) * 260, z = fp.z + Math.sin(a) * 160, y = base + 35 + 25 * Math.sin(a * 2);
+        dragon.position.set(x, y, z); dragon.scale.setScalar(55 + 10 * Math.sin(t * 9)); dl.position.copy(dragon.position); dl.intensity = 40;
+        for (let k = 0; k < 4; k++) spawn(x, y, z, (Math.random() - 0.5) * 6, (Math.random() - 0.5) * 6, (Math.random() - 0.5) * 6, k % 2 ? [1, 0.45, 0.15] : [1, 0.8, 0.3], 1.1);
+        const cyc = Math.floor(t * 0.12); if (ph > 0.97 && cyc !== lastBurst) for (let k = (lastBurst = cyc, 0); k < 200; k++) { const u = Math.random() * 2 - 1, b = Math.random() * 6.283, q = Math.sqrt(1 - u * u); spawn(x, y + 60, z, Math.cos(b) * q * 40, u * 40, Math.sin(b) * q * 40, k % 2 ? [1, 0.3, 0.1] : [1, 0.9, 0.5], 2.2); }
+      } else dl.intensity = 0;
+    });
+  }
   grp.userData.update = (dt, t) => ups.forEach(f => f(dt, t));
   return grp;
 }
