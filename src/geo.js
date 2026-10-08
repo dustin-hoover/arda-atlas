@@ -859,8 +859,12 @@ const JOURNEYS = {
       [0.3,0.5,'2941 4 28.1'],[6.3,-2.2,'2941 4 28.4'],[72,4.9,'2941 4 30'],[127.9,7.4,'2941 5 4'],[208,11,'2941 5 12'],[317.5,12,'2941 5 20'],[361.7,17.4,'2941 5 25.75'],[361.7,17.4,'2941 5 26.4'],[420.5,17.5,'2941 6 16'],[420.5,17.5,'2941 6 30.9'],[457.4,16.5,'2941 7 2'],[485.2,2.1,'2941 7 5'],[493,7.2,'2941 7 6'],[514.3,12.2,'2941 7 6.7'],[514.3,12.2,'2941 7 7'],[542.9,54.3,'2941 7 8'],[565.5,48.1,'2941 7 9'],[565.5,48.1,'2941 7 11.5'],[587,71.1,'2941 7 14'],[624.8,62.7,'2941 7 20'],[665.9,59,'2941 7 30'],[705,69.6,'2941 8 6'],[705,69.6,'2941 8 7.5'],[713.5,81,'2941 8 12'],[735.4,87.3,'2941 9 22'],[766.5,97.5,'2941 9 23'],[766.5,97.5,'2941 10 1'],[766.1,115.4,'2941 10 3'],[763.4,136.7,'2941 10 8'],[763.4,136.7,'2941 10 16'],[770,131.4,'2941 10 18'],[770,131.4,'2941 11 23'],[769,128.4,'2941 11 23.8'],[770,131.4,'2941 11 26'],[565.5,48.1,'2941 12 30'],[565.5,48.1,'2942 3 30'],[420.5,17.5,'2942 5 1'],[208,11,'2942 5 25'],[127.9,7.4,'2942 6 5'],[0.3,0.5,'2942 6 22']
     ]},
     { name:'Gandalf: the White Council at Dol Guldur', hide:true, color:'#c8c8d8', pts:[[565.5,48.1,'2941 7 14'],[587,71.1,'2941 7 18'],[553,25,'2941 7 22'],[540,-60,'2941 7 28'],[609.2,-194.2,'2941 8 5'],[609.2,-194.2,'2941 8 25'],[560,-60,'2941 9 15'],[553,25,'2941 10 1'],[646,0,'2941 10 25'],[759,-14,'2941 11 10'],[769,128.4,'2941 11 22']] },
-    { name:'Gollum', color:'#b4bc9c', pts:[[493.1,7.2,'2941 4 25'],[493.1,7.2,'2942 6 30']] },
-    { name:'Elrond', color:'#b9c2d4', pts:[[420.5,17.5,'2941 4 25'],[420.5,17.5,'2942 6 30']] },
+    // The Shadow of the Past (LR I.2; AppB 2463, 2470; the days are not recorded): Sméagol and his friend Déagol go
+    // fishing by the Gladden Fields; Déagol finds the Ring in the river and Sméagol murders him for it; cast out by his
+    // kin, he wanders, and about 2470 creeps under the Misty Mountains, where Bilbo finds him in 2941
+    { name:'Déagol', hide:true, color:'#8ab06a', pts:[[547,-176,'2463 4 28'],[543,-180.7,'2463 5 1.35'],[543,-180.7,'2463 5 1.6']] },
+    { name:'Gollum', color:'#b4bc9c', pts:[[547,-176,'2463 4 28'],[543,-180.7,'2463 5 1.35'],[543,-180.7,'2463 5 2'],[547,-176,'2463 5 3'],[547,-176,'2463 5 20'],[540,-140,'2464 6 1'],[520,-60,'2466 6 1'],[500,-10,'2469 6 1'],[493.1,7.2,'2470 6 1'],[493.1,7.2,'2942 6 30']] },
+    { name:'Elrond', color:'#b9c2d4', pts:[[420.5,17.5,'2463 4 28'],[420.5,17.5,'2942 6 30']] },
     { name:'The Three Trolls', color:'#8a6a50', pts:[[361.7,17.4,'2941 4 25'],[361.7,17.4,'2942 6 30']] },
     { name:'The Great Goblin', color:'#7a8a5a', hide:true, pts:[[493,7.2,'2941 4 25'],[493,7.2,'2941 7 6.4']] },
     { name:'Wargs and Goblins', color:'#4a4a52', hide:true, pts:[[514.3,12.2,'2941 7 6.6'],[514.3,12.2,'2941 7 7.1']] },
@@ -872,10 +876,13 @@ const JOURNEYS = {
     { name:'Bolg and the Goblins of the North', color:'#5a5a3a', hide:true, pts:[[443.5,219,'2941 11 6'],[766,141,'2941 11 23.4'],[769,129.5,'2941 11 23.8']] },
     { name:'The Dwarves of Erebor', color:'#9aa0a8', pts:[[770,131.4,'2941 11 26'],[770,131.4,'2942 6 30']] },
     { name:'The Arkenstone', color:'#f4f8ff', with:[['Bilbo & Thorin\'s Company','2941 10 17.4','2941 11 22.6']], pts:[[768.4,138,'2941 4 25'],[768.4,138,'2941 10 17.3'],[769,128.4,'2941 11 22.8'],[769,128.4,'2941 11 26'],[768.4,138,'2941 11 27'],[768.4,138,'2942 6 30']] },
-    { name:'Smaug', color:'#d8462a', hide:true, pts:[[768.4,138,'2941 4 25'],[768.4,138,'2941 10 15.8'],[763.4,136.7,'2941 10 15.85'],[766.5,97.5,'2941 10 15.97'],[766.5,97.5,'2941 10 16.05']] },
+    // the coming of Smaug (H I; LR AppA III, AppB 2770; the day is not recorded): out of the north he falls on Erebor
+    // and Dale; Thrór and Thráin escape by a secret door, and Thorin, abroad, with them south into exile
+    { name:'Thrór, Thráin and Thorin', hide:true, color:'#c9a03c', pts:[[768.4,138,'2770 5 3.35'],[772,125,'2770 5 3.5'],[766,100,'2770 5 4.5'],[745,70,'2770 5 7'],[700,40,'2770 5 14']] },
+    { name:'Smaug', color:'#d8462a', hide:true, pts:[[934.4,226.6,'2770 5 2'],[800,170,'2770 5 3.1'],[768.4,138,'2770 5 3.2'],[769,128.4,'2770 5 3.3'],[768.4,138,'2770 5 3.45'],[768.4,138,'2941 4 25'],[768.4,138,'2941 10 15.8'],[763.4,136.7,'2941 10 15.85'],[766.5,97.5,'2941 10 15.97'],[766.5,97.5,'2941 10 16.05']] },
     // Bilbo at home before the dwarves come; he joins the Company when it sets out
-    { name:'Bilbo at Bag End', hide:true, color:'#f2d06b', pts:[[0.3,0.5,'2941 4 25'],[0.3,0.5,'2941 4 28.1']] },
-    { name:'Durin\'s Bane', color:'#ff6a24', pts:[[408,-161,'2941 4 25'],[408,-161,'2942 6 30']] },   // the Balrog, deep in Moria since it woke in 1980
+    { name:'Bilbo at Bag End', hide:true, color:'#f2d06b', pts:[[0.3,0.5,'2890 9 22'],[0.3,0.5,'2941 4 28.1']] },
+    { name:'Durin\'s Bane', color:'#ff6a24', pts:[[408,-161,'2463 4 28'],[408,-161,'2942 6 30']] },   // the Balrog, deep in Moria since it woke in 1980
   ],
 };
 
@@ -914,7 +921,9 @@ const MODES = [
   ['Bilbo & Thorin', '2941 10 1', '2941 10 3', 'boat'],                                              // up the Long Lake
   ['Bilbo & Thorin', '2941 11 26', '2942 6 22', 'ride'],                                             // home with Gandalf
   ['^Smaug$', '2941 10 15.8', '2941 10 15.95', 'fly'],                                               // out of the Mountain
-  ['^Smaug$', '2941 10 15.95', '2941 10 16.05', 'fire'],                                             // over Lake-town until Bard's arrow
+  ['^Smaug$', '2941 10 15.95', '2941 10 16.05', 'fire'],
+  ['^Smaug$', '2770 5 2', '2770 5 3.15', 'fly'],                                                  // out of the north
+  ['^Smaug$', '2770 5 3.15', '2770 5 3.45', 'fire'],                                               // Erebor and Dale burn                                             // over Lake-town until Bard's arrow
 ];
 
 // Battles, drawn as two small armies while they are fought. at: [X, Y]; units: [kind, how many to draw] —
@@ -957,7 +966,7 @@ const BATTLES = [
 const STORIES = {
   war: { title:'The War of the Ring', start:'3001 9 20', end:'3019 3 30' },
   return: { title:'The Return of the King & the Grey Havens', start:'3019 3 25', end:'3021 10 6' },
-  hobbit: { title:'There and Back Again', start:'2941 4 25', end:'2942 6 30' },
+  hobbit: { title:'There and Back Again', start:'2463 4 28', end:'2942 6 30' },
 };
 
 // Gandalf's fireworks at the Long-expected Party (LR I.1): after the afternoon's feasting, rockets, fountains and

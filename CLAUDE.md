@@ -158,3 +158,8 @@ Phase 1 is porting `gen.js` to run server-side and caching tiles as PMTiles.
 - GEO.FIREWORKS (Gandalf's at the Party, 3001 9 22 evening, the dragon at the end): map art via
   AVATARS.landmark('fireworks', frame, dragon) in the landmarks layer (offset above the party with `off`), and particle
   bursts plus a flying dragon glow in the ground view (W3far, `o.fireworks`).
+- The Hobbit opens in 2463 with the Finding of the Ring (Déagol, Sméagol; Gollum under the mountains by 2470), then
+  Smaug's coming in 2770 (Withered Heath → Erebor and Dale; Thrór, Thráin and Thorin flee south), Bilbo's birth in
+  2890, and the Quest from 2941. The Tale of Years gives only years for 2463 and 2770; the days are marked as not
+  recorded. `warpOf` caps each quiet spell at 2.5 day-weights however long, and counts a day as busy only when a
+  party covers half a mile or more.

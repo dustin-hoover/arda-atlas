@@ -55,6 +55,10 @@ const C = {
   grima:   { name: 'Gríma',     skin: '#e6d8cc', hair: ['#1e1a1c', '#0e0c0e'], style: 'long', eye: '#3a4a3a' },
   ugluk:   { name: 'Uglúk',     skin: '#5a4a3c', hair: ['#141010', '#0a0808'], style: 'none', hat: 'orchelm', eye: '#f0c040', fangs: 1, brows: 1, beardC: ['#141010', '#0a0808'] },
   uruk:    { name: 'Uruk-hai',  skin: '#4e4234', hair: ['#141010', '#0a0808'], style: 'none', hat: 'orchelm', eye: '#e8a838', fangs: 1 },
+  smeagol: { name: 'Sméagol',   skin: '#e0b48e', hair: ['#5a4228', '#3a2a18'], style: 'shaggy', ears: 'hobbit' },
+  deagol:  { name: 'Déagol',    skin: '#e6bc96', hair: ['#8a6038', '#5e4024'], style: 'curly', ears: 'hobbit', blush: 1 },
+  thror:   { name: 'Thrór',     skin: '#f0c4a0', hair: ['#f4f4ee', '#cacac2'], style: 'none', beard: 'dwarf', beardC: ['#f4f4ee', '#cacac2'], hat: 'crown', brows: 1 },
+  thrain:  { name: 'Thráin',    skin: '#ecbe98', hair: ['#5a5658', '#3a3638'], style: 'none', beard: 'dwarf', beardC: ['#5a5658', '#3a3638'], hat: 'helm', brows: 1 },
   gollum:  { name: 'Gollum',    skin: '#b4bc9c', hair: ['#4a4a3a', '#2a2a20'], style: 'sparse', ears: 'gollum', bigEyes: 1 },
   treebeard:{ name: 'Treebeard', special: 'ent' },
   sauron:  { name: 'Sauron',    special: 'eye' },
@@ -80,10 +84,10 @@ const JOURNEY = {
     'Frodo\'s last journey': ['frodo'], 'Sam to the Havens and home': ['sam'], 'Merry & Pippin to the Havens': ['merry', 'pippin'],
     'Treebeard at Isengard': ['treebeard'], 'Tom Bombadil and Goldberry': ['tom', 'goldberry'], 'Faramir & Éowyn': ['faramir', 'eowyn'], 'Saruman and Wormtongue': ['saruman', 'grima'],
   },
-  hobbit: { 'Bilbo at Bag End': ['bilbo'], 'Durin\'s Bane': ['balrog'], 'Bilbo & Thorin\'s Company': ['bilbo', ['thorin', null, '2941 11 24'], ['fili', null, '2941 11 24'], ['kili', null, '2941 11 24'], ...['dwalin', 'balin', 'dori', 'nori', 'ori', 'oin', 'gloin', 'bifur', 'bofur', 'bombur'].map(d => [d, null, '2941 11 26']), ['gandalf', null, '2941 7 14'], ['gandalf', '2941 11 24', null]],
+  hobbit: { 'Bilbo at Bag End': ['bilbo'], 'Durin\'s Bane': ['balrog'], 'Déagol': ['deagol'], 'Thrór, Thráin and Thorin': ['thror', 'thrain', 'thorin'], 'Gollum': [['smeagol', null, '2463 5 20'], ['gollum', '2463 5 20', null]], 'Bilbo & Thorin\'s Company': ['bilbo', ['thorin', null, '2941 11 24'], ['fili', null, '2941 11 24'], ['kili', null, '2941 11 24'], ...['dwalin', 'balin', 'dori', 'nori', 'ori', 'oin', 'gloin', 'bifur', 'bofur', 'bombur'].map(d => [d, null, '2941 11 26']), ['gandalf', null, '2941 7 14'], ['gandalf', '2941 11 24', null]],
     'Elrond': ['elrond'], 'The Three Trolls': [['trolls', null, '2941 5 26.25'], ['stonetrolls', '2941 5 26.25', null]], 'The Great Goblin': ['greatgoblin', 'goblin'], 'Wargs and Goblins': ['warg', 'goblin'],
     'Beorn': ['beorn'], 'The Spiders of Mirkwood': ['mirkspider'], 'Thranduil': ['thranduil'], 'Bard': ['bard'], 'Dáin Ironfoot': ['dain'], 'Bolg and the Goblins of the North': ['bolg', 'goblin', 'warg'],
-    'The Dwarves of Erebor': ['dwalin', 'balin', 'dori', 'nori', 'ori', 'oin', 'gloin', 'bifur', 'bofur', 'bombur'], 'The Arkenstone': ['arkenstone'], 'Gandalf: the White Council at Dol Guldur': ['gandalf'], 'Gollum': ['gollum'], 'Smaug': ['smaug'] },
+    'The Dwarves of Erebor': ['dwalin', 'balin', 'dori', 'nori', 'ori', 'oin', 'gloin', 'bifur', 'bofur', 'bombur'], 'The Arkenstone': ['arkenstone'], 'Gandalf: the White Council at Dol Guldur': ['gandalf'], 'Smaug': ['smaug'] },
 };
 const P = s => typeof s === 'string' ? WX.parse(s) : s;
 function charsOf(story, name, t) {
@@ -95,6 +99,8 @@ function charsOf(story, name, t) {
 const has = (S, ...ids) => ids.every(i => S.has(i));
 const HOBBITS = ['frodo', 'sam', 'merry', 'pippin'];
 const GROUPS = [
+  { name: 'The Finding of the Ring', lead: ['deagol', 'smeagol'], frame: '#1e2a2a', edge: '#e0b84e', emblem: 'ring', when: ['2463 4 30', '2463 5 2'], test: S => has(S, 'deagol', 'smeagol') },
+  { name: 'The Flight from Erebor', lead: ['thror', 'thrain', 'thorin'], frame: '#2a1a14', edge: '#ff7a24', emblem: 'star', when: ['2770 5 1', '2770 6 1'], test: S => has(S, 'thror', 'thrain') },
   { name: 'The Bridge of Khazad-dûm', lead: ['gandalf', 'balrog'], frame: '#1a0e0a', edge: '#ff7a24', emblem: 'star', when: ['3019 1 14.99', '3019 1 22.9'], test: S => has(S, 'gandalf', 'balrog'), order: ['balrog', 'gandalf'] },
   { name: 'The Battle of the Peak', lead: ['gandalf', 'balrog'], frame: '#2a3040', edge: '#e8eef8', emblem: 'star', when: ['3019 1 22.95', '3019 1 26'], test: S => has(S, 'gandalf', 'balrog'), order: ['balrog', 'gandalf'] },
   { name: 'The Fellowship of the Ring', frame: '#1c2a20', edge: '#d9ac52', emblem: 'ring', when: ['3018 12 25', '3019 2 26.6'], test: S => has(S, 'frodo', 'sam', 'aragorn', 'legolas', 'gimli') && S.size >= 7, order: ['gandalf', 'aragorn', 'boromir', 'legolas', 'gimli', 'frodo', 'sam', 'merry', 'pippin'] },
@@ -237,6 +243,10 @@ const B = {
   grima:    { robe: '#2a2a2e' },
   ugluk:    { tunic: '#2a2626', legs: '#2a2020', boots: '#141010', gear: 'handshield', mail: 1 },
   uruk:     { tunic: '#2e2a28', legs: '#2a2020', boots: '#141010', gear: 'handshield', mail: 1 },
+  smeagol:  { tunic: '#6a5a3a', legs: '#4a4030', feet: 'hobbit' },
+  deagol:   { tunic: '#5a7a4a', legs: '#5a4a30', feet: 'hobbit' },
+  thror:    { tunic: '#7a2a3a', legs: '#3a3028', cloak: '#c9a03c', boots: '#2a1f18', belt: '#e8c860', mail: 1 },
+  thrain:   { tunic: '#4a4e58', legs: '#3a3028', cloak: '#3a5a8a', boots: '#2a1f18', belt: '#c9a03c', gear: 'axe', mail: 1 },
   gollum:   { gollum: 1 },
   dwalin: { tunic: '#6a5a46', legs: '#4a3e32', boots: '#2a1f18', cloak: '#2e5a2e', belt: '#c8ccd4', gear: 'axe', belt: '#c9a03c' },
   balin: { tunic: '#6a5a46', legs: '#4a3e32', boots: '#2a1f18', cloak: '#b8261e', belt: '#c8ccd4' },
