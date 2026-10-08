@@ -282,23 +282,30 @@ function entGrid(f) {
   for (let y = 14; y <= 27; y++) { const w = Math.max(1, 5 - Math.floor((y - 14) / 3)); for (let x = 11 - w; x <= 10 + w; x++) set(x, y, (x + y) % 4 ? moss : mossD); }
   return g;
 }
-// the Lidless Eye, wreathed in flame between the horns of Barad-dûr
+// the Lidless Eye: wide, wreathed in flame, floating between the two great horns that crown Barad-dûr
 function eyeGrid(f) {
-  const Wd = 24, Ht = 34, g = Array.from({ length: Ht }, () => Array(Wd).fill(null));
-  const set = (x, y, v) => { if (x >= 0 && x < Wd && y >= 0 && y < Ht) g[y][x] = v; };
+  const Wd = 32, Ht = 30, g = Array.from({ length: Ht }, () => Array(Wd).fill(null));
+  const set = (x, y, v) => { x = Math.round(x); y = Math.round(y); if (x >= 0 && x < Wd && y >= 0 && y < Ht && v) g[y][x] = v; };
   const rect = (x0, y0, x1, y1, v) => { for (let y = y0; y <= y1; y++) for (let x = x0; x <= x1; x++) set(x, y, v); };
   const k = '#16141a', k2 = '#2a2830';
-  rect(7, 16, 16, 33, k); for (let y = 16; y <= 33; y++) { set(7, y, k2); if (y % 4 === 1) rect(8, y, 15, y, k2); }
-  for (let i = 0; i <= 9; i++) { set(3 + Math.round(i / 3), 16 - i, k); set(4 + Math.round(i / 3), 16 - i, k); set(20 - Math.round(i / 3), 16 - i, k); set(19 - Math.round(i / 3), 16 - i, k); }
-  rect(5, 15, 18, 16, k);
-  // a teardrop of flame, licking upward, then the lens-shaped eye with its cat's slit
+  // the crown of the tower: broad battlements with red-lit windows
+  rect(1, 21, 30, 29, k); for (let x = 1; x <= 30; x += 3) rect(x, 19, x + 1, 20, k); for (let y = 22; y <= 29; y += 3) rect(2, y, 29, y, k2);
+  for (const [x, y] of [[6, 24], [12, 26], [19, 24], [25, 27], [15, 23]]) set(x, y, f % 2 && x % 2 ? '#ff6a18' : '#c02010');
+  // two horns rising from the corners, leaning out and then curving in, tapering to points
+  const horn = [[4, 20, 3], [3, 17, 3], [3, 14, 3], [3, 11, 2], [4, 8, 2], [5, 6, 2], [7, 4, 2], [9, 3, 1], [11, 2, 1]];
+  for (let i = 0; i < horn.length - 1; i++) {
+    const [x0, y0, w0] = horn[i], [x1, y1] = horn[i + 1];
+    for (let t = 0; t <= 1; t += 0.2) { const x = x0 + (x1 - x0) * t, y = y0 + (y1 - y0) * t; for (let d = 0; d < w0; d++) { set(x + d, y, k); set(31 - x - d, y, k); } }
+  }
+  // flame around the eye, licking outward
   const lick = [[0, 2, 1, 3], [2, 0, 3, 1], [1, 3, 0, 2], [3, 1, 2, 0]][f];
-  for (let y = 1; y <= 13; y++) { const w = y < 4 ? 1 + y + lick[y % 4] % 2 : Math.round(7 - Math.abs(y - 8) * 0.6); for (let x = 11 - w; x <= 12 + w; x++) set(x, y, (x + y + f) % 3 ? '#d83a10' : '#ff6a18'); }
-  for (let i = 0; i < 4; i++) { const x = 6 + i * 4 + (lick[i] % 2); set(x, 3 - lick[i] % 3, '#ff9a30'); set(x, 4 - lick[i] % 3, '#e04a14'); }
-  const lens = [[7, 10, 13], [8, 8, 15], [9, 6, 17], [10, 6, 17], [11, 8, 15], [12, 10, 13]];
-  for (const [y, x0, x1] of lens) rect(x0, y, x1, y, '#ff8a20');
-  for (const [y, x0, x1] of lens.slice(1, 5)) rect(x0 + 2, y, x1 - 2, y, '#ffd050');
-  rect(11, 6, 12, 13, '#0a0606'); set(11, 5, '#0a0606'); set(12, 14, '#0a0606');
+  for (let y = 5; y <= 15; y++) { const w = Math.round(10 * Math.sqrt(Math.max(0, 1 - Math.pow((y - 10) / 6, 2)))) + lick[y % 4] % 2; for (let x = 16 - w; x <= 15 + w; x++) set(x, y, (x + y + f) % 3 ? '#c8300c' : '#f05a14'); }
+  for (let i = 0; i < 5; i++) { const x = 9 + i * 3.5, y = 4 - (lick[i % 4] % 2); set(x, y, '#ff8a20'); set(x, y + 1, '#e04a14'); }
+  // the eye: a wide lens, gold at the heart, with its black slit
+  const lens = [[8, 11, 20], [9, 9, 22], [10, 8, 23], [11, 9, 22], [12, 11, 20]];
+  for (const [y, x0, x1] of lens) rect(x0, y, x1, y, '#ff9a24');
+  for (const [y, x0, x1] of lens.slice(1, 4)) rect(x0 + 3, y, x1 - 3, y, '#ffd050');
+  rect(15, 8, 16, 12, '#0a0606'); set(15, 7, '#0a0606'); set(16, 13, '#0a0606');
   return g;
 }
 // Smaug asleep on the hoard: coiled, breathing, smoke from a nostril, and now and then a thin slit of eye
@@ -690,7 +697,7 @@ function icon(ids, color, t, f = 0, mode = 'walk', flip = false) {
     return ICACHE[key + f] = { canvas: cv, name: C[id].name, key };
   }
   if (show.length === 1 && C[show[0]].special === 'eye') {
-    const gh = hOf('sauron'); cv.width = fw + 30; cv.height = gh + 20;
+    const gh = hOf('sauron'); cv.width = wOf('sauron') + 30; cv.height = gh + 20;
     const rg = g.createRadialGradient(cv.width / 2, 30, 4, cv.width / 2, 30, cv.width * 0.6); rg.addColorStop(0, 'rgba(255,120,30,0.75)'); rg.addColorStop(1, 'rgba(255,60,10,0)');
     g.fillStyle = rg; g.fillRect(0, 0, cv.width, cv.height); drawFigure(g, 'sauron', 15, 8, s, f);
     return ICACHE[key + f] = { canvas: cv, name: 'The Eye of Sauron', key };
@@ -944,6 +951,15 @@ function listNames(ids) {
   return n.length <= 2 ? n.join(' & ') : n.length <= 4 ? n.slice(0, -1).join(', ') + ' & ' + n[n.length - 1] : n.slice(0, 3).join(', ') + ` & ${n.length - 3} more`;
 }
 function dataURL(ids, color, t) { return icon(ids, color, t).canvas.toDataURL(); }
-return { C, B, JOURNEY, GROUPS, charsOf, icon, dataURL, drawHead, drawFigure, battle };
+// one soldier, rider or beast of a battle as its own canvas (for the ground view's armies)
+const UCACHE = {};
+function unitCanvas(kind, f, flip) {
+  const key = kind + f + (flip ? 'w' : ''); if (UCACHE[key]) return UCACHE[key];
+  const gr = ['mumak', 'troll', 'ent', 'huorn', 'beorn', 'rider', 'warg', 'bolg', 'thorin', 'eagle', 'nazgul', 'bat'].includes(kind) ? beast(kind, f) : soldier(kind, f, f % 2 === 1);
+  const s = 3, cv = document.createElement('canvas'); cv.width = (gr[0].length + 2) * s; cv.height = (gr.length + 2) * s;
+  const g = cv.getContext('2d'); if (flip) { g.translate(cv.width, 0); g.scale(-1, 1); } drawGrid(g, gr, 0, 0, s);
+  return UCACHE[key] = cv;
+}
+return { C, B, JOURNEY, GROUPS, charsOf, icon, dataURL, drawHead, drawFigure, battle, unitCanvas };
 })();
 if (typeof self !== 'undefined') self.AVATARS = AVATARS;

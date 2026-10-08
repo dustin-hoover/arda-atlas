@@ -254,11 +254,13 @@ function mallorn(r, h, flets, lamps, x, y, z) {
 /* Landmark specials (Orthanc, Barad-dûr, …) and town details for one near patch.
    B = { list, special } from GEN.buildingsNear; coordinates relative to the patch centre (X0, Y0). */
 function W3town(B, X0, Y0, hAt) {
-  const grp = new THREE.Group(), up = [];
+  const grp = new THREE.Group(), up = [], solids = [];
   const P = [], lamps = [];
   const toXZ = (X, Y) => [(X - X0) * MI, -(Y - Y0) * MI];
   for (const s of B.special) {
     const [x, z] = toXZ(s.x, s.y);
+    // great towers are solid: travellers and walkers who would stand inside one are set down at its foot
+    if (s.type === 'tower' && ['orthanc', 'baraddur', 'morgul', 'ecthelion'].includes(s.kind)) solids.push({ x, z, r: (s.r || 20) * 1.15 + 4, h: s.h || 100, kind: s.kind });
     if (Math.hypot(x - G.px, z - G.pz) > 60000) continue;
     const y = hAt(x, z);
     let m = null;
@@ -304,7 +306,7 @@ function W3town(B, X0, Y0, hAt) {
     lamps.forEach(([x, y, z, i], k) => { m4.makeTranslation(x, y, z); lm.setMatrixAt(k, m4); lm.setColorAt(k, c.set(tints[(k + i) % 4])); });
     grp.add(lm);
   }
-  grp.userData.update = (dt, t) => up.forEach(f => f(dt, t));
+  grp.userData.update = (dt, t) => up.forEach(f => f(dt, t)); grp.userData.solids = solids;
   return grp;
 }
 function elvenHouse(P, b, x, y, z) {

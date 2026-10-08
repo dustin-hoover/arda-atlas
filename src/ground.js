@@ -476,7 +476,71 @@ function travTexture(canvas, key) {
   }
   return t;
 }
+/* ---- armies on the field: within a few km a battle or muster becomes ranks of soldiers, riders and beasts ---- */
+const ARMY = new Map();
+const ARMY_NEAR = 6000, ARMY_M = 0.05;      // metres per canvas pixel for the soldiers (≈ 2 m a man, 2.6 m a rider)
+const FLYERS = new Set(['eagle', 'nazgul', 'bat']);
+function hashF(i, k) { const x = Math.sin(i * 127.1 + k * 311.7) * 43758.5453; return x - Math.floor(x); }
+function buildArmy(b, cx, cz) {
+  const grp = new THREE.Group(), units = [];
+  const sides = b.sides.length === 1 ? [b.sides[0]] : b.sides;
+  sides.forEach((side, si) => {
+    const dir = sides.length === 1 ? 1 : si === 0 ? 1 : -1, list = [];
+    for (const [kind, n] of side.units) for (let i = 0; i < n * (FLYERS.has(kind) ? 2 : 5); i++) list.push(kind);
+    let col = 0, row = 0;
+    list.forEach((kind, i) => {
+      const fly = FLYERS.has(kind), big = ['mumak', 'troll', 'ent', 'huorn', 'beorn', 'bolg'].includes(kind);
+      let x, z, y = 0;
+      if (fly) { x = cx - dir * (40 + hashF(i, si) * 160); z = cz + (hashF(i, si + 7) - 0.5) * 300; y = 35 + hashF(i, 3) * 40; }
+      else {
+        // ranks across the field, nearest the foe first; the great beasts behind
+        const depth = big ? 6 + (i % 3) : Math.floor(row / 1), perRank = 14;
+        if (!big) { col = i % perRank; row = Math.floor(i / perRank); }
+        x = cx - dir * ((sides.length === 1 ? -60 : 35) + (big ? 90 + (i % 4) * 25 : row * 14) + hashF(i, 5) * 5);
+        z = cz + ((big ? (i % 5) - 2 : col - perRank / 2) * (big ? 30 : 11)) + hashF(i, 9) * 4;
+      }
+      const sp = new THREE.Sprite(new THREE.SpriteMaterial({ transparent: true, alphaTest: 0.35 }));
+      sp.center.set(0.5, 0); grp.add(sp);
+      units.push({ sp, kind, x, z, y, dir, ph: i % 4 });
+    });
+  });
+  if (b.muster) {
+    // white pavilions with green pennants on the field behind the Riders
+    const tentM = new THREE.MeshStandardMaterial({ color: 0xe8e2d0, roughness: 0.9 }), poleM = new THREE.MeshStandardMaterial({ color: 0x5a3a22 }), flagM = new THREE.MeshStandardMaterial({ color: 0x2a6a2a, side: THREE.DoubleSide });
+    for (let i = 0; i < 26; i++) {
+      const x = cx - 120 - (i % 5) * 34 - hashF(i, 1) * 12, z = cz + (Math.floor(i / 5) - 2.5) * 38 + hashF(i, 2) * 10, y = groundAt(x, z);
+      const tent = new THREE.Mesh(new THREE.ConeGeometry(4.2, 5.2, 6), tentM); tent.position.set(x, y + 2.6, z); tent.castShadow = true;
+      const pole = new THREE.Mesh(new THREE.CylinderGeometry(0.08, 0.08, 3.2, 5), poleM); pole.position.set(x, y + 6.4, z);
+      const flag = new THREE.Mesh(new THREE.PlaneGeometry(1.6, 0.8), flagM); flag.position.set(x + 0.8, y + 7.4, z);
+      grp.add(tent, pole, flag);
+    }
+  }
+  G.scene.add(grp);
+  return { grp, units };
+}
+function updateArmies(ts, battles) {
+  const A = window.AVATARS, keep = new Set(), f = Math.floor(ts / 170) % 4, rx = Math.cos(G.yaw);
+  for (const b of battles) {
+    const cx = (b.at[0] - G.X0) * MI, cz = -(b.at[1] - G.Y0) * MI;
+    if (Math.hypot(cx - G.px, cz - G.pz) > ARMY_NEAR) continue;
+    keep.add(b.name);
+    let a = ARMY.get(b.name); if (!a) { a = buildArmy(b, cx, cz); ARMY.set(b.name, a); }
+    for (const u of a.units) {
+      // face the foe as seen from where you stand: flip the sprite when the army's heading points screen-left
+      const flip = u.dir * rx < 0, cv = A.unitCanvas(u.kind, (f + u.ph) % 4, flip), tex = travTexture(cv, 'u:' + u.kind + ((f + u.ph) % 4) + (flip ? 'w' : ''));
+      if (u.sp.material.map !== tex) { u.sp.material.map = tex; u.sp.material.needsUpdate = true; }
+      u.sp.scale.set(cv.width * ARMY_M, cv.height * ARMY_M, 1);
+      u.sp.position.set(u.x, groundAt(u.x, u.z) - 0.1 + u.y + (u.y ? Math.sin(ts / 300 + u.ph) * 2 : 0), u.z);
+    }
+  }
+  for (const [k, a] of ARMY) if (!keep.has(k)) { G.scene.remove(a.grp); a.grp.traverse(m => { if (m.material) m.material.dispose(); if (m.geometry) m.geometry.dispose(); }); ARMY.delete(k); }
+  return keep;
+}
+let TAGCV = null;
+function tagCanvas() { if (!TAGCV) { TAGCV = document.createElement('canvas'); TAGCV.width = TAGCV.height = 2; } return TAGCV; }
 function clearTravellers() {
+  for (const [k, a] of ARMY) { G.scene.remove(a.grp); a.grp.traverse(m => { if (m.material) m.material.dispose(); if (m.geometry) m.geometry.dispose(); }); }
+  ARMY.clear();
   for (const it of TRAV.items.values()) { G.scene.remove(it.sprite); it.sprite.material.dispose(); it.el.remove(); }
   TRAV.items.clear(); TRAV.list = [];
 }
@@ -492,10 +556,12 @@ function updateTravellers(ts) {
       const mounted = c.mode !== 'walk' && c.mode !== 'under', idle = c.mode === 'fly' || c.mode === 'fire' || c.ids.some(i => i === 'sauron' || i === 'smaug' || i === 'shelob');
       const flip = mounted && (c.vx * MI * rx + -c.vy * MI * rz) < 0;
       const ic = A.icon(c.ids, c.color, G.t, c.moving || idle ? f : 0, c.mode, flip);
-      want.push({ key: 'p:' + ic.key.split('|').slice(0, 2).join('|'), x, z, vx: c.vx * MI, vz: -c.vy * MI, t0: G.t, canvas: ic.canvas, tkey: ic.key + (c.moving || idle ? f : 0) + (flip ? 'w' : ''), name: ic.name, air: c.mode === 'fly' || c.mode === 'fire' ? 120 : 0 });
+      want.push({ key: 'p:' + ic.key.split('|').slice(0, 2).join('|'), eye: c.ids.includes('sauron'), x, z, vx: c.vx * MI, vz: -c.vy * MI, t0: G.t, canvas: ic.canvas, tkey: ic.key + (c.moving || idle ? f : 0) + (flip ? 'w' : ''), name: ic.name, air: c.mode === 'fly' || c.mode === 'fire' ? 120 : 0 });
     }
+    const near = o.battles ? updateArmies(ts, o.battles(G.t)) : new Set();
     if (o.battles) for (const b of o.battles(G.t)) {
       const x = (b.at[0] - G.X0) * MI, z = -(b.at[1] - G.Y0) * MI; if (Math.hypot(x - G.px, z - G.pz) > 30000) continue;
+      if (near.has(b.name)) { want.push({ key: 'b:' + b.name, x, z, vx: 0, vz: 0, t0: G.t, canvas: tagCanvas(), tkey: 'tag', name: b.name, air: 18, k: 0.01 }); continue; }
       const f2 = Math.floor(ts / 170) % 4; want.push({ key: 'b:' + b.name, x, z, vx: 0, vz: 0, t0: G.t, canvas: A.battle(b, f2), tkey: 'b:' + b.name + f2, name: b.name, air: 0, k: 1.8 });
     }
     for (const w of want) {
@@ -515,9 +581,16 @@ function updateTravellers(ts) {
   // every frame: stand them on the ground, grow the far ones, and place the name tags
   const w = innerWidth, h = innerHeight, p = new THREE.Vector3();
   for (const it of TRAV.items.values()) {
-    const ex = it.x + it.vx * (G.t - it.t0), ez = it.z + it.vz * (G.t - it.t0);       // glide on between refreshes
+    let ex = it.x + it.vx * (G.t - it.t0), ez = it.z + it.vz * (G.t - it.t0), top = 0;       // glide on between refreshes
+    for (const o of G.solids || []) {
+      const dx = ex - o.x, dz = ez - o.z, d = Math.hypot(dx, dz); if (d >= o.r) continue;
+      if (it.eye) { ex = o.x; ez = o.z; top = o.h + 10; continue; }      // the Eye keeps its watch from the summit
+      const cx = G.px - o.x, cz = G.pz - o.z, cd = Math.hypot(cx, cz) || 1;   // otherwise stand at the foot, on your side
+      const ux = d > 1 ? dx / d * 0.35 + cx / cd * 0.65 : cx / cd, uz = d > 1 ? dz / d * 0.35 + cz / cd * 0.65 : cz / cd, ul = Math.hypot(ux, uz) || 1;
+      ex = o.x + ux / ul * (o.r + 4); ez = o.z + uz / ul * (o.r + 4);
+    }
     const d = Math.hypot(ex - G.px, ez - G.pz), boost = Math.min(60, Math.max(1, d / 220)), k = PX_M * (it.k || 1) * boost;
-    const sw = it.canvas.width * k, sh = it.canvas.height * k, y = groundAt(ex, ez) - 0.2 + it.air * Math.min(1, boost);
+    const sw = it.canvas.width * k * (it.eye ? 6 : 1), sh = it.canvas.height * k * (it.eye ? 6 : 1), y = groundAt(ex, ez) - 0.2 + (top || it.air * Math.min(1, boost));
     it.sprite.position.set(ex, y, ez); it.sprite.scale.set(sw, sh, 1);
     p.set(ex, y + sh * 1.04, ez).project(G.camera);
     if (p.z > 1 || p.x < -1.1 || p.x > 1.1 || p.y < -1.1 || p.y > 1.1) { it.el.hidden = true; continue; }
@@ -566,6 +639,9 @@ async function loadNear(Xc, Yc, offX, offZ) {
   grp.add(town, folk);
   grp.userData.update = (dt, t) => { town.userData.update(dt, t); folk.userData.update(dt, t); };
   G.px = pxSave; G.pz = pzSave;
+  G.solids = (town.userData.solids || []).map(o => ({ ...o, x: o.x + offX, z: o.z + offZ }));
+  // never arrive inside a tower: step out to its foot, on the side you came from
+  for (const o of G.solids) { const dx = G.px - o.x, dz = G.pz - o.z, d = Math.hypot(dx, dz); if (d < o.r + 6) { const k = (o.r + 18) / (d || 1); G.px = o.x + (d ? dx : 0) * k; G.pz = o.z + (d ? dz : o.r + 18) * (d ? k : 1); } }
   G.scene.add(grp);
   G.nearGroup = grp;
   G.nearCtx = null;
