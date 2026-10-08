@@ -53,6 +53,8 @@ const C = {
   eowyn:   { name: 'Éowyn',     skin: '#f6dcc4', hair: ['#f0d070', '#c8a848'], style: 'long' },
   saruman: { name: 'Saruman',   skin: '#e8c0a0', hair: ['#e8e8ec', '#9a9aa8'], style: 'long', beard: 'wizard', beardC: ['#ececf0', '#8a8a98'], brows: 1 },
   grima:   { name: 'Gríma',     skin: '#e6d8cc', hair: ['#1e1a1c', '#0e0c0e'], style: 'long', eye: '#3a4a3a' },
+  grishnakh: { name: 'Grishnákh', skin: '#4e5236', hair: ['#141010', '#0a0808'], style: 'sparse', ears: 'gollum', eye: '#f05030', fangs: 1, brows: 1, beardC: ['#141010', '#0a0808'] },
+  mordororc: { name: 'Orcs of Mordor', skin: '#5a5e3e', hair: ['#141010', '#0a0808'], style: 'none', hat: 'helm', eye: '#f05030', fangs: 1 },
   ugluk:   { name: 'Uglúk',     skin: '#5a4a3c', hair: ['#141010', '#0a0808'], style: 'none', hat: 'orchelm', eye: '#f0c040', fangs: 1, brows: 1, beardC: ['#141010', '#0a0808'] },
   uruk:    { name: 'Uruk-hai',  skin: '#4e4234', hair: ['#141010', '#0a0808'], style: 'none', hat: 'orchelm', eye: '#e8a838', fangs: 1 },
   smeagol: { name: 'Sméagol',   skin: '#e0b48e', hair: ['#5a4228', '#3a2a18'], style: 'shaggy', ears: 'hobbit' },
@@ -76,7 +78,7 @@ const JOURNEY = {
     'Merry with Théoden': ['merry', 'theoden', ['eowyn', '3019 3 10', '3019 3 15.6']], 'Gandalf the Grey': ['gandalf'], 'The Black Riders': ['nazgul'], 'Boromir': ['boromir'],
     'Legolas': ['legolas'], 'Gimli': ['gimli'], 'Gandalf: to Orthanc': ['gandalf'], 'Gandalf the White': ['gandalfW'],
     'Elrond': ['elrond'], 'The Stone-trolls': ['stonetrolls'], 'Shelob': ['shelob'], 'Tom Bombadil': ['tom'], 'Goldberry': ['goldberry'], 'Galadriel': ['galadriel'], 'Sauron': ['sauron'], 'Saruman': ['saruman'], 'Gríma Wormtongue': ['grima'],
-    'Uglúk and the Uruk-hai': ['ugluk', 'uruk'], 'Treebeard': ['treebeard'], 'Gollum': ['gollum'], 'Faramir': ['faramir'],
+    'Uglúk and the Uruk-hai': ['ugluk', 'uruk'], 'Grishnákh and the Orcs of Mordor': ['grishnakh', 'mordororc'], 'The Northern Orcs from Moria': ['goblin'], 'Treebeard': ['treebeard'], 'Gollum': ['gollum'], 'Faramir': ['faramir'],
   },
   return: {
     'Frodo & Sam homeward': ['frodo', 'sam'], 'Merry & Pippin homeward': ['merry', 'pippin'], 'Aragorn & Arwen': ['aragorn', ['arwen', '3019 6 31']],
@@ -130,6 +132,8 @@ const GROUPS = [
   { name: 'The Ring-bearers', frame: '#1b2433', edge: '#f2d06b', emblem: 'ring', test: S => S.size === 2 && has(S, 'frodo', 'bilboOld') },
   { name: 'Captives of the Uruk-hai', frame: '#1e1a18', edge: '#e8e4dc', emblem: 'hand', test: S => has(S, 'merry', 'pippin', 'ugluk'), order: ['uruk', 'merry', 'ugluk', 'pippin'] },
   { name: 'The Uruk-hai of Isengard', frame: '#1e1a18', edge: '#e8e4dc', emblem: 'hand', test: S => S.size === 2 && has(S, 'ugluk', 'uruk'), show: ['uruk', 'ugluk', 'uruk'] },
+  { name: 'The orc-bands meet at Parth Galen', frame: '#1a1612', edge: '#e05030', emblem: 'eye', test: S => has(S, 'ugluk', 'grishnakh') && !S.has('merry'), show: ['uruk', 'ugluk', 'uruk', 'mordororc', 'grishnakh', 'goblin', 'goblin'] },
+  { name: 'Grishnákh and the Orcs of Mordor', frame: '#1a1210', edge: '#e05030', emblem: 'eye', test: S => S.size === 2 && has(S, 'grishnakh', 'mordororc'), show: ['mordororc', 'grishnakh', 'mordororc'] },
   { name: 'Treebeard and the Hobbits', frame: '#24361c', edge: '#8a9a6a', emblem: 'leaf', test: S => has(S, 'merry', 'pippin', 'treebeard') },
   { name: 'Frodo, Sam and Sméagol', frame: '#1b2433', edge: '#b4bc9c', emblem: 'ring', test: S => S.size === 3 && has(S, 'frodo', 'sam', 'gollum') },
   { name: 'Faramir and the Ring-bearer', frame: '#24361c', edge: '#7fa86a', emblem: 'star', test: S => has(S, 'frodo', 'sam', 'faramir') },
@@ -241,6 +245,8 @@ const B = {
   eowyn:    { tunic: '#3f6a3a', legs: '#5a4a30', cloak: '#2a4a2a', boots: '#3a2a1a', belt: '#c9a03c', gear: 'sword', mail: 1 },
   saruman:  { robe: '#d8d8e2', iris: 1, gear: 'staff', staff: '#2a2a30' },
   grima:    { robe: '#2a2a2e' },
+  grishnakh: { tunic: '#2a2420', legs: '#1e1a16', boots: '#100c0a', gear: 'sword' },
+  mordororc: { tunic: '#3a2e28', legs: '#2a2420', boots: '#141010', gear: 'sword', mail: 1 },
   ugluk:    { tunic: '#2a2626', legs: '#2a2020', boots: '#141010', gear: 'handshield', mail: 1 },
   uruk:     { tunic: '#2e2a28', legs: '#2a2020', boots: '#141010', gear: 'handshield', mail: 1 },
   smeagol:  { tunic: '#6a5a3a', legs: '#4a4030', feet: 'hobbit' },
@@ -1087,9 +1093,33 @@ function fireworksGrid(f, dragon) {
   return g;
 }
 const LCACHE = {};
+// Orthanc: the black, four-horned tower in its ring, crowned by a cold white light (Saruman the White, and the
+// palantír); while he breeds his Uruk-hai the ring is pitted with furnaces and smoke, and after the Ents it is a lake
+function orthancGrid(f, st) {
+  const Wd = 44, Ht = 62, g = blank(Wd, Ht), cx = 22, k = '#16161a', k2 = '#26262c', k3 = '#34343c';
+  // the light at the summit: a pale halo pulsing
+  const r0 = 6 + (f % 2);
+  for (let y = 0; y < 16; y++) for (let x = 0; x < Wd; x++) { const d = Math.hypot(x - cx, (y - 6) * 1.1); if (d < r0) setp(g, x, y, d < 2 ? '#ffffff' : d < 4 ? '#e8f4ff' : '#b8d4f0'); }
+  // four horns, leaning out and in
+  for (const [x0, dx] of [[cx - 5, -1], [cx - 2, -0.4], [cx + 2, 0.4], [cx + 5, 1]]) for (let y = 4; y <= 16; y++) { const x = Math.round(x0 + dx * (16 - y) * 0.25); setp(g, x, y, k3); setp(g, x - Math.sign(dx || 1), y, k); }
+  // the shaft of fused piers, ribbed
+  for (let y = 15; y <= 50; y++) { const hw = 4 + (y > 44 ? (y - 44) * 0.6 : 0); for (let x = Math.round(cx - hw); x <= Math.round(cx + hw); x++) setp(g, x, y, (x - cx + 9) % 3 === 0 ? k3 : x > cx ? k : k2); }
+  setp(g, cx, 30, st === 1 && f % 2 ? '#ff7a2a' : '#5a5a66'); setp(g, cx - 1, 38, '#5a5a66');
+  // the plain within the Ring: furnace pits and smoke, or the flood
+  for (let y = 50; y <= 58; y++) { const t = (y - 50) / 8, hw = Math.round(14 + 6 * Math.sin(Math.PI * Math.min(1, t * 1.2))); for (let x = cx - hw; x <= cx + hw; x++) if (!g[y][x]) setp(g, x, y, st === 2 ? ((x + y + f) % 5 ? '#3a6a8a' : '#6aa0c0') : '#4a4440'); }
+  if (st === 1) for (const [x, y] of [[cx - 12, 54], [cx - 7, 56], [cx + 8, 55], [cx + 13, 53], [cx - 3, 57], [cx + 4, 57]]) {
+    setp(g, x, y, (x + f) % 2 ? '#ffb030' : '#ff6a18'); setp(g, x + 1, y, '#c02010');
+    for (let h = 1; h <= 7; h++) setp(g, x + Math.round(Math.sin((h + f + x) * 0.7)), y - h - (f % 2), h < 3 ? '#6a5a50' : '#8a8a8a');     // smoke from the pits
+  }
+  // the Ring of Isengard, unbroken until the Ents
+  for (let a = 0; a < 64; a++) { const t = a / 64 * Math.PI * 2, x = Math.round(cx + Math.cos(t) * 20), y = Math.round(55 + Math.sin(t) * 5); if (st === 2 && (a > 40 && a < 50)) continue; setp(g, x, y, Math.sin(t) > 0 ? '#2a2a30' : '#3a3a44'); setp(g, x, y + 1, '#16161a'); }
+  // the White Hand on the gate-banner
+  rectp(g, cx + 18, 44, cx + 18, 54, '#6b4a2a'); rectp(g, cx + 19, 44, cx + 23, 48, '#141418'); setp(g, cx + 21, 45, '#f0f0ea'); setp(g, cx + 20, 46, '#f0f0ea'); setp(g, cx + 21, 46, '#f0f0ea'); setp(g, cx + 22, 46, '#f0f0ea'); setp(g, cx + 21, 47, '#f0f0ea');
+  return g;
+}
 function landmark(kind, f, heat = 1) {
   const key = kind + f + ':' + heat; if (LCACHE[key]) return LCACHE[key];
-  const gr = kind === 'doom' ? doomGrid(f, heat) : kind === 'fireworks' ? fireworksGrid(f, heat) : cityGrid(f), s = 3, cv = document.createElement('canvas');
+  const gr = kind === 'doom' ? doomGrid(f, heat) : kind === 'fireworks' ? fireworksGrid(f, heat) : kind === 'orthanc' ? orthancGrid(f, heat) : cityGrid(f), s = 3, cv = document.createElement('canvas');
   cv.width = (gr[0].length + 2) * s; cv.height = (gr.length + 2) * s; drawGrid(cv.getContext('2d'), gr, 0, 0, s);
   return LCACHE[key] = cv;
 }
