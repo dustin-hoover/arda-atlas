@@ -1297,10 +1297,9 @@ function orthancGrid(f, st) {
 function landmark(kind, f, heat = 1) {
   const key = kind + f + ':' + heat; if (LCACHE[key]) return LCACHE[key];
   const gr = kind === 'doom' ? doomGrid(f, heat) : kind === 'fireworks' ? fireworksGrid(f, heat) : kind === 'orthanc' ? orthancGrid(f, heat) : kind === 'barad' ? baradGrid(f, heat) : cityGrid(f), cv = document.createElement('canvas');
-  // the two towers in proportion to each other: Orthanc 500 ft (LR III.8) at 1.5 px a cell, Barad-dûr (height never
-  // given; our ground model makes it ~1,800 ft) at 3, about three and a half times as tall. Orodruin is drawn larger
-  // (4) so the tower does not dwarf it, though the mountain's true height would be greater still.
-  const s = kind === 'barad' ? 3 : kind === 'orthanc' ? 1.5 : kind === 'doom' ? 4 : 3;
+  // the two towers in proportion to each other: Orthanc 500 ft (LR III.8) at 1.2 px a cell, Barad-dûr (height never
+  // given) at 2, about three times as tall, and no taller on the map than Orodruin beside it (drawn at 4)
+  const s = kind === 'barad' ? 2 : kind === 'orthanc' ? 1.2 : kind === 'doom' ? 4 : 3;
   // drawn at a whole 3 px a cell and then scaled without smoothing, so fractional scales keep crisp pixels
   const tmp = document.createElement('canvas'); tmp.width = (gr[0].length + 2) * 3; tmp.height = (gr.length + 2) * 3; drawGrid(tmp.getContext('2d'), gr, 0, 0, 3);
   cv.width = Math.round(tmp.width * s / 3); cv.height = Math.round(tmp.height * s / 3);
