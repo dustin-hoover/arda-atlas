@@ -7880,3 +7880,13 @@ function W3far(o) {
   return grp;
 }
 </script>
+
+<!-- Visit counter (GoatCounter: no cookies, no personal data). Off until COUNTER is set to the account's code. It
+     counts only the published site, never local previews; open the site once with #toggle-goatcounter on each of
+     your own browsers and devices and your visits are left out. -->
+<script>(() => {
+  const COUNTER = '';                                  // e.g. 'otherworldly' for https://otherworldly.goatcounter.com
+  if (!COUNTER || !/\.github\.io$|otherworldly/.test(location.hostname)) return;
+  const s = document.createElement('script'); s.async = true; s.src = 'https://gc.zgo.at/count.js';
+  s.dataset.goatcounter = 'https://' + COUNTER + '.goatcounter.com/count'; document.head.appendChild(s);
+})();</script>
