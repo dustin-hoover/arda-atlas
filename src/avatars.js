@@ -305,13 +305,14 @@ function entGrid(f) {
 }
 // the Lidless Eye: wide, wreathed in flame, floating between the two great horns that crown Barad-dûr
 function eyeGrid(f) {
-  const Wd = 32, Ht = 30, g = Array.from({ length: Ht }, () => Array(Wd).fill(null));
+  const Wd = 32, Ht = 60, g = Array.from({ length: Ht }, () => Array(Wd).fill(null));   // twice the original height, same width
   const set = (x, y, v) => { x = Math.round(x); y = Math.round(y); if (x >= 0 && x < Wd && y >= 0 && y < Ht && v) g[y][x] = v; };
   const rect = (x0, y0, x1, y1, v) => { for (let y = y0; y <= y1; y++) for (let x = x0; x <= x1; x++) set(x, y, v); };
   const k = '#16141a', k2 = '#2a2830';
   // the crown of the tower: broad battlements with red-lit windows
-  rect(1, 21, 30, 29, k); for (let x = 1; x <= 30; x += 3) rect(x, 19, x + 1, 20, k); for (let y = 22; y <= 29; y += 3) rect(2, y, 29, y, k2);
-  for (const [x, y] of [[6, 24], [12, 26], [19, 24], [25, 27], [15, 23]]) set(x, y, f % 2 && x % 2 ? '#ff6a18' : '#c02010');
+  rect(1, 21, 30, 59, k); for (let x = 1; x <= 30; x += 3) rect(x, 19, x + 1, 20, k); for (let y = 22; y <= 59; y += 3) rect(2, y, 29, y, k2);
+  for (const y of [34, 46]) { rect(0, y, 31, y + 1, k2); for (let x = 0; x <= 31; x += 3) set(x, y - 1, k); }      // tiers and battlements down the tower
+  for (const [x, y] of [[6, 24], [12, 26], [19, 24], [25, 27], [15, 23], [9, 31], [22, 30], [5, 39], [16, 41], [26, 38], [11, 51], [20, 53], [27, 49], [4, 56]]) set(x, y, f % 2 && x % 2 ? '#ff6a18' : '#c02010');
   // two horns rising from the corners, leaning out and then curving in, tapering to points
   const horn = [[4, 20, 3], [3, 17, 3], [3, 14, 3], [3, 11, 2], [4, 8, 2], [5, 6, 2], [7, 4, 2], [9, 3, 1], [11, 2, 1]];
   for (let i = 0; i < horn.length - 1; i++) {
@@ -759,10 +760,9 @@ function icon(ids, color, t, f = 0, mode = 'walk', flip = false) {
     return ICACHE[key + f] = { canvas: cv, name: C.balrog.name, key };
   }
   if (show.length === 1 && C[show[0]].special === 'eye') {
-    // the Eye on its tower is drawn at twice the scale of the other figures, so it looms over Mordor
-    const s2 = s * 2, gh = hOf('sauron') * 2; cv.width = wOf('sauron') * 2 + 60; cv.height = gh + 40;
-    const rg = g.createRadialGradient(cv.width / 2, cv.height * 0.35, 8, cv.width / 2, cv.height * 0.35, Math.min(cv.width, cv.height) * 0.5); rg.addColorStop(0, 'rgba(255,120,30,0.75)'); rg.addColorStop(1, 'rgba(255,60,10,0)');
-    g.fillStyle = rg; g.fillRect(0, 0, cv.width, cv.height); drawFigure(g, 'sauron', 30, 16, s2, f);
+    const gh = hOf('sauron'); cv.width = wOf('sauron') + 30; cv.height = gh + 20;
+    const rg = g.createRadialGradient(cv.width / 2, 30, 4, cv.width / 2, 30, cv.width * 0.5); rg.addColorStop(0, 'rgba(255,120,30,0.75)'); rg.addColorStop(1, 'rgba(255,60,10,0)');
+    g.fillStyle = rg; g.fillRect(0, 0, cv.width, cv.height); drawFigure(g, 'sauron', 15, 8, s, f);
     return ICACHE[key + f] = { canvas: cv, name: 'The Eye of Sauron', key };
   }
   let two = show.length > 5, back = two ? show.slice(0, Math.floor(show.length / 2)) : [], front = two ? show.slice(back.length) : show;
