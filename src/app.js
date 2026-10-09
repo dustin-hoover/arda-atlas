@@ -615,7 +615,7 @@ function updateLandmarks() {
   if (!mapLoaded || !window.AVATARS) return;
   const f = Math.floor(performance.now() / 260) % 4, heat = doomHeat(S.t), feats = [];
   for (const [kind, X, Y] of LANDMARK_ART) {
-    const h = kind === 'orthanc' ? isenState(S.t) : kind === 'barad' ? baradState(S.t) : heat; if (kind === 'barad' && h < 0) continue;
+    const h = kind === 'orthanc' ? isenState(S.t) : kind === 'barad' ? baradState(S.t) : heat; if (kind === 'barad' && h <= 0) continue;   // before its fall the tower is Sauron's own figure (the Eye on its crown)
     const fr = kind === 'doom' || kind === 'orthanc' || kind === 'barad' ? f : f >> 1, id = 'lm:' + kind + fr + ':' + h;
     if (!map.hasImage(id)) { const cv = AVATARS.landmark(kind, fr, h); map.addImage(id, cv.getContext('2d').getImageData(0, 0, cv.width, cv.height), { pixelRatio: 2 }); }
     feats.push(pt(X, Y, kind === 'orthanc' ? { icon: id, off: [-50, 2] } : { icon: id }));     // Orthanc stands beside those gathered at its foot
@@ -708,7 +708,7 @@ function updateJourneys(posOnly) {
     if (!gone) live.push({ j, p });
   }
   for (const m of clusterLive(live)) {
-    const ids = [...new Set(m.flatMap(l => window.AVATARS ? AVATARS.charsOf(S.story, l.j.name, S.t) : []))].filter(i => i !== 'sauron' || S.story === 'hobbit');   // the Eye is drawn on Barad-dûr itself
+    const ids = [...new Set(m.flatMap(l => window.AVATARS ? AVATARS.charsOf(S.story, l.j.name, S.t) : []))];
     const X = m.reduce((a, l) => a + l.p.X, 0) / m.length, Y = m.reduce((a, l) => a + l.p.Y, 0) / m.length, color = m[0].j.color;
     if (!ids.length || !mapLoaded) { m.forEach(l => pos.push(pt(l.p.X, l.p.Y, { name: l.j.name, color: l.j.color }))); continue; }
     // walking while the clock runs and the party is on the move; standing otherwise

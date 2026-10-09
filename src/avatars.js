@@ -759,9 +759,10 @@ function icon(ids, color, t, f = 0, mode = 'walk', flip = false) {
     return ICACHE[key + f] = { canvas: cv, name: C.balrog.name, key };
   }
   if (show.length === 1 && C[show[0]].special === 'eye') {
-    const gh = hOf('sauron'); cv.width = wOf('sauron') + 30; cv.height = gh + 20;
-    const rg = g.createRadialGradient(cv.width / 2, 30, 4, cv.width / 2, 30, cv.width * 0.6); rg.addColorStop(0, 'rgba(255,120,30,0.75)'); rg.addColorStop(1, 'rgba(255,60,10,0)');
-    g.fillStyle = rg; g.fillRect(0, 0, cv.width, cv.height); drawFigure(g, 'sauron', 15, 8, s, f);
+    // the Eye on its tower is drawn at twice the scale of the other figures, so it looms over Mordor
+    const s2 = s * 2, gh = hOf('sauron') * 2; cv.width = wOf('sauron') * 2 + 60; cv.height = gh + 40;
+    const rg = g.createRadialGradient(cv.width / 2, cv.height * 0.35, 8, cv.width / 2, cv.height * 0.35, Math.min(cv.width, cv.height) * 0.5); rg.addColorStop(0, 'rgba(255,120,30,0.75)'); rg.addColorStop(1, 'rgba(255,60,10,0)');
+    g.fillStyle = rg; g.fillRect(0, 0, cv.width, cv.height); drawFigure(g, 'sauron', 30, 16, s2, f);
     return ICACHE[key + f] = { canvas: cv, name: 'The Eye of Sauron', key };
   }
   let two = show.length > 5, back = two ? show.slice(0, Math.floor(show.length / 2)) : [], front = two ? show.slice(back.length) : show;
@@ -1297,10 +1298,8 @@ function orthancGrid(f, st) {
 function landmark(kind, f, heat = 1) {
   const key = kind + f + ':' + heat; if (LCACHE[key]) return LCACHE[key];
   const gr = kind === 'doom' ? doomGrid(f, heat) : kind === 'fireworks' ? fireworksGrid(f, heat) : kind === 'orthanc' ? orthancGrid(f, heat) : kind === 'barad' ? baradGrid(f, heat) : cityGrid(f), cv = document.createElement('canvas');
-  // map symbols, not to scale: the two towers are drawn about the same height (Orthanc at 1.5 px a cell, Barad-dûr's
-  // taller grid at 1), and both stand well below Orodruin (4). The ground view keeps the Dark Tower's true bulk.
-  // the fall itself (the last blaze, the collapse, the rising shadow and the wind) is a spectacle and drawn large
-  const s = kind === 'barad' ? (heat >= 1 && heat <= 4 ? 2.5 : 1) : kind === 'orthanc' ? 1.5 : kind === 'doom' ? 4 : 3;
+  // Orodruin is drawn a little larger than the other landmarks
+  const s = kind === 'doom' ? 4 : 3;
   // drawn at a whole 3 px a cell and then scaled without smoothing, so fractional scales keep crisp pixels
   const tmp = document.createElement('canvas'); tmp.width = (gr[0].length + 2) * 3; tmp.height = (gr.length + 2) * 3; drawGrid(tmp.getContext('2d'), gr, 0, 0, 3);
   cv.width = Math.round(tmp.width * s / 3); cv.height = Math.round(tmp.height * s / 3);
