@@ -1295,15 +1295,38 @@ function orthancGrid(f, st) {
   rectp(g, cx + 18, 44, cx + 18, 54, '#6b4a2a'); rectp(g, cx + 19, 44, cx + 23, 48, '#141418'); setp(g, cx + 21, 45, '#f0f0ea'); setp(g, cx + 20, 46, '#f0f0ea'); setp(g, cx + 21, 46, '#f0f0ea'); setp(g, cx + 22, 46, '#f0f0ea'); setp(g, cx + 21, 47, '#f0f0ea');
   return g;
 }
+
+// Minas Morgul: the pale Tower of Sorcery on its ledge in the mountains' shadow, its top slowly turning, lit with a
+// corpse-light (LR IV.8); drawn between Orthanc and Barad-dûr in height
+function morgulGrid(f) {
+  const Wd = 30, Ht = 62, g = blank(Wd, Ht), cx = 15, p0 = '#a6c2b4', p1 = '#8ba79a', p2 = '#c4dccf', lit = f % 2 ? '#d8ffe8' : '#a8f0c8';
+  for (let y = 0; y < 16; y++) for (let x = 0; x < Wd; x++) { const d = Math.hypot(x - cx, (y - 7) * 1.1); if (d < 6.5 + (f % 2) * 0.5) setp(g, x, y, d < 2 ? '#f0fff6' : d < 4 ? '#c8f8dc' : '#7ad0a8'); }
+  for (let y = 7; y <= 15; y++) rectp(g, cx - 4, y, cx + 4, y, y % 3 ? p0 : p1);                                // the turning top
+  for (let k = 0; k < 5; k++) setp(g, cx - 4 + ((k * 2 + f) % 9), 11, lit);
+  for (const x of [cx - 4, cx - 2, cx, cx + 2, cx + 4]) { setp(g, x, 6, p1); setp(g, x, 5, p2); }
+  rectp(g, cx - 6, 16, cx + 6, 17, p1);
+  for (let y = 18; y <= 45; y++) { const hw = 4 + (y > 38 ? 1 : 0); for (let x = cx - hw; x <= cx + hw; x++) setp(g, x, y, x > cx + 1 ? p1 : x < cx - 2 ? p2 : p0); }
+  for (const [x, y] of [[cx - 1, 22], [cx + 1, 28], [cx - 2, 34], [cx, 40]]) { setp(g, x, y, lit); setp(g, x, y + 1, lit); }
+  for (let y = 46; y <= 54; y++) rectp(g, 3, y, 26, y, y % 4 ? p1 : p0); for (let x = 3; x <= 26; x += 2) setp(g, x, 45, p1);   // the walls
+  rectp(g, cx - 2, 50, cx + 2, 54, '#0a100e'); setp(g, cx, 49, '#0a100e');                                     // the gate
+  for (let y = 55; y < Ht; y++) for (let x = 1 + (Ht - y); x < Wd - 1 - (Ht - y) / 2; x++) setp(g, x, y, (x + y) % 3 ? '#3a3a3e' : '#2a2a2e');   // the ledge
+  return g;
+}
 function landmark(kind, f, heat = 1) {
   const key = kind + f + ':' + heat; if (LCACHE[key]) return LCACHE[key];
-  const gr = kind === 'doom' ? doomGrid(f, heat) : kind === 'fireworks' ? fireworksGrid(f, heat) : kind === 'orthanc' ? orthancGrid(f, heat) : kind === 'barad' ? baradGrid(f, heat) : cityGrid(f), cv = document.createElement('canvas');
-  // Orodruin is drawn a little larger than the other landmarks
-  const s = kind === 'doom' ? 4 : 3;
+  // before its fall Barad-dûr is drawn as Sauron himself: the Eye on its tower (eyeGrid), narrowed and heightened
+  const sauron = kind === 'barad' && heat === 0;
+  const gr = kind === 'doom' ? doomGrid(f, heat) : kind === 'fireworks' ? fireworksGrid(f, heat) : kind === 'orthanc' ? orthancGrid(f, heat) : kind === 'morgul' ? morgulGrid(f) : sauron ? eyeGrid(f) : kind === 'barad' ? baradGrid(f, heat) : cityGrid(f), cv = document.createElement('canvas');
+  // Orodruin a little larger than the other landmarks; the three towers drawn to their own proportions (map symbols,
+  // not to scale): Orthanc squat (two thirds height), Minas Morgul between, Sauron's tower narrow and tall
+  const s = kind === 'doom' ? 4 : 3, sx = sauron ? 2 / 3 : 1, sy = kind === 'orthanc' ? 2 / 3 : sauron ? 4 / 3 : 1;
   // drawn at a whole 3 px a cell and then scaled without smoothing, so fractional scales keep crisp pixels
   const tmp = document.createElement('canvas'); tmp.width = (gr[0].length + 2) * 3; tmp.height = (gr.length + 2) * 3; drawGrid(tmp.getContext('2d'), gr, 0, 0, 3);
-  cv.width = Math.round(tmp.width * s / 3); cv.height = Math.round(tmp.height * s / 3);
-  const cx2 = cv.getContext('2d'); cx2.imageSmoothingEnabled = false; cx2.drawImage(tmp, 0, 0, cv.width, cv.height);
+  const pad = sauron ? 16 : 0;
+  cv.width = Math.round(tmp.width * s * sx / 3) + pad * 2; cv.height = Math.round(tmp.height * s * sy / 3) + pad;
+  const cx2 = cv.getContext('2d');
+  if (sauron) { const rg = cx2.createRadialGradient(cv.width / 2, 40, 4, cv.width / 2, 40, cv.width * 0.6); rg.addColorStop(0, 'rgba(255,120,30,0.75)'); rg.addColorStop(1, 'rgba(255,60,10,0)'); cx2.fillStyle = rg; cx2.fillRect(0, 0, cv.width, cv.height); }
+  cx2.imageSmoothingEnabled = false; cx2.drawImage(tmp, pad, pad, cv.width - pad * 2, cv.height - pad);
   return LCACHE[key] = cv;
 }
 return { C, B, JOURNEY, GROUPS, charsOf, icon, dataURL, drawHead, drawFigure, battle, unitCanvas, landmark, corpse, rest };

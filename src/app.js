@@ -270,7 +270,7 @@ const style = {
     { id: 'hl', type: 'symbol', source: 'hl', layout: { visibility: 'none', 'text-field': ['get', 't'], 'text-font': TXT_UIB, 'text-size': 26, 'text-allow-overlap': true }, paint: { 'text-color': ['match', ['get', 't'], 'L', '#ff8a6a', '#8ecbff'], 'text-halo-color': 'rgba(0,0,0,0.6)', 'text-halo-width': 1.5 } },
     { id: 'isobar-labels', type: 'symbol', source: 'isobars', layout: { visibility: 'none', 'symbol-placement': 'line', 'symbol-spacing': 300, 'text-field': ['to-string', ['get', 'p']], 'text-font': TXT_UI, 'text-size': 11 }, paint: { 'text-color': '#e6f2f7', 'text-halo-color': 'rgba(0,0,0,0.6)', 'text-halo-width': 1.2 } },
     // Orodruin and Minas Tirith drawn large: the Mountain's fire follows the story (updateLandmarks)
-    { id: 'landmarks-art', type: 'symbol', source: 'landmarks', minzoom: 3.2, layout: { 'icon-image': ['get', 'icon'], 'icon-size': ['interpolate', ['linear'], ['zoom'], 3.2, 0.8, 6, 1.3, 9, 2, 12, 2.6], 'icon-anchor': 'bottom', 'icon-offset': ['coalesce', ['get', 'off'], ['literal', [0, 0]]], 'icon-allow-overlap': true, 'icon-ignore-placement': true } },
+    { id: 'landmarks-art', type: 'symbol', source: 'landmarks', minzoom: 3.2, layout: { 'icon-image': ['get', 'icon'], 'icon-size': ['interpolate', ['linear'], ['zoom'], 3.2, 0.8, 6, 1.3, 9, 2, 12, 2.6], 'icon-anchor': 'bottom', 'icon-offset': ['coalesce', ['get', 'off'], ['literal', [0, 0]]], 'icon-allow-overlap': true, 'icon-ignore-placement': true, 'text-field': ['coalesce', ['get', 'label'], ''], 'text-font': TXT_REG, 'text-size': 13, 'text-anchor': 'top', 'text-offset': [0, 1.4], 'text-allow-overlap': true, 'text-ignore-placement': true }, paint: { 'text-color': '#ff8a3a', 'text-halo-color': 'rgba(20,6,2,0.9)', 'text-halo-width': 1.4 } },
   ].concat([1, 2, 3, 4, 5].map(r => ({
     id: 'places-' + r, type: 'symbol', source: 'places', minzoom: RANK_MINZ[r], filter: ['all', ['==', ['get', 'rank'], r], ['!', ['in', ['get', 'type'], ['literal', ['bridge', 'ford', 'beacon']]]]],
     layout: { 'icon-image': ['concat', 'i-', ['get', 'type']], 'icon-size': r === 1 ? 0.8 : r === 2 ? 0.72 : 0.62, 'icon-allow-overlap': r <= 2, 'text-field': ['get', 'name'], 'text-font': r === 1 ? TXT_UIB : r === 2 ? TXT_UIM : TXT_UI, 'text-size': r === 1 ? 16 : r === 2 ? 14.5 : 13, 'text-anchor': 'left', 'text-offset': [0.85, 0], 'text-optional': true, 'symbol-sort-key': r },
@@ -608,17 +608,17 @@ function baradState(t) {
   return t < end ? 0 : t < end + 0.06 ? 1 : t < end + 0.16 ? 2 : t < end + 0.26 ? 3 : t < end + 0.34 ? 4 : t < end + 30 ? 5 : 6;
 }
 const doomGone = t => doomHeat(t) >= 4 ? 1 : 0;
-const LANDMARK_ART = [['doom', 840.1, -554], ['city', 725.1, -599.1], ['orthanc', 334, -379.1], ['barad', 895.4, -532.8]];
+const LANDMARK_ART = [['doom', 840.1, -554], ['city', 725.1, -599.1], ['orthanc', 334, -379.1], ['barad', 895.4, -532.8], ['morgul', 773.6, -597.9]];
 // Isengard: quiet in the years of the Hobbit, its pits burning while Saruman breeds and arms his Uruk-hai, a lake after the Ents
 function isenState(t) { if (S.story === 'hobbit') return 0; return t >= WX.parse('3019 3 3.4') ? 2 : t >= WX.parse('3018 7 1') ? 1 : 0; }
 function updateLandmarks() {
   if (!mapLoaded || !window.AVATARS) return;
   const f = Math.floor(performance.now() / 260) % 4, heat = doomHeat(S.t), feats = [];
   for (const [kind, X, Y] of LANDMARK_ART) {
-    const h = kind === 'orthanc' ? isenState(S.t) : kind === 'barad' ? baradState(S.t) : heat; if (kind === 'barad' && h <= 0) continue;   // before its fall the tower is Sauron's own figure (the Eye on its crown)
+    const h = kind === 'orthanc' ? isenState(S.t) : kind === 'barad' ? baradState(S.t) : heat; if (kind === 'barad' && h < 0) continue;   // not yet rebuilt in the Hobbit's day; before its fall it is drawn as Sauron himself
     const fr = kind === 'doom' || kind === 'orthanc' || kind === 'barad' ? f : f >> 1, id = 'lm:' + kind + fr + ':' + h;
     if (!map.hasImage(id)) { const cv = AVATARS.landmark(kind, fr, h); map.addImage(id, cv.getContext('2d').getImageData(0, 0, cv.width, cv.height), { pixelRatio: 2 }); }
-    feats.push(pt(X, Y, kind === 'orthanc' ? { icon: id, off: [-50, 2] } : { icon: id }));     // Orthanc stands beside those gathered at its foot
+    feats.push(pt(X, Y, kind === 'orthanc' ? { icon: id, off: [-50, 2] } : kind === 'barad' && h === 0 ? { icon: id, label: 'Sauron', off: [0, 0] } : { icon: id }));     // Orthanc stands beside those gathered at its foot
   }
   // the Party's fireworks while they last (GEO.FIREWORKS), the dragon at the end
   for (const fw of GEO.FIREWORKS) {
@@ -708,7 +708,7 @@ function updateJourneys(posOnly) {
     if (!gone) live.push({ j, p });
   }
   for (const m of clusterLive(live)) {
-    const ids = [...new Set(m.flatMap(l => window.AVATARS ? AVATARS.charsOf(S.story, l.j.name, S.t) : []))];
+    const ids = [...new Set(m.flatMap(l => window.AVATARS ? AVATARS.charsOf(S.story, l.j.name, S.t) : []))].filter(i => i !== 'sauron');   // Sauron is drawn as Barad-dûr (LANDMARK_ART)
     const X = m.reduce((a, l) => a + l.p.X, 0) / m.length, Y = m.reduce((a, l) => a + l.p.Y, 0) / m.length, color = m[0].j.color;
     if (!ids.length || !mapLoaded) { m.forEach(l => pos.push(pt(l.p.X, l.p.Y, { name: l.j.name, color: l.j.color }))); continue; }
     // walking while the clock runs and the party is on the move; standing otherwise
