@@ -1194,7 +1194,12 @@ function baradGrid(f, st) {
   };
   const dust = (n, top) => { for (let i = 0; i < n; i++) { const x = cx + Math.sin(i * 2.3 + f) * 26, y = top + ((i * 13 + f * 3) % (Ht - top)), r = 2 + (i % 4); for (let yy = -r; yy <= r; yy++) for (let xx = -r; xx <= r; xx++) if (xx * xx + yy * yy <= r * r) setp(g, x + xx, y + yy, i % 3 ? '#5a524a' : '#7a6e60'); } };
   const rubble = (hot) => { for (let y = 70; y < Ht; y++) { const hw = (y - 70) * 1.5; for (let x = Math.round(cx - hw); x <= Math.round(cx + hw); x++) setp(g, x, y, hot && (x * 3 + y + f) % 9 === 0 ? (f % 2 ? '#ff8a24' : '#c03a10') : (x + y) % 3 ? k2 : '#3a3238'); } };
-  if (st === 1) {
+  if (st === 0) {
+    // standing: the Dark Tower with the Eye wreathed in flame between the horns of its crown
+    tower(0);
+    for (let y = 2; y < 24; y++) for (let x = 0; x < Wd; x++) { const d = Math.hypot((x - cx) * 0.8, (y - 13) * 1.4); if (d < 7 + (f % 2) * 0.6) setp(g, x, y, d < 2.2 ? '#ffd050' : d < 4.5 ? '#ff9a24' : (x + y + f) % 3 ? '#e05a14' : '#c02010'); }
+    rectp(g, cx, 9, cx, 17, '#0a0606'); setp(g, cx - 1, 13, '#0a0606'); setp(g, cx + 1, 13, '#0a0606');
+  } else if (st === 1) {
     tower(0);
     const r = 10 + (f % 2) * 2;      // the Eye blazing white-hot, a ring of fire, lightning
     for (let y = 0; y < 30; y++) for (let x = 0; x < Wd; x++) { const d = Math.hypot(x - cx, (y - 14) * 1.3); if (d < r) setp(g, x, y, d < 3 ? '#ffffff' : d < 6 ? '#fff0a0' : d < 8 ? '#ffb040' : '#ff5a14'); }
@@ -1291,8 +1296,15 @@ function orthancGrid(f, st) {
 }
 function landmark(kind, f, heat = 1) {
   const key = kind + f + ':' + heat; if (LCACHE[key]) return LCACHE[key];
-  const gr = kind === 'doom' ? doomGrid(f, heat) : kind === 'fireworks' ? fireworksGrid(f, heat) : kind === 'orthanc' ? orthancGrid(f, heat) : kind === 'barad' ? baradGrid(f, heat) : cityGrid(f), s = 3, cv = document.createElement('canvas');
-  cv.width = (gr[0].length + 2) * s; cv.height = (gr.length + 2) * s; drawGrid(cv.getContext('2d'), gr, 0, 0, s);
+  const gr = kind === 'doom' ? doomGrid(f, heat) : kind === 'fireworks' ? fireworksGrid(f, heat) : kind === 'orthanc' ? orthancGrid(f, heat) : kind === 'barad' ? baradGrid(f, heat) : cityGrid(f), cv = document.createElement('canvas');
+  // the two towers in proportion to each other: Orthanc 500 ft (LR III.8) at 1.5 px a cell, Barad-dûr (height never
+  // given; our ground model makes it ~1,800 ft) at 3, about three and a half times as tall. Orodruin is drawn larger
+  // (4) so the tower does not dwarf it, though the mountain's true height would be greater still.
+  const s = kind === 'barad' ? 3 : kind === 'orthanc' ? 1.5 : kind === 'doom' ? 4 : 3;
+  // drawn at a whole 3 px a cell and then scaled without smoothing, so fractional scales keep crisp pixels
+  const tmp = document.createElement('canvas'); tmp.width = (gr[0].length + 2) * 3; tmp.height = (gr.length + 2) * 3; drawGrid(tmp.getContext('2d'), gr, 0, 0, 3);
+  cv.width = Math.round(tmp.width * s / 3); cv.height = Math.round(tmp.height * s / 3);
+  const cx2 = cv.getContext('2d'); cx2.imageSmoothingEnabled = false; cx2.drawImage(tmp, 0, 0, cv.width, cv.height);
   return LCACHE[key] = cv;
 }
 return { C, B, JOURNEY, GROUPS, charsOf, icon, dataURL, drawHead, drawFigure, battle, unitCanvas, landmark, corpse, rest };

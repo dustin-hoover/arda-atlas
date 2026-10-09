@@ -49,13 +49,14 @@ const vcMat = (o = {}) => new THREE.MeshStandardMaterial(Object.assign({ vertexC
 /* ---------------- landmarks ---------------- */
 // Orthanc: four many-sided piers fused into one, opening near the summit into four horns (~500 ft).
 function orthanc() {
-  const k = 0x1b1b21, P = [[bx(58, 3, 58), 0x1a1a1e], [bx(48, 3, 48).translate(0, 3, 0), 0x1a1a1e], [bx(20, 128, 20).translate(0, 6, 0), k]];
+  // 500 feet (152 m) from the floor of the Ring to the tips of its horns (LR III.8)
+  const k = 0x1b1b21, P = [[bx(58, 3, 58), 0x1a1a1e], [bx(48, 3, 48).translate(0, 3, 0), 0x1a1a1e], [bx(20, 112, 20).translate(0, 6, 0), k]];
   for (const [x, z] of [[-8, -8], [8, -8], [8, 8], [-8, 8]]) {
-    P.push([cy(8.5, 10.5, 128, 7).translate(x, 6, z), k]);
+    P.push([cy(8.5, 10.5, 112, 7).translate(x, 6, z), k]);
     const horn = new THREE.ConeGeometry(6.5, 36, 7).translate(0, 18, 0).rotateZ(-Math.sign(x) * 0.2).rotateX(Math.sign(z) * 0.2);
-    P.push([horn.translate(x * 1.2, 133, z * 1.2), k]);
+    P.push([horn.translate(x * 1.2, 117, z * 1.2), k]);
   }
-  P.push([bx(22, 1.2, 22).translate(0, 134, 0), 0x26262c]);
+  P.push([bx(22, 1.2, 22).translate(0, 118, 0), 0x26262c]);
   P.push([bx(7, 11, 1.2).translate(0, 6, 19.2), 0x030304], [bx(14, 6, 10).translate(0, 0, 26), 0x1a1a1e], [bx(10, 3, 6).translate(0, 6, 22), 0x1a1a1e]);
   const g = new THREE.Group();
   const m = new THREE.Mesh(merge(P), vcMat({ roughness: 0.32, metalness: 0.15 }));

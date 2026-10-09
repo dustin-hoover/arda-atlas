@@ -4269,7 +4269,12 @@ function baradGrid(f, st) {
   };
   const dust = (n, top) => { for (let i = 0; i < n; i++) { const x = cx + Math.sin(i * 2.3 + f) * 26, y = top + ((i * 13 + f * 3) % (Ht - top)), r = 2 + (i % 4); for (let yy = -r; yy <= r; yy++) for (let xx = -r; xx <= r; xx++) if (xx * xx + yy * yy <= r * r) setp(g, x + xx, y + yy, i % 3 ? '#5a524a' : '#7a6e60'); } };
   const rubble = (hot) => { for (let y = 70; y < Ht; y++) { const hw = (y - 70) * 1.5; for (let x = Math.round(cx - hw); x <= Math.round(cx + hw); x++) setp(g, x, y, hot && (x * 3 + y + f) % 9 === 0 ? (f % 2 ? '#ff8a24' : '#c03a10') : (x + y) % 3 ? k2 : '#3a3238'); } };
-  if (st === 1) {
+  if (st === 0) {
+    // standing: the Dark Tower with the Eye wreathed in flame between the horns of its crown
+    tower(0);
+    for (let y = 2; y < 24; y++) for (let x = 0; x < Wd; x++) { const d = Math.hypot((x - cx) * 0.8, (y - 13) * 1.4); if (d < 7 + (f % 2) * 0.6) setp(g, x, y, d < 2.2 ? '#ffd050' : d < 4.5 ? '#ff9a24' : (x + y + f) % 3 ? '#e05a14' : '#c02010'); }
+    rectp(g, cx, 9, cx, 17, '#0a0606'); setp(g, cx - 1, 13, '#0a0606'); setp(g, cx + 1, 13, '#0a0606');
+  } else if (st === 1) {
     tower(0);
     const r = 10 + (f % 2) * 2;      // the Eye blazing white-hot, a ring of fire, lightning
     for (let y = 0; y < 30; y++) for (let x = 0; x < Wd; x++) { const d = Math.hypot(x - cx, (y - 14) * 1.3); if (d < r) setp(g, x, y, d < 3 ? '#ffffff' : d < 6 ? '#fff0a0' : d < 8 ? '#ffb040' : '#ff5a14'); }
@@ -4366,8 +4371,15 @@ function orthancGrid(f, st) {
 }
 function landmark(kind, f, heat = 1) {
   const key = kind + f + ':' + heat; if (LCACHE[key]) return LCACHE[key];
-  const gr = kind === 'doom' ? doomGrid(f, heat) : kind === 'fireworks' ? fireworksGrid(f, heat) : kind === 'orthanc' ? orthancGrid(f, heat) : kind === 'barad' ? baradGrid(f, heat) : cityGrid(f), s = 3, cv = document.createElement('canvas');
-  cv.width = (gr[0].length + 2) * s; cv.height = (gr.length + 2) * s; drawGrid(cv.getContext('2d'), gr, 0, 0, s);
+  const gr = kind === 'doom' ? doomGrid(f, heat) : kind === 'fireworks' ? fireworksGrid(f, heat) : kind === 'orthanc' ? orthancGrid(f, heat) : kind === 'barad' ? baradGrid(f, heat) : cityGrid(f), cv = document.createElement('canvas');
+  // the two towers in proportion to each other: Orthanc 500 ft (LR III.8) at 1.5 px a cell, Barad-dûr (height never
+  // given; our ground model makes it ~1,800 ft) at 3, about three and a half times as tall. Orodruin is drawn larger
+  // (4) so the tower does not dwarf it, though the mountain's true height would be greater still.
+  const s = kind === 'barad' ? 3 : kind === 'orthanc' ? 1.5 : kind === 'doom' ? 4 : 3;
+  // drawn at a whole 3 px a cell and then scaled without smoothing, so fractional scales keep crisp pixels
+  const tmp = document.createElement('canvas'); tmp.width = (gr[0].length + 2) * 3; tmp.height = (gr.length + 2) * 3; drawGrid(tmp.getContext('2d'), gr, 0, 0, 3);
+  cv.width = Math.round(tmp.width * s / 3); cv.height = Math.round(tmp.height * s / 3);
+  const cx2 = cv.getContext('2d'); cx2.imageSmoothingEnabled = false; cx2.drawImage(tmp, 0, 0, cv.width, cv.height);
   return LCACHE[key] = cv;
 }
 return { C, B, JOURNEY, GROUPS, charsOf, icon, dataURL, drawHead, drawFigure, battle, unitCanvas, landmark, corpse, rest };
@@ -5369,7 +5381,7 @@ function doomHeat(t) {
 }
 // Barad-dûr: whole until the Ring is unmade; then the Eye's last blaze, the fall, the shadow, the wind, the ruin
 function baradState(t) {
-  if (S.story === 'hobbit') return 0;
+  if (S.story === 'hobbit') return -1;           // in the Hobbit's day the Dark Tower is not yet rebuilt (2951)
   const end = WX.parse('3019 3 25.4');
   return t < end ? 0 : t < end + 0.06 ? 1 : t < end + 0.16 ? 2 : t < end + 0.26 ? 3 : t < end + 0.34 ? 4 : t < end + 30 ? 5 : 6;
 }
@@ -5381,7 +5393,7 @@ function updateLandmarks() {
   if (!mapLoaded || !window.AVATARS) return;
   const f = Math.floor(performance.now() / 260) % 4, heat = doomHeat(S.t), feats = [];
   for (const [kind, X, Y] of LANDMARK_ART) {
-    const h = kind === 'orthanc' ? isenState(S.t) : kind === 'barad' ? baradState(S.t) : heat; if (kind === 'barad' && !h) continue;
+    const h = kind === 'orthanc' ? isenState(S.t) : kind === 'barad' ? baradState(S.t) : heat; if (kind === 'barad' && h < 0) continue;
     const fr = kind === 'doom' || kind === 'orthanc' || kind === 'barad' ? f : f >> 1, id = 'lm:' + kind + fr + ':' + h;
     if (!map.hasImage(id)) { const cv = AVATARS.landmark(kind, fr, h); map.addImage(id, cv.getContext('2d').getImageData(0, 0, cv.width, cv.height), { pixelRatio: 2 }); }
     feats.push(pt(X, Y, kind === 'orthanc' ? { icon: id, off: [-50, 2] } : { icon: id }));     // Orthanc stands beside those gathered at its foot
@@ -5474,7 +5486,7 @@ function updateJourneys(posOnly) {
     if (!gone) live.push({ j, p });
   }
   for (const m of clusterLive(live)) {
-    const ids = [...new Set(m.flatMap(l => window.AVATARS ? AVATARS.charsOf(S.story, l.j.name, S.t) : []))];
+    const ids = [...new Set(m.flatMap(l => window.AVATARS ? AVATARS.charsOf(S.story, l.j.name, S.t) : []))].filter(i => i !== 'sauron' || S.story === 'hobbit');   // the Eye is drawn on Barad-dûr itself
     const X = m.reduce((a, l) => a + l.p.X, 0) / m.length, Y = m.reduce((a, l) => a + l.p.Y, 0) / m.length, color = m[0].j.color;
     if (!ids.length || !mapLoaded) { m.forEach(l => pos.push(pt(l.p.X, l.p.Y, { name: l.j.name, color: l.j.color }))); continue; }
     // walking while the clock runs and the party is on the move; standing otherwise
@@ -6944,13 +6956,14 @@ const vcMat = (o = {}) => new THREE.MeshStandardMaterial(Object.assign({ vertexC
 /* ---------------- landmarks ---------------- */
 // Orthanc: four many-sided piers fused into one, opening near the summit into four horns (~500 ft).
 function orthanc() {
-  const k = 0x1b1b21, P = [[bx(58, 3, 58), 0x1a1a1e], [bx(48, 3, 48).translate(0, 3, 0), 0x1a1a1e], [bx(20, 128, 20).translate(0, 6, 0), k]];
+  // 500 feet (152 m) from the floor of the Ring to the tips of its horns (LR III.8)
+  const k = 0x1b1b21, P = [[bx(58, 3, 58), 0x1a1a1e], [bx(48, 3, 48).translate(0, 3, 0), 0x1a1a1e], [bx(20, 112, 20).translate(0, 6, 0), k]];
   for (const [x, z] of [[-8, -8], [8, -8], [8, 8], [-8, 8]]) {
-    P.push([cy(8.5, 10.5, 128, 7).translate(x, 6, z), k]);
+    P.push([cy(8.5, 10.5, 112, 7).translate(x, 6, z), k]);
     const horn = new THREE.ConeGeometry(6.5, 36, 7).translate(0, 18, 0).rotateZ(-Math.sign(x) * 0.2).rotateX(Math.sign(z) * 0.2);
-    P.push([horn.translate(x * 1.2, 133, z * 1.2), k]);
+    P.push([horn.translate(x * 1.2, 117, z * 1.2), k]);
   }
-  P.push([bx(22, 1.2, 22).translate(0, 134, 0), 0x26262c]);
+  P.push([bx(22, 1.2, 22).translate(0, 118, 0), 0x26262c]);
   P.push([bx(7, 11, 1.2).translate(0, 6, 19.2), 0x030304], [bx(14, 6, 10).translate(0, 0, 26), 0x1a1a1e], [bx(10, 3, 6).translate(0, 6, 22), 0x1a1a1e]);
   const g = new THREE.Group();
   const m = new THREE.Mesh(merge(P), vcMat({ roughness: 0.32, metalness: 0.15 }));
