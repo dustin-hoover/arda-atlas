@@ -98,10 +98,28 @@ const NCH = 16;
 const CH = { land:0, cont:1, mtn:2, hill:3, forest:4, gold:5, dark:6, marsh:7, arid:8, farm:9, ash:10, valley:11, uplift:12, grass:13, ice:14, lake:15 };
 
 function init(data) {
-  M = data.main; G = data.glob; PEAKS = data.peaks || []; NUM = data.numenor; FLATS = data.flats || [];
+  M = data.main; G = data.glob; PEAKS = data.peaks || []; RANGEPAL = data.ranges || []; NUM = data.numenor; FLATS = data.flats || [];
   if (data.vectors) initVectors(data.vectors);
 }
 
+// the mountain ranges' own colours (Earth analogues, see rasters.js): rp.w is how strongly the nearest range's
+// character applies here (1 on its crest, fading to 0 at its reach), rp.r that range
+let RANGEPAL = [];
+const rp = { w: 0, r: null };
+function rangeAt(X, Y) {
+  rp.w = 0; rp.r = null;
+  for (const r of RANGEPAL) {
+    if (X < r.bb[0] || X > r.bb[2] || Y < r.bb[1] || Y > r.bb[3]) continue;
+    let d = 1e9; const P = r.pts;
+    for (let i = 0; i < P.length - 1; i++) {
+      const ax = P[i][0], ay = P[i][1], dx = P[i + 1][0] - ax, dy = P[i + 1][1] - ay, L = dx * dx + dy * dy || 1;
+      const t = Math.max(0, Math.min(1, ((X - ax) * dx + (Y - ay) * dy) / L)); d = Math.min(d, Math.hypot(X - ax - dx * t, Y - ay - dy * t));
+    }
+    const w = 1 - Math.min(1, Math.max(0, (d - r.reach * 0.35) / (r.reach * 0.65)));
+    if (w > rp.w) { rp.w = w; rp.r = r; }
+  }
+  return rp;
+}
 const F = new Float32Array(NCH);
 function sampleMain(X, Y) {
   const px = (X - M.x0) / M.res - 0.5, py = (M.y1 - Y) / M.res - 0.5;
@@ -455,7 +473,11 @@ function colorAt(X, Y, h, slope, pix, mode, dsea) {
   if (R.stream > 0) blend(56, 78, 40, R.stream * 0.55 * veg + 0.1 * R.stream);
   // alpine grassland and mountain rock tones by elevation
   const alp = sstep(900, 2200, h);
-  if (alp > 0) blend(126, 118, 92, alp * 0.55);
+  const RP = h > 250 ? rangeAt(X, Y) : (rp.w = 0, rp);
+  const tw = (a, i) => RP.w ? 1 + (RP.r[a][i] - 1) * RP.w : 1;
+  if (alp > 0) blend(126 * tw('m', 0), 118 * tw('m', 1), 92 * tw('m', 2), alp * 0.55);
+  // on the ranges' lower slopes, meadow and scrub take the analogue's colour too
+  if (RP.w > 0) blend(126 * tw('m', 0), 118 * tw('m', 1), 92 * tw('m', 2), RP.w * sstep(250, 900, h) * (1 - alp) * 0.6);
   // arid / desert
   const hot = sstep(9, 19, T);
   let desert = sat(arid * 1.1 - 0.05);
@@ -514,6 +536,7 @@ function colorAt(X, Y, h, slope, pix, mode, dsea) {
     const gold = F[5];
     if (gold > 0) { const gm = gold * (0.35 + 0.35 * sat(0.5 + fbm(X * 0.6, Y * 0.6, 3))); fr = mix(fr, 168, gm); fg = mix(fg, 140, gm); fb = mix(fb, 52, gm); }
     if (T > 22) { fr *= 0.8; fg *= 1.05; }
+    if (RP.w > 0) { fr *= tw('f', 0); fg *= tw('f', 1); fb *= tw('f', 2); }
     const mott = fbmA(X, Y, 0.6, Math.max(pix, 0.002), 0.7, 9);
     fr *= 1 + 0.12 * mott; fg *= 1 + 0.14 * mott; fb *= 1 + 0.1 * mott;
     let dens = sstep(0.3, 0.52, fd + 0.28 * fbmA(X, Y, 4, Math.max(pix, 0.003), 0.8, 40));
@@ -547,11 +570,13 @@ function colorAt(X, Y, h, slope, pix, mode, dsea) {
     }
   }
   // alpine: rock on steep slopes and high ground, snow above the snowline
-  const rock = Math.max(sstep(0.5, 0.95, slope), sstep(treeline + 200, treeline + 900, h) * 0.85);
+  // bare rock: steep slopes and high ground, and more of it in ranges whose analogues are bare (the High Atlas)
+  const bare = RP.w ? RP.r.bare * RP.w * sstep(300, 1200, h) * sat(0.4 + fbm(X * 0.2 + 5, Y * 0.2, 3)) : 0;
+  const rock = Math.max(sstep(0.5, 0.95, slope), sstep(treeline + 200, treeline + 900, h) * 0.85, Math.min(0.85, bare * 2.2));
   if (rock > 0.01) {
     const rn = fbm(X * 0.3, Y * 0.3, 3);
     const dark = ash > 0.3 ? 0.55 : 0;
-    blend(mix(124, 70, dark) + 14 * rn, mix(114, 64, dark) + 12 * rn, mix(104, 60, dark) + 10 * rn, rock);
+    blend((mix(124, 70, dark) + 14 * rn) * tw('k', 0), (mix(114, 64, dark) + 12 * rn) * tw('k', 1), (mix(104, 60, dark) + 10 * rn) * tw('k', 2), rock);
   }
   const Tsnow = T + 8.5 + 8 * slope;
   let snow = sstep(-1, -4.5, Tsnow);

@@ -122,6 +122,19 @@ function build(GEO) {
     main: { W, H, x0: X0, y1: Y1, res: RES, ch },
     glob: { W: GW, H: GH, ch: [boxBlur(G0, GW, GH, 1, 1), G1, boxBlur(G2, GW, GH, 1, 1), boxBlur(G3, GW, GH, 1, 1)] },
     peaks: GEO.PEAKS.map(p => ({ x: p.x, y: p.y, h: p.h, r: p.r, kind: p.kind, gate: p.gate, to: p.to, reach: p.reach })),
+    // each range's character from its Earth analogue (src/analogues.js): colour tints for its forests, meadows and
+    // rock (hue and saturation from the analogue, brightness kept near the engine's own), and how much bare rock shows
+    ranges: (() => {
+      const A = self.ANALOGUES || {}, lum = c => 0.3 * c[0] + 0.59 * c[1] + 0.11 * c[2];
+      const DEF = { forest: [40, 60, 35], meadow: [126, 118, 92], rock: [124, 114, 104] };
+      const mean = k => { const v = Object.values(A).map(a => a[k]).filter(Boolean); return v.length ? v.reduce((s, c) => s + lum(c), 0) / v.length : 1; };
+      const M = { forest: mean('forest'), meadow: mean('meadow'), rock: mean('rock') };
+      const tint = (k, c) => { if (!c) return [1, 1, 1]; const d = DEF[k], b = Math.pow(lum(c) / M[k], 0.5);
+        return d.map((dv, i) => Math.max(0.55, Math.min(1.7, (c[i] / lum(c)) / (dv / lum(d)) * b))); };
+      return GEO.RANGES.filter(r => A[r.name]).map(r => { const a = A[r.name], xs = r.pts.map(p => p[0]), ys = r.pts.map(p => p[1]), reach = r.w * 0.9 + 6;
+        return { pts: r.pts, reach, bb: [Math.min(...xs) - reach, Math.min(...ys) - reach, Math.max(...xs) + reach, Math.max(...ys) + reach],
+          f: tint('forest', a.forest), m: tint('meadow', a.meadow), k: tint('rock', a.rock), bare: a.shares ? a.shares.bare : 0 }; });
+    })(),
     flats: GEO.PLACES.filter(p => p[7] && p[7].r >= 0.3 && p[7].culture !== 'minastirith').map(p => ({ x: p[2], y: p[3], r: p[7].r * 1.6 + 0.3, lift: p[7].culture === 'hobbit' ? 30 : 20, sea: p[1] === 'port' ? 1 : 0 })),
     numenor: GEO.NUMENOR,
     vectors: {
