@@ -4663,6 +4663,129 @@ function boxBlur(a, w, h, r, passes) {
   return out;
 }
 
+/* ---------- mountain ranges as orogens ----------
+   A range is not a ribbon of even width. Each is shaped by the story of how it rose (docs/RANGES.md, Geology):
+   collision ranges have a steep inner side and a broad foreland of foothills and folded parallel ridges; old worn
+   ranges are lower and rounder; high massifs alternate with low passes along the crest; width swells and pinches;
+   the crest wanders off the drawn line; spurs run out between valleys so the outline is ragged, not smooth; free
+   ends die away into foothills while ends that meet another range stay high (Gundabad, the Morannon corner).
+   verge: which side of the drawn line is the foreland (+1 left of the drawing direction, -1 right);
+   asym: how much broader the foreland side is; folds: parallel ridges on the foreland; spurs: lateral ridges;
+   worn: rounded, eroded; inner: a lower parallel ridge on the inner side (the Morgai). */
+const GEOLOGY = {
+  'Hithaeglir':                     { verge: -1, asym: 0.45, folds: 0.35, spurs: 0.9, worn: 0 },     // west: the Ettenmoors, Trollshaws, Hollin
+  'Ered Mithrin':                   { verge: -1, asym: 0.35, folds: 0.3, spurs: 0.7, worn: 0.1 },    // south: the dwarf-halls side
+  'Ered Luin':                      { verge: 1, asym: 0.4, folds: 0.15, spurs: 0.6, worn: 0.6 },     // east to Eriador; sheer to the sea
+  'Ered Nimrais':                   { verge: -1, asym: 0.55, folds: 0.2, spurs: 1, worn: 0 },        // long southern spurs between the rivers of Gondor
+  'Ered Nimrais (Mindolluin spur)': { verge: -1, asym: 0.2, folds: 0, spurs: 0.4, worn: 0 },
+  'Ephel Dúath':                    { verge: -1, asym: 0.5, folds: 0.25, spurs: 0.6, worn: 0, inner: 1 },   // Ithilien slopes; cliffs and the Morgai within
+  'Ered Lithui':                    { verge: 1, asym: 0.35, folds: 0.2, spurs: 0.5, worn: 0.1 },     // north to the Dagorlad; sheer over Lithlad
+  'Mountains of Angmar':            { verge: -1, asym: 0.3, folds: 0.2, spurs: 0.6, worn: 0.4 },
+  'Iron Hills':                     { verge: -1, asym: 0.1, folds: 0, spurs: 0.5, worn: 0.8 },
+  'Mountains of Mirkwood':          { verge: 1, asym: 0.1, folds: 0, spurs: 0.4, worn: 0.9 },
+  'Orocarni':                       { verge: -1, asym: 0.5, folds: 0.6, spurs: 0.8, worn: 0 },       // Tian Shan-like: parallel ranges toward Rhûn
+  'Ered Gorgoroth of the East':     { verge: -1, asym: 0.3, folds: 0.3, spurs: 0.6, worn: 0.2 },
+  'Mountains of Harad':             { verge: 1, asym: 0.4, folds: 0.8, spurs: 0.5, worn: 0.1 },      // Atlas-like folds
+  'Mountains of Far Harad':         { verge: -1, asym: 0.4, folds: 0.5, spurs: 0.7, worn: 0 },
+  'Yellow Mountains':               { verge: 1, asym: 0.45, folds: 0.9, spurs: 0.4, worn: 0.2 },     // Zagros-like folds
+  'Northern Heights':               { verge: -1, asym: 0.2, folds: 0.2, spurs: 0.5, worn: 0.7 },
+};
+// branch ridges: secondary ranges leaving the main crest at an angle, mostly on the foreland side, so that from above
+// a range reads as a branching tree of ridges and not a tube
+function branches(RANGES, seed0 = 0) {
+  const out = [];
+  RANGES.forEach((r, ri0) => {
+    const ri = ri0 + seed0;
+    const g = r.geo || GEOLOGY[r.name] || { verge: 1, worn: 0.2 };
+    if (r.w < 14 || r.sub === 2) return;
+    const P = r.pts, S = [0];
+    for (let i = 1; i < P.length; i++) S.push(S[i - 1] + Math.hypot(P[i][0] - P[i - 1][0], P[i][1] - P[i - 1][1]));
+    const Lt = S[S.length - 1];
+    let k = 1, n = 0;
+    for (let s = r.w * (0.8 + GEN.hash2(ri, 0, 3)); s < Lt - r.w * 0.6; s += r.w * (1.2 + 1.1 * GEN.hash2(ri, n, 5)), n++) {
+      if (s / Lt < 0.08 || s / Lt > 0.92 || GEN.hash2(ri, n, 7) > 0.8) continue;
+      while (k < P.length - 1 && S[k] < s) k++;
+      const a = P[k - 1], b = P[k], t = (s - S[k - 1]) / ((S[k] - S[k - 1]) || 1);
+      const x = a[0] + (b[0] - a[0]) * t, y = a[1] + (b[1] - a[1]) * t;
+      const tx = (b[0] - a[0]), ty = (b[1] - a[1]), tl = Math.hypot(tx, ty) || 1;
+      const side = GEN.hash2(ri, n, 11) < 0.72 ? g.verge : -g.verge;             // most branches run out on the foreland
+      const nx = -ty / tl * side, ny = tx / tl * side;                          // outward normal (+1 = left)
+      const ang = (0.5 + 0.45 * GEN.hash2(ri, n, 13)) * Math.PI / 2, fw = GEN.hash2(ri, n, 17) < 0.5 ? 1 : -1;
+      const dx = nx * Math.sin(ang) + tx / tl * Math.cos(ang) * fw, dy = ny * Math.sin(ang) + ty / tl * Math.cos(ang) * fw;
+      const L = r.w * (1.6 + 2.2 * GEN.hash2(ri, n, 19)) * (side === g.verge ? 1 : 0.6) * (r.sub ? 0.55 : 1), bend = (GEN.hash2(ri, n, 23) - 0.5) * 0.7;
+      const mx = x + dx * L * 0.5 - dy * L * bend * 0.3, my = y + dy * L * 0.5 + dx * L * bend * 0.3;
+      const ex = x + dx * L - dy * L * bend * 0.5, ey = y + dy * L + dx * L * bend * 0.5;
+      out.push({ name: r.name + ' branch', pts: [[x, y], [mx, my], [ex, ey]], w: r.w * (0.45 + 0.25 * GEN.hash2(ri, n, 29)), h: r.h * (0.6 + 0.3 * GEN.hash2(ri, n, 31)),
+        geo: { verge: side, asym: 0.2, folds: 0, spurs: 0.6, worn: g.worn }, root: 1, sub: r.sub ? 2 : 1 });
+    }
+  });
+  return out;
+}
+function rangeField(RANGES0, rmask) {
+  const out = new Float32Array(W * H);
+  const B1 = branches(RANGES0), B2 = branches(B1, 100);              // branches, and their own side branches
+  const RANGES = RANGES0.concat(B1, B2);
+  const sst = (a, b, x) => { const t = Math.max(0, Math.min(1, (x - a) / (b - a))); return t * t * (3 - 2 * t); };
+  const n1 = (x, k) => GEN.noise(x, k);
+  const ends = RANGES.map(r => [r.pts[0], r.pts[r.pts.length - 1]]);
+  const nearOther = (p, self) => RANGES.some((o, j) => j !== self && o.pts.some(q => Math.hypot(q[0] - p[0], q[1] - p[1]) < 30));
+  RANGES.forEach((r, ri) => {
+    const g = r.geo || GEOLOGY[r.name] || { verge: 1, asym: 0.3, folds: 0.3, spurs: 0.6, worn: 0.2 };
+    const P = r.pts, S = [0];
+    for (let i = 1; i < P.length; i++) S.push(S[i - 1] + Math.hypot(P[i][0] - P[i - 1][0], P[i][1] - P[i - 1][1]));
+    const Lt = S[S.length - 1], seed = (ri * 7.31 + r.name.length * 1.7) % 50;
+    const freeA = !r.root && !nearOther(P[0], ri), freeB = !nearOther(P[P.length - 1], ri);
+    const reach = r.w * 2.2 + 10;
+    let x0 = 1e9, x1 = -1e9, y0 = 1e9, y1 = -1e9;
+    for (const p of P) { x0 = Math.min(x0, p[0]); x1 = Math.max(x1, p[0]); y0 = Math.min(y0, p[1]); y1 = Math.max(y1, p[1]); }
+    const c0 = Math.max(0, Math.floor((x0 - reach - X0) / RES)), c1 = Math.min(W - 1, Math.ceil((x1 + reach - X0) / RES));
+    const r0 = Math.max(0, Math.floor((Y1 - y1 - reach) / RES)), r1 = Math.min(H - 1, Math.ceil((Y1 - y0 + reach) / RES));
+    for (let j = r0; j <= r1; j++) for (let i = c0; i <= c1; i++) {
+      const x = X0 + (i + 0.5) * RES, y = Y1 - (j + 0.5) * RES;
+      // nearest point on the drawn line: distance, which side, how far along
+      let bd = 1e9, bs = 0, side = 1;
+      for (let k = 1; k < P.length; k++) {
+        const ax = P[k - 1][0], ay = P[k - 1][1], bx = P[k][0], by = P[k][1], dx = bx - ax, dy = by - ay, l2 = dx * dx + dy * dy || 1;
+        const t = Math.max(0, Math.min(1, ((x - ax) * dx + (y - ay) * dy) / l2));
+        const d = Math.hypot(x - ax - t * dx, y - ay - t * dy);
+        if (d < bd) { bd = d; bs = S[k - 1] + t * Math.sqrt(l2); side = dx * (y - ay) - dy * (x - ax) >= 0 ? 1 : -1; }
+      }
+      if (bd > reach) continue;
+      const t = bs / Lt, w = r.w;
+      const tp = (freeA ? sst(0, 0.16, t) : 1) * (freeB ? sst(1, 0.84, t) : 1);
+      // width swells and pinches along the range; the crest wanders off the line
+      const wv = Math.max(0.35, Math.min(2.1, 1 + 0.6 * n1(bs / (w * 2.2) + seed, 1.3) + 0.25 * n1(bs / (w * 0.8) + seed * 2, 4.1)));
+      const hw0 = w * 0.62 * wv * (0.4 + 0.6 * tp);
+      const dd = side * bd - 0.45 * hw0 * n1(bs / (w * 2.5) + seed * 3, 7.7);   // the crest steps aside, en échelon
+      const fore = (dd >= 0 ? 1 : -1) === g.verge;
+      const lobe = Math.max(0.35, 1 + 0.55 * GEN.fbm(x / 13 + seed, y / 13 - seed, 4));   // embayments and lobes in the outline
+      const hw = hw0 * (fore ? 1 + g.asym : 1 - 0.55 * g.asym) * lobe;
+      let u = Math.abs(dd) / hw;
+      // spurs: ridges running out from the crest between valleys
+      const sp = g.spurs * Math.pow(0.5 + 0.5 * Math.cos(2 * Math.PI * bs / (w * 1.1) + 2.5 * n1(bs / (w * 2) + seed, 5.5)), 2);
+      u /= 1 + 0.45 * sp * sst(0.4, 1, u);
+      // a broad uplifted block (the peaks come later, from the terrain noise), falling away at the flanks
+      const p0 = sst(1, 0.55, u);
+      let p = Math.pow(p0, 1.1 - 0.4 * g.worn);
+      // folded parallel ridges on the foreland
+      if (fore && g.folds > 0) p *= 1 + g.folds * 0.5 * Math.cos(2 * Math.PI * Math.abs(dd) / (w * 0.3)) * sst(0.15, 0.55, u);
+      // massifs and passes along the crest
+      let hgt = r.h * (0.6 + 0.4 * Math.max(0, Math.min(1, 0.5 + 0.7 * n1(bs / (w * 1.4) + seed * 5, 2.2))));
+      hgt *= 1 - 0.38 * sst(0.45, 0.8, n1(bs / (w * 2.6) + seed * 7, 9.3));
+      hgt *= (1 - 0.35 * g.worn) * (0.45 + 0.55 * tp);
+      let v = hgt / 5200 * p;
+      // an inner, lower parallel ridge (the Morgai within the Ephel Dúath)
+      if (g.inner && !fore) { const di = Math.abs(Math.abs(dd) - hw0 * 1.9); v = Math.max(v, r.h / 5200 * 0.42 * sst(hw0 * 0.35, 0, di) * sst(0.08, 0.25, t) * sst(0.95, 0.75, t)); }
+      const q = j * W + i;
+      if (r.root && rmask) v *= 1 - Math.min(1, rmask[q] / 160);
+      if (v > out[q]) out[q] = v;
+    }
+  });
+  const o = new Uint8Array(W * H);
+  for (let i = 0; i < o.length; i++) o[i] = Math.min(255, out[i] * 255 + 0.5);
+  return o;
+}
+
 function build(GEO) {
   const cv = document.createElement('canvas');
   cv.width = W; cv.height = H;
@@ -4680,7 +4803,9 @@ function build(GEO) {
   const landRaw = grab();
   ch[0] = boxBlur(landRaw, W, H, 1, 2);
   ch[1] = boxBlur(landRaw, W, H, 18, 3);
-  begin(); lines(GEO.RANGES, f => f.w / RES, f => f.h / 5200); ch[2] = boxBlur(grab(), W, H, 2, 2);
+  // rivers cut through the branch ridges (a branch must never dam a river the books run through its valley)
+  begin(); lines(GEO.RIVERS, f => (f.rank <= 2 ? 22 : 14) / RES, () => 1); const rmask = boxBlur(grab(), W, H, 2, 2);
+  ch[2] = boxBlur(rangeField(GEO.RANGES, rmask), W, H, 1, 2);
   begin(); lines(GEO.HILLS, f => f.w / RES, f => f.h / 1200); polys(GEO.RELIEF || [], f => f.v); ch[3] = boxBlur(grab(), W, H, 2, 2);
   { const foot = boxBlur(ch[2], W, H, 7, 3); for (let i = 0; i < foot.length; i++) ch[3][i] = Math.max(ch[3][i], Math.min(255, foot[i] * 1.6)); }
   begin(); polys(GEO.FORESTS, f => f.dens); ch[4] = boxBlur(grab(), W, H, 1, 2);

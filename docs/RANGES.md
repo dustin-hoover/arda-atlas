@@ -23,3 +23,35 @@ forbid copying or deriving data from it.
 | Mountains of Far Harad | 3200 | The Ethiopian Highlands (Simien) | `rgb(36,56,15)` | `rgb(71,72,39)` | — | 0% |
 | Yellow Mountains | 2200 | The Zagros (central) | `rgb(120,101,65)` | `rgb(140,118,80)` | `rgb(127,103,75)` | 0% |
 | Northern Heights | 1500 | The Khibiny | `rgb(23,34,8)` | `rgb(62,67,41)` | `rgb(135,138,141)` | 1% |
+
+## Geology: how each range is shaped
+
+A range is not drawn as a ribbon of even width. `rangeField` in `src/rasters.js` builds each from a story of how it
+rose, taken from how real mountain belts look from orbit:
+
+- **Collision ranges are lopsided.** One side (the foreland) is broad, with foothills and folded parallel ridges; the
+  other is short and steep. Each range has a `verge` (which side is the foreland) and `asym` (how lopsided).
+- **Width swells and pinches**, and the main crest steps sideways in offset segments (en échelon) rather than
+  following one smooth line.
+- **Massifs and passes alternate** along the crest: high knots of peaks (the Moria peaks, Gundabad) with low saddles
+  between (the High Pass, the Redhorn).
+- **Branch ridges** leave the crest at an angle, mostly on the foreland side, and carry their own side branches, so
+  from above a range reads as a branching tree of ridges with valleys between. Rivers always cut through them.
+- **The outline is ragged**: lobes, embayments and spurs, not a smooth edge.
+- **Free ends die away** into foothills; where two ranges meet (Hithaeglir and Ered Mithrin at Gundabad, the Ephel
+  Dúath and Ered Lithui at the Morannon) the junction stays high.
+- **Old ranges are worn**: lower, rounder and broader (Ered Luin, the Iron Hills, the Mountains of Mirkwood).
+
+| Range | Imagined origin | Foreland side | Character |
+|---|---|---|---|
+| Hithaeglir | a long collision belt (Alps-like) | west: the Ettenmoors, Trollshaws, Hollin | long western branches, steep to the Anduin vale |
+| Ered Mithrin | collision belt, eroded | south | branches toward the dwarf-halls |
+| Ered Luin | an old worn range split by the Gulf of Lhûn rift | east, to Eriador | rounded; sheer to the sea |
+| Ered Nimrais | collision belt (Pyrenees-like) | south, to Gondor | long spurs between the rivers of Gondor; steep to Rohan |
+| Ephel Dúath | the uplifted rim of Mordor | west, to Ithilien | cliffs within, and the lower Morgai ridge inside |
+| Ered Lithui | the northern rim of Mordor | north, to the Dagorlad | sheer over Lithlad |
+| Mountains of Angmar | old, worn | south | |
+| Iron Hills, Mountains of Mirkwood | old worn massifs | | low, rounded |
+| Orocarni | a wide young belt (Tian Shan-like) | west, to Rhûn | parallel ranges and branches |
+| Mountains of Harad, Yellow Mountains | fold belts (Atlas-, Zagros-like) | | strong parallel fold ridges |
+| Mountains of Far Harad, Ered Gorgoroth of the East, Northern Heights | | | |
