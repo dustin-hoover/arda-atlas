@@ -337,7 +337,7 @@ await callWorker(WXW, { type: 'wxinit', ...WXB });
 const S = {
   story: 'war', t: WX.parse(GEO.STORIES.war.start),   // every story opens at its beginning
   playing: false, speed: 0.25,
-  wxMaster: true, era: 'TA3018', base: 0, layers: {}, wx: { clouds: true, radar: false, temp: false, pressure: false, wind: false, night: false },
+  wxMaster: false, era: 'TA3018', base: 0, layers: {}, wx: { clouds: true, radar: false, temp: false, pressure: false, wind: false, night: false },
   measure: null, pick: null,
 };
 S.t = Math.floor(S.t) + 14 / 24;
@@ -1318,7 +1318,9 @@ async function playTour(t) {
 buildTicks();
 setTime(S.t);
 statusAt(map.getCenter());
-setWx('clouds', true);
+// weather starts hidden (off by default until it renders better); the button and the Weather panel turn it on
+for (const k in WX_IDS) applyWx(k);
+$('#bwx').classList.remove('on'); $('#bwx').setAttribute('aria-pressed', 'false');
 lstep('The road goes ever on…', 100);
 await sleep(250);
 $('#loader').classList.add('gone');
