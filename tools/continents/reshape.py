@@ -66,16 +66,20 @@ def sstep(a, b, x):
 # region of Earth, moved whole: two points on its real coast (land on their right, or on their left when mirrored)
 # are set on the two ends of the stretch, and everything around them comes along - gulfs, peninsulas, islands.
 SECTORS = [
-    # the north shore, west half: the fjord coast of Norway, Stavanger to Lofoten
-    dict(name='Norwegian fjord coast', mirror=False, p1=(5.6, 58.9), p2=(13.5, 68.2), s=(0.00, 0.13)),
-    # the north shore, east half: the Kola shore, the White Sea, Kanin and the Pechora coast
-    dict(name='Kola, White Sea and Pechora coast', mirror=False, p1=(33.0, 69.4), p2=(60.0, 69.0), s=(0.13, 0.27)),
-    # the east coast: the Okhotsk shore, Sakhalin and the Sea of Japan, Korea
-    dict(name='Okhotsk, Sakhalin and Korea (mirrored)', mirror=True, p1=(126.5, 34.4), p2=(141.0, 56.5), s=(0.27, 0.52)),
-    # the south-east: the China coast, Taiwan off it, the Gulf of Tonkin and Hainan
+    # the north shore: the Arctic coast from the White Sea to the Lena - Kanin, Yamal and the Ob gulf, Gydan, Taymyr,
+    # with Novaya Zemlya and Severnaya Zemlya off it
+    dict(name='Arctic coast, White Sea to the Lena', mirror=False, p1=(40.5, 64.6), p2=(128.5, 72.6), s=(0.00, 0.27)),
+    # the east coast: Chukotka and Kamchatka round the Sea of Okhotsk to the Amur and the Tatar Strait, mirrored
+    dict(name='Kamchatka and the Sea of Okhotsk (mirrored)', mirror=True, p1=(135.5, 43.5), p2=(178.0, 64.6), s=(0.27, 0.52)),
+    # the south-east: the China coast, Leizhou and Hainan, the Gulf of Tonkin, mirrored
     dict(name='South China coast (mirrored)', mirror=True, p1=(106.5, 20.5), p2=(122.0, 31.0), s=(0.52, 0.66)),
-    # the south: the north shore of the Mediterranean, mirrored (the Aegean, the boot of Italy, Sicily, the Gulf of Lion)
-    dict(name='Northern Mediterranean (mirrored)', mirror=True, p1=(3.2, 42.4), p2=(28.0, 36.7), s=(0.66, 0.88)),
+    # the south: the north shore of the Mediterranean, Gibraltar to Iskenderun, mirrored - the Italian and Greek
+    # peninsulas, Anatolia's south coast, Sardinia, Sicily, Crete, Cyprus (Africa left out)
+    dict(name='Northern Mediterranean (mirrored)', mirror=True, p1=(-5.6, 36.0), p2=(36.0, 36.8), s=(0.66, 0.88),
+         exclude=[[(-20, 0), (-20, 35.95), (-5.4, 35.95), (-1.0, 35.3), (8.5, 37.0), (10.3, 37.5), (11.4, 37.15), (11.4, 34.0),
+                   (20.0, 32.2), (25.0, 32.3), (33.0, 31.4), (34.3, 31.2), (35.0, 29.0), (60, 0)],
+                  # and the Levant and Syria beyond Iskenderun, and Iberia beyond Gibraltar (only open sea past the ends)
+                  [(35.75, 25), (35.75, 36.6), (36.4, 37.4), (50, 40), (50, 25)], [(-20, 35.95), (-20, 46), (-5.7, 46), (-5.7, 35.95)]]),
     # the south-west, up to Harad: the west coast of India, Kathiawar and the Gulf of Khambhat
     dict(name='Western India', mirror=False, p1=(76.6, 8.6), p2=(69.0, 22.3), s=(0.88, 1.00)),
 ]
@@ -92,6 +96,12 @@ def sector_sdf(sec, margin=1600.0):
     LAT = lat0 + Y / 111.32; LON = lon0 + X / (111.32 * math.cos(math.radians(lat0)))
     _, at = earth_mask(LON.min() - 1, LON.max() + 1, LAT.min() - 1, LAT.max() + 1, 0.02)
     M = at(LON, LAT).astype(bool)
+    if sec.get('exclude'):
+        # the grid is affine in lon/lat, so the polygon can be drawn straight onto it
+        dlon = LON[0, 1] - LON[0, 0]; dlat = LAT[0, 0] - LAT[1, 0]
+        im = Image.new('L', (M.shape[1], M.shape[0]), 0); dr = ImageDraw.Draw(im)
+        for poly in sec['exclude']: dr.polygon([((lo - LON[0, 0]) / dlon, (LAT[0, 0] - la) / dlat) for lo, la in poly], fill=1)
+        M &= ~np.array(im, bool)
     sdf = (ndimage.distance_transform_edt(M) - ndimage.distance_transform_edt(~M)) * SRES
     return dict(sdf=sdf, R=R, n=n, q1=complex(*q1), q2=complex(*q2))
 
@@ -105,7 +115,7 @@ def geo():
 
 G = geo()
 RES = 2.0
-X0, X1, Y0, Y1 = -800.0, 3800.0, -3300.0, 1700.0
+X0, X1, Y0, Y1 = -900.0, 4100.0, -3500.0, 2000.0
 W, H = int((X1 - X0) / RES), int((Y1 - Y0) / RES)
 px = lambda p: ((p[0] - X0) / RES, (Y1 - p[1]) / RES)
 def poly_mask(polys, width=0):
@@ -149,7 +159,7 @@ dist_kept = ndimage.distance_transform_edt(K) * RES
 d_env = np.where(land0, dist_env, -dist_env)                  # signed distance to the guessed outline, + inland
 
 # how much each place is reshaped: nowhere near the books' coast, fully along the guessed outline
-w = sstep(0, 220, s_near) * sstep(Ls, Ls - 220, s_near) * sstep(-40, 120, dist_kept - dist_env)
+w = sstep(0, 260, s_near) * sstep(Ls, Ls - 260, s_near) * sstep(-40, 160, dist_kept - dist_env)
 
 # sectors: each moved onto its stretch; blended where they meet
 def env_at(sv):
@@ -157,17 +167,20 @@ def env_at(sv):
 Qx = X0 + (np.arange(W) + 0.5) * RES; Qy = Y1 - (np.arange(H) + 0.5) * RES
 Q = Qx[None, :] + 1j * Qy[:, None]
 f_new = np.zeros((H, W)); wsum = np.zeros((H, W))
-near = np.abs(d_env) < 700
+near = np.abs(d_env) < 900
 # a slow warp of the borrowed ground, so that no borrowed coast matches its source
 rw = np.random.RandomState(5)
 WARP = (ndimage.gaussian_filter(rw.randn(H, W), 140 / RES) + 1j * ndimage.gaussian_filter(rw.randn(H, W), 140 / RES))
 WARP *= 75.0 / np.abs(WARP).std()                                 # km
+# and a continental-scale bend (miles): broad lobes and bights, so the outline is nowhere a smooth round curve
+BEND = (ndimage.gaussian_filter(rw.randn(H, W), 380 / RES) + 1j * ndimage.gaussian_filter(rw.randn(H, W), 380 / RES))
+BEND *= 190.0 / np.abs(BEND).std()
 for sec in SECTORS:
     E = sector_sdf(sec)
     sa, sb = sec['s'][0] * Ls, sec['s'][1] * Ls
     Ea, Eb = env_at(sa), env_at(sb)
     a = Eb - Ea; b = E['q2'] - E['q1']
-    wv = (Q - Ea) / a
+    wv = (Q + BEND - Ea) / a
     if sec['mirror']: wv = np.conj(wv)
     P = E['q1'] + wv * b + WARP                                  # km in the sector's plane
     kpm = abs(b) / abs(a)                                        # Earth km per Arda mile
@@ -184,9 +197,11 @@ for sec in SECTORS:
     print(sec['name'], 'scale %.2f km/mi' % kpm, 'miles', round(sa), round(sb), file=sys.stderr)
 f_new = (f_new + np.maximum(0, 1 - wsum) * d_env) / np.maximum(wsum, 1)      # where no sector reaches, the old outline
 # deep inland stays land, the far ocean stays sea apart from islands the sectors bring
-f_new = np.where(d_env > 380, np.maximum(f_new, d_env - 380), f_new)
+f_new = np.where(d_env > 700, np.maximum(f_new, d_env - 700), f_new)
 # (further out off the east coast, where an island arc lies)
-cap = -330 - 200 * sstep(0.25 * Ls, 0.30 * Ls, s_near) * sstep(0.56 * Ls, 0.50 * Ls, s_near) + 110 * sstep(0.64 * Ls, 0.70 * Ls, s_near)
+cap = -620 + 120 * sstep(0.64 * Ls, 0.70 * Ls, s_near) + 330 * sstep(0.84 * Ls, 0.90 * Ls, s_near)   # less far out in the south (the Dark Land) and south-west (the Straits)
+_cn = ndimage.gaussian_filter(np.random.RandomState(8).randn(H, W), 30 / RES); cap += 90 * _cn / _cn.std()   # ragged, never a straight cut
+
 f_new = np.where(d_env < cap, np.minimum(f_new, -1 - (cap - d_env)), f_new)
 f = (1 - w) * d0 + w * f_new
 
