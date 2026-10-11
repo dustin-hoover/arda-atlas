@@ -15,3 +15,6 @@ tools/routing/terrain.npz
 tools/routing/geo.json
 tools/borders/geo.json
 tools/borders/*.png
+
+# tools/analogues: downloaded imagery cache
+tools/analogues/cache/

@@ -137,6 +137,9 @@ function build(GEO) {
     })(),
     flats: GEO.PLACES.filter(p => p[7] && p[7].r >= 0.3 && p[7].culture !== 'minastirith').map(p => ({ x: p[2], y: p[3], r: p[7].r * 1.6 + 0.3, lift: p[7].culture === 'hobbit' ? 30 : 20, sea: p[1] === 'port' ? 1 : 0 })),
     numenor: GEO.NUMENOR,
+    tex: TEX,
+    // river mouths: where each river reaching the sea ends, for sediment plumes in the imagery
+    mouths: GEO.RIVERS.filter(r => r.w1 >= 40).map(r => { const p = r.pts[r.pts.length - 1]; return { x: p[0], y: p[1], w: r.w1 }; }),
     vectors: {
       rivers: GEO.RIVERS.map(r => ({ name: r.name, pts: r.pts, w0: r.w0, w1: r.w1 })),
       roads: GEO.ROADS.map(r => ({ name: r.name, pts: r.pts, cls: r.cls })),
@@ -146,5 +149,25 @@ function build(GEO) {
     },
   };
 }
-return { build };
+/* Land-cover texture patches (src/textures.js): one WebP atlas, decoded once here and handed to every worker as raw
+   RGB. Each class has a fine patch (detail at the source's resolution) and a coarse one (its pattern at middle zoom). */
+let TEX = null;
+async function loadTextures() {
+  const T = self.TEXTURES;
+  if (!T || TEX) return TEX;
+  try {
+    const bin = atob(T.webp), u8 = new Uint8Array(bin.length);
+    for (let i = 0; i < bin.length; i++) u8[i] = bin.charCodeAt(i);
+    const bmp = await createImageBitmap(new Blob([u8], { type: 'image/webp' }));
+    const cv = document.createElement('canvas'); cv.width = bmp.width; cv.height = bmp.height;
+    const ctx = cv.getContext('2d', { willReadFrequently: true }); ctx.drawImage(bmp, 0, 0);
+    const px = ctx.getImageData(0, 0, bmp.width, bmp.height).data, N = T.atlas.cell, per = T.atlas.per_row;
+    const cell = k => { const out = new Uint8Array(N * N * 3), cx = (k % per) * N, cy = Math.floor(k / per) * N;
+      for (let j = 0; j < N; j++) for (let i = 0; i < N; i++) { const s = ((cy + j) * bmp.width + cx + i) * 4, d = (j * N + i) * 3; out[d] = px[s]; out[d + 1] = px[s + 1]; out[d + 2] = px[s + 2]; }
+      return out; };
+    TEX = { N, water: T.water, cls: T.classes.map((c, k) => ({ name: c.name, tf: c.fine, tc: c.coarse, mean: c.mean, fine: cell(2 * k), coarse: cell(2 * k + 1) })) };
+  } catch (e) { console.warn('textures unavailable', e); TEX = null; }
+  return TEX;
+}
+return { build, loadTextures };
 })();

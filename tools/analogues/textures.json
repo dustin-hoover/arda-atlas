@@ -1,0 +1,438 @@
+{
+ "classes": {
+  "pasture": {
+   "source": "linz",
+   "at": [
+    -37.86,
+    175.78,
+    -37.88,
+    175.8
+   ],
+   "place": "Matamata, Waikato: dairy pasture in small hedged paddocks",
+   "use": "the Shire, Bree-land, Buckland, Eriador and Gondor grassland",
+   "mean": [
+    72,
+    107,
+    57
+   ],
+   "fine_m_per_px": 10.0,
+   "coarse_m_per_px": 80.0
+  },
+  "arable": {
+   "source": "linz",
+   "at": [
+    -43.7,
+    171.75
+   ],
+   "place": "Canterbury Plains near Methven: mixed cropping",
+   "use": "Lebennin, Lossarnach, the Pelennor, Anórien, Nurn, Dorwinion",
+   "mean": [
+    68,
+    106,
+    53
+   ],
+   "fine_m_per_px": 10.0,
+   "coarse_m_per_px": 80.0
+  },
+  "tussock": {
+   "source": "linz",
+   "at": [
+    -44.05,
+    170.3,
+    -43.93,
+    170.3
+   ],
+   "place": "Mackenzie Basin near Twizel: short tussock grassland",
+   "use": "Rohan, the Wold, Enedwaith, Minhiriath",
+   "mean": [
+    120,
+    110,
+    75
+   ],
+   "fine_m_per_px": 10.0,
+   "coarse_m_per_px": 80.0
+  },
+  "forest": {
+   "source": "linz",
+   "at": [
+    -46.2,
+    167.2
+   ],
+   "place": "Waitutu, Fiordland: lowland podocarp and beech forest",
+   "use": "Mirkwood, Fangorn, the Old Forest, Eryn Vorn, Chetwood",
+   "mean": [
+    27,
+    44,
+    21
+   ],
+   "fine_m_per_px": 10.0,
+   "coarse_m_per_px": 80.0
+  },
+  "beech": {
+   "source": "linz",
+   "at": [
+    -46.564,
+    169.325,
+    -46.57,
+    169.33
+   ],
+   "place": "The Catlins: silver and red beech forest",
+   "use": "Lothlórien, Ithilien, Hollin, montane forest",
+   "mean": [
+    36,
+    58,
+    30
+   ],
+   "fine_m_per_px": 10.0,
+   "coarse_m_per_px": 80.0
+  },
+  "taiga": {
+   "source": "weld",
+   "at": [
+    62.0,
+    58.8
+   ],
+   "place": "Northern Urals foothills: spruce and fir taiga",
+   "use": "the Taiga of Forodwaith, the Iron Hills, the north",
+   "mean": [
+    28,
+    68,
+    22
+   ],
+   "fine_m_per_px": 30.0,
+   "coarse_m_per_px": 120.0
+  },
+  "scree": {
+   "source": "linz",
+   "at": [
+    -42.2,
+    173.6
+   ],
+   "place": "Seaward Kaikōura Range: greywacke scree with tussock gullies",
+   "use": "mountain slopes above the forest in every range",
+   "mean": [
+    150,
+    143,
+    109
+   ],
+   "fine_m_per_px": 10.0,
+   "coarse_m_per_px": 80.0
+  },
+  "rock": {
+   "source": "linz",
+   "at": [
+    -45.05,
+    168.81
+   ],
+   "place": "The Remarkables: bare schist rock and talus",
+   "use": "crags and summit rock",
+   "mean": [
+    130,
+    132,
+    89
+   ],
+   "fine_m_per_px": 10.0,
+   "coarse_m_per_px": 80.0
+  },
+  "neve": {
+   "source": "linz",
+   "at": [
+    "flat",
+    -43.52,
+    170.32
+   ],
+   "place": "Upper Tasman Glacier névé",
+   "use": "glaciers and the snowfields of the high ranges",
+   "mean": [
+    222,
+    225,
+    217
+   ],
+   "fine_m_per_px": 10.0,
+   "coarse_m_per_px": 80.0
+  },
+  "gravel": {
+   "source": "linz",
+   "at": [
+    -43.88,
+    170.15,
+    "flat"
+   ],
+   "place": "Tasman River: braided gravel bed above Lake Pukaki",
+   "use": "braided river beds below the mountains, the Ethir Anduin",
+   "mean": [
+    184,
+    198,
+    183
+   ],
+   "fine_m_per_px": 10.0,
+   "coarse_m_per_px": 80.0
+  },
+  "bog": {
+   "source": "linz",
+   "at": [
+    -37.43,
+    175.55
+   ],
+   "place": "Kopuatai peat dome, Hauraki Plains: restiad raised bog",
+   "use": "the Dead Marshes, the Nindalf, the Midgewater, the Gladden Fields",
+   "mean": [
+    65,
+    86,
+    45
+   ],
+   "fine_m_per_px": 10.0,
+   "coarse_m_per_px": 80.0
+  },
+  "ashplain": {
+   "source": "linz",
+   "at": [
+    -39.3,
+    175.66
+   ],
+   "place": "Rangipo Desert: tephra and gullied ash",
+   "use": "Gorgoroth, Udûn, Lithlad, the Dagorlad",
+   "mean": [
+    115,
+    100,
+    79
+   ],
+   "fine_m_per_px": 10.0,
+   "coarse_m_per_px": 80.0
+  },
+  "lava": {
+   "source": "linz",
+   "at": [
+    -39.163,
+    175.618,
+    -39.155,
+    175.635
+   ],
+   "place": "Ngāuruhoe cone: young lava and scoria",
+   "use": "Orodruin and its slopes",
+   "mean": [
+    104,
+    94,
+    69
+   ],
+   "fine_m_per_px": 10.0,
+   "coarse_m_per_px": 80.0
+  },
+  "schist": {
+   "source": "linz",
+   "at": [
+    -45.36,
+    169.65,
+    -45.45,
+    169.55
+   ],
+   "place": "Poolburn, Central Otago: brown tussock on schist with tors",
+   "use": "the Brown Lands, Dunland, the downs and hill country",
+   "mean": [
+    121,
+    104,
+    69
+   ],
+   "fine_m_per_px": 10.0,
+   "coarse_m_per_px": 80.0
+  },
+  "sand": {
+   "source": "weld",
+   "at": [
+    25.5,
+    -2.5
+   ],
+   "place": "Erg Chech, Algeria/Mali: linear dunes",
+   "use": "the sand seas of Far Harad",
+   "mean": [
+    240,
+    206,
+    161
+   ],
+   "fine_m_per_px": 30.0,
+   "coarse_m_per_px": 120.0
+  },
+  "hamada": {
+   "source": "weld",
+   "at": [
+    25.6,
+    8.6
+   ],
+   "place": "Tassili n'Ajjer foreland, Algeria: stony desert",
+   "use": "Near Harad, Khand, the deserts' rocky ground",
+   "mean": [
+    187,
+    164,
+    137
+   ],
+   "fine_m_per_px": 30.0,
+   "coarse_m_per_px": 120.0
+  },
+  "steppe": {
+   "source": "weld",
+   "at": [
+    51.8,
+    72.5
+   ],
+   "place": "Kazakh steppe near Astana: feather-grass steppe",
+   "use": "the steppe of Rhûn",
+   "mean": [
+    119,
+    116,
+    86
+   ],
+   "fine_m_per_px": 30.0,
+   "coarse_m_per_px": 120.0
+  },
+  "tundra": {
+   "source": "weld",
+   "at": [
+    68.5,
+    70.5
+   ],
+   "place": "Yamal peninsula: lake-studded tundra",
+   "use": "Forodwaith",
+   "mean": [
+    111,
+    110,
+    86
+   ],
+   "fine_m_per_px": 30.0,
+   "coarse_m_per_px": 120.0
+  },
+  "seaice": {
+   "source": "modis",
+   "at": [
+    64.8,
+    23.5
+   ],
+   "place": "Bay of Bothnia in late March (fast ice and leads)",
+   "use": "the Icebay of Forochel",
+   "mean": [
+    240,
+    239,
+    242
+   ],
+   "fine_m_per_px": 10.0,
+   "coarse_m_per_px": 250.0
+  },
+  "savanna": {
+   "source": "weld",
+   "at": [
+    13.5,
+    2.5
+   ],
+   "place": "Sahel near Niamey: tiger-bush and dry savanna",
+   "use": "the southern lands of Far Harad",
+   "mean": [
+    215,
+    185,
+    149
+   ],
+   "fine_m_per_px": 30.0,
+   "coarse_m_per_px": 120.0
+  },
+  "blacklava": {
+   "source": "S2A_28WDT_20220923_0_L2A",
+   "at": [
+    64.87,
+    -16.76
+   ],
+   "place": "Holuhraun, Iceland: the 2014-15 lava field on black sandur",
+   "use": "Gorgoroth and the black plains of Mordor",
+   "mean": [
+    23,
+    19,
+    13
+   ],
+   "fine_m_per_px": 10.0,
+   "coarse_m_per_px": 80.0
+  },
+  "cinder": {
+   "source": "S2A_5QKB_20230820_0_L2A",
+   "at": [
+    19.62,
+    -155.45
+   ],
+   "place": "Mauna Loa saddle, Island of Hawaiʻi: young lava flows and cinder",
+   "use": "Udûn, the slopes about Orodruin, Lithlad",
+   "mean": [
+    65,
+    55,
+    48
+   ],
+   "fine_m_per_px": 10.0,
+   "coarse_m_per_px": 80.0
+  },
+  "water:deep": {
+   "source": "linz",
+   "at": [
+    -40.88,
+    173.06
+   ],
+   "percentile": 5,
+   "place": "Abel Tasman coast: open water of Tasman Bay",
+   "mean": [
+    8,
+    21,
+    40
+   ]
+  },
+  "water:shelf": {
+   "source": "linz",
+   "at": [
+    -40.88,
+    173.06
+   ],
+   "percentile": 60,
+   "place": "Abel Tasman coast: water over the inshore shelf",
+   "mean": [
+    11,
+    34,
+    58
+   ]
+  },
+  "water:shallow": {
+   "source": "linz",
+   "at": [
+    -40.88,
+    173.06
+   ],
+   "percentile": 97,
+   "place": "Abel Tasman coast: sand shallows by the beaches",
+   "mean": [
+    46,
+    140,
+    115
+   ]
+  },
+  "water:plume": {
+   "source": "linz",
+   "at": [
+    -43.9,
+    172.22
+   ],
+   "percentile": 70,
+   "place": "Rakaia mouth: glacial sediment plume along the shore",
+   "mean": [
+    48,
+    161,
+    157
+   ]
+  },
+  "water:fjord": {
+   "source": "linz",
+   "at": [
+    -45.3,
+    166.98
+   ],
+   "percentile": 30,
+   "place": "Doubtful Sound: dark fjord water",
+   "mean": [
+    8,
+    15,
+    19
+   ]
+  }
+ }
+}

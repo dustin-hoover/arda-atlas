@@ -100,7 +100,113 @@ const CH = { land:0, cont:1, mtn:2, hill:3, forest:4, gold:5, dark:6, marsh:7, a
 function init(data) {
   M = data.main; G = data.glob; PEAKS = data.peaks || []; RANGEPAL = data.ranges || []; NUM = data.numenor; FLATS = data.flats || [];
   if (data.vectors) initVectors(data.vectors);
+  initTex(data.tex); MOUTHS = data.mouths || [];
 }
+
+/* ---------------- photographic land cover ----------------
+   Texture patches cut from real satellite imagery of Earth landscapes chosen as analogues (src/textures.js,
+   docs/ANALOGUES.md). Each class has a fine patch (10-30 m/px) and a coarse one (80-250 m/px); both are turned into
+   mip pyramids of brightness ratios (patch / its mean), sampled in world metres at the pixel's footprint, twice at
+   different rotations and offsets mixed by noise so the repeat does not show. The colour is the analogue's own mean
+   colour times that detail. */
+let TX = null, MOUTHS = [];
+// bright specks in a forest patch (tracks, a stream, a slip) repeat as marks: forests keep only gentle highlights
+const CLAMP = { forest: 1.2, beech: 1.25, taiga: 1.25 };
+const TXI = {};
+const MI_M = 1609.344;
+function pyramid(rgb, N, hi = 1.6) {
+  const levels = [];
+  let n = N, a = new Float32Array(N * N * 3), m = [0, 0, 0];
+  for (let i = 0; i < N * N; i++) for (let c = 0; c < 3; c++) m[c] += rgb[i * 3 + c];
+  for (let c = 0; c < 3; c++) m[c] = Math.max(1, m[c] / (N * N));
+  for (let i = 0; i < N * N; i++) for (let c = 0; c < 3; c++) a[i * 3 + c] = rgb[i * 3 + c] / m[c];
+  levels.push(a);
+  while (n > 1) {
+    const h = n >> 1, b = new Float32Array(h * h * 3);
+    for (let j = 0; j < h; j++) for (let i = 0; i < h; i++) for (let c = 0; c < 3; c++)
+      b[(j * h + i) * 3 + c] = 0.25 * (a[((2 * j) * n + 2 * i) * 3 + c] + a[((2 * j) * n + 2 * i + 1) * 3 + c] + a[((2 * j + 1) * n + 2 * i) * 3 + c] + a[((2 * j + 1) * n + 2 * i + 1) * 3 + c]);
+    levels.push(b); a = b; n = h;
+  }
+  // each level relative to its own neighbourhood (three levels up, bilinear), so neighbouring cells of different local
+  // tone do not show as blocks; done once here rather than per pixel
+  const out = [];
+  for (let l = 0; l < levels.length; l++) {
+    const lm = Math.min(l + 3, levels.length - 1), nl = N >> l, nm = N >> lm, src = levels[l], up = levels[lm];
+    if (lm === l) { out.push(src); continue; }
+    const d = new Float32Array(src.length), acc = [0, 0, 0];
+    for (let j = 0; j < nl; j++) for (let i = 0; i < nl; i++) {
+      acc[0] = acc[1] = acc[2] = 0;
+      txLevel(up, nm, (i + 0.5) * nm / nl, (j + 0.5) * nm / nl, acc, 1);
+      const q = (j * nl + i) * 3;
+      for (let c = 0; c < 3; c++) d[q + c] = Math.min(hi, Math.max(0.35, src[q + c] / Math.max(0.05, acc[c])));
+    }
+    out.push(d);
+  }
+  return out;
+}
+function initTex(t) {
+  TX = null;
+  if (!t || !t.cls) return;
+  TX = { N: t.N, water: t.water, cls: t.cls.map((c, k) => { TXI[c.name] = k; return { name: c.name, mean: c.mean, tf: c.tf, tc: c.tc, fine: pyramid(c.fine, t.N, CLAMP[c.name]), coarse: pyramid(c.coarse, t.N, CLAMP[c.name]) }; }) };
+}
+// bilinear sample of one mip level, wrapping; adds w × rgb into acc
+function txLevel(lv, n, u, v, acc, w) {
+  u -= 0.5; v -= 0.5;
+  const fu = Math.floor(u), fv = Math.floor(v), du = u - fu, dv = v - fv;
+  const i0 = ((fu % n) + n) % n, j0 = ((fv % n) + n) % n, i1 = (i0 + 1) % n, j1 = (j0 + 1) % n;
+  const a = (j0 * n + i0) * 3, b = (j0 * n + i1) * 3, c = (j1 * n + i0) * 3, d = (j1 * n + i1) * 3;
+  const wa = (1 - du) * (1 - dv) * w, wb = du * (1 - dv) * w, wc = (1 - du) * dv * w, wd = du * dv * w;
+  acc[0] += lv[a] * wa + lv[b] * wb + lv[c] * wc + lv[d] * wd;
+  acc[1] += lv[a + 1] * wa + lv[b + 1] * wb + lv[c + 1] * wc + lv[d + 1] * wd;
+  acc[2] += lv[a + 2] * wa + lv[b + 2] * wb + lv[c + 2] * wc + lv[d + 2] * wd;
+}
+// detail ratio of one pyramid at world point (metres xm, ym) for a footprint of pm metres per pixel; multiplies into out.
+// Anti-repeat: the plane is cut into patch-sized cells, each showing the patch at its own offset, turn and mirror;
+// neighbouring cells cross-fade (variance kept) so no seam or repeat shows. Detail fades out where the whole patch
+// would be only a few dozen pixels across (the repeat would read as a pattern) - there the mean colour stands alone.
+const tacc = [0, 0, 0];
+function txPyr(pyr, res, xm, ym, pm, seed, out) {
+  const N = Math.round(Math.sqrt(pyr[0].length / 3));
+  const P = N * res / pm;                                 // patch size on screen, px
+  const fade = sstep(16, 70, P);
+  if (fade <= 0) return;
+  const L = Math.log2(Math.max(pm / res, 1));
+  const l0 = Math.min(Math.floor(L), pyr.length - 1), l1 = Math.min(l0 + 1, pyr.length - 1), t = L - Math.floor(L);
+  const u = xm / res, v = ym / res, gu = u / N - 0.5, gv = v / N - 0.5;
+  const i0 = Math.floor(gu), j0 = Math.floor(gv);
+  const wx = sstep(0.2, 0.8, gu - i0), wy = sstep(0.2, 0.8, gv - j0);
+  let ar = 0, ag = 0, ab = 0, ww = 0;
+  for (let b = 0; b < 2; b++) for (let a = 0; a < 2; a++) {
+    const w = (a ? wx : 1 - wx) * (b ? wy : 1 - wy);
+    if (w < 0.004) continue;
+    const ci = i0 + a, cj = j0 + b;
+    // each cell turned about its centre by an angle that drifts slowly across the land (like the grain of real ground),
+    // so neighbours share their grain and a direction never repeats far; random turns would read as brushwork
+    const th = 1.3 * noise(ci * 0.07 + seed * 0.37, cj * 0.07 - seed * 0.21), co = Math.cos(th), sn = Math.sin(th);
+    const cu = (ci + 1) * N, cv = (cj + 1) * N, du = u - cu, dv = v - cv;
+    const su = cu + du * co - dv * sn + hash2(ci, cj, seed + 1) * N * 8, sv = cv + du * sn + dv * co + hash2(ci, cj, seed + 2) * N * 8;
+    tacc[0] = tacc[1] = tacc[2] = 0;
+    txLevel(pyr[l0], N >> l0, su / (1 << l0), sv / (1 << l0), tacc, 1 - t);
+    if (t > 0.02) txLevel(pyr[l1], N >> l1, su / (1 << l1), sv / (1 << l1), tacc, t);
+    ar += w * (tacc[0] - 1); ag += w * (tacc[1] - 1); ab += w * (tacc[2] - 1); ww += w * w;
+  }
+  const k = fade / Math.sqrt(Math.max(ww, 1e-4));
+  out[0] *= Math.max(0.2, 1 + ar * k); out[1] *= Math.max(0.2, 1 + ag * k); out[2] *= Math.max(0.2, 1 + ab * k);
+}
+const tcol = [0, 0, 0];
+// colour of class k at (X, Y) miles, pixel footprint pix miles → tcol
+function txColor(k, X, Y, pix, lite) {
+  const c = TX.cls[k], pm = pix * MI_M, xm = X * MI_M, ym = -Y * MI_M;
+  tcol[0] = c.mean[0]; tcol[1] = c.mean[1]; tcol[2] = c.mean[2];
+  txPyr(c.coarse, c.tc, xm, ym, pm, 100 + 7 * k, tcol);
+  if (!lite) txPyr(c.fine, c.tf, xm, ym, pm, 300 + 7 * k, tcol);
+  return tcol;
+}
+// land-cover layers gathered while the procedural colour is built, then painted again from the real patches
+const PL = { n: 0, k: new Int16Array(24), t: new Float32Array(24), c: new Float32Array(72) };
+function plAdd(name, t) { if (TX && t > 0.04 && PL.n < 24) { PL.k[PL.n] = TXI[name]; PL.t[PL.n] = t; PL.n++; } }
+// a plain colour among the layers (water in the bogs, lava channels): kept over the patches beneath it
+function plRGB(r, g, b, t) { if (TX && t > 0.02 && PL.n < 24) { PL.k[PL.n] = -1; PL.t[PL.n] = t; PL.c[PL.n * 3] = r; PL.c[PL.n * 3 + 1] = g; PL.c[PL.n * 3 + 2] = b; PL.n++; } }
 
 // the mountain ranges' own colours (Earth analogues, see rasters.js): rp.w is how strongly the nearest range's
 // character applies here (1 on its crest, fading to 0 at its reach), rp.r that range
@@ -446,11 +552,29 @@ function colorAt(X, Y, h, slope, pix, mode, dsea) {
     blend(9, 26, 54, t3);
     const n = fbmA(X, Y, 20, Math.max(pix, 0.003), 0.7, 5);
     tmp3[0] *= 1 + 0.05 * n; tmp3[1] *= 1 + 0.06 * n; tmp3[2] *= 1 + 0.05 * n;
+    if (TX) {
+      // water colours read from real coasts: sand shallows, the inshore shelf, open water; silt plumes off river mouths
+      const W = TX.water, a = sstep(1, 30, depth + 6 * n), b = sstep(25, 260, depth);
+      let wr = mix(mix(W.shallow[0], W.shelf[0], a), W.deep[0], b), wg = mix(mix(W.shallow[1], W.shelf[1], a), W.deep[1], b), wb = mix(mix(W.shallow[2], W.shelf[2], a), W.deep[2], b);
+      const cold = 1 - warm;
+      wr = mix(wr, wr * 0.8, cold * b); wg = mix(wg, wg * 0.85, cold * b);
+      let pl = 0;
+      for (const m of MOUTHS) {
+        const dx = X - m.x, dy = Y - m.y;
+        if (Math.abs(dx) > 40 || Math.abs(dy) > 40) continue;
+        const r = 3 + Math.sqrt(m.w) * 0.6;
+        const d = Math.sqrt(dx * dx + dy * dy) * (1 + 0.45 * noise(X * 0.25 + 3, Y * 0.25 - 1));
+        pl = Math.max(pl, sat(1 - d / r));
+      }
+      if (pl > 0) { pl = Math.pow(pl, 0.7) * sstep(120, 5, depth); wr = mix(wr, W.plume[0] * 0.9 + 20, pl * 0.7); wg = mix(wg, W.plume[1] * 0.85 + 10, pl * 0.7); wb = mix(wb, W.plume[2] * 0.75, pl * 0.7); }
+      blend(wr, wg, wb, 0.9);
+    }
     const ice = F[14];
     if (ice > 0.05) {
       const floe = fbmA(X, Y, 8, Math.max(pix, 0.002), 0.9, 8);
       const cov = sstep(0.1, 0.6, ice + 0.4 * floe);
-      blend(222, 230, 238, cov * 0.95);
+      if (TX && TXI.seaice !== undefined) { const c = txColor(TXI.seaice, X, Y, pix); blend(c[0], c[1], c[2], cov * 0.95); }
+      else blend(222, 230, 238, cov * 0.95);
     }
     const lake = F[15];
     if (lake > 0.4 && depth < 5) blend(24, 58, 74, 0.8);
@@ -460,6 +584,7 @@ function colorAt(X, Y, h, slope, pix, mode, dsea) {
   const T = tempAt(lat, h);
   const Mst = moistAt(X, Y, lat, wm);
   const arid = F[8];
+  PL.n = 0; FIELDV = 0;
   // ---- base ground ----
   const veg = sat(Mst * 1.35 - 0.15);
   setc(134, 124, 84);                            // dry steppe
@@ -480,11 +605,20 @@ function colorAt(X, Y, h, slope, pix, mode, dsea) {
   blend(112, 96, 78, sat((F[3] + sat(h / 1500)) * 0.8) * sat(lc2 + 0.2) * 0.45);   // heath on hills
   const lv = lc2 * 0.1 + 0.07 * fbm(X * 0.012 - 30, Y * 0.012 + 8, 3) + 0.07 * fbmA(X, Y, 3, Math.max(pix * 1.5, 0.01), 0.7, 33); tmp3[0] *= 1 + lv; tmp3[1] *= 1 + lv * 0.9; tmp3[2] *= 1 + lv * 0.7;
   if (R.stream > 0) blend(56, 78, 40, R.stream * 0.55 * veg + 0.1 * R.stream);
+  // real ground: tussock grassland by default, steppe where dry (Rhûn), green pasture where wet, brown schist downs on
+  // the hills, savanna in the hot south, tundra in the cold north
+  plAdd('tussock', 1);
+  plAdd('steppe', sat((0.5 - veg) * 3) * (X > 1000 || wm < 1 ? 1 : 0.4));
+  plAdd('pasture', sstep(0.18, 0.55, veg + 0.15 * lc1) * (1 - 0.85 * sat(g * 1.5)) * (1 - sat((T - 15) / 6)));
+  plAdd('schist', sat(F[3] * 1.5) * (1 - 0.6 * veg) * sat(lc2 + 0.6));
+  if (T > 18) plAdd('savanna', sat((T - 18) / 6) * (1 - veg) * 0.9);
+  if (T < 3) plAdd('tundra', sat((3 - T) / 5));
   // alpine grassland and mountain rock tones by elevation
   const alp = sstep(900, 2200, h);
   const RP = h > 250 ? rangeAt(X, Y) : (rp.w = 0, rp);
   const tw = (a, i) => RP.w ? 1 + (RP.r[a][i] - 1) * RP.w : 1;
   if (alp > 0) blend(126 * tw('m', 0), 118 * tw('m', 1), 92 * tw('m', 2), alp * 0.55);
+  plAdd('tussock', alp * 0.7);
   // on the ranges' lower slopes, meadow and scrub take the analogue's colour too
   if (RP.w > 0) blend(126 * tw('m', 0), 118 * tw('m', 1), 92 * tw('m', 2), RP.w * sstep(250, 900, h) * (1 - alp) * 0.6);
   // arid / desert
@@ -496,6 +630,9 @@ function colorAt(X, Y, h, slope, pix, mode, dsea) {
     const dr = 212 + 18 * dn, dg = 178 + 10 * dn, db = 120;
     const cr = 132, cg = 112, cb = 82;
     blend(mix(cr, dr, hot), mix(cg, dg, hot), mix(cb, db, hot), desert);
+    plAdd('schist', desert * (1 - hot));
+    plAdd('hamada', desert * hot);
+    plAdd('sand', desert * hot * sstep(0.55, 0.85, desert + 0.3 * dn));
     if (hot > 0.5 && desert > 0.6 && pix < 0.2) {
       const dune = Math.abs(noise(X * 0.9 + noise(X * 0.1, Y * 0.1) * 2, Y * 0.35));
       const dl = (dune - 0.35) * 0.18 * sat((0.2 - pix) * 6);
@@ -509,9 +646,11 @@ function colorAt(X, Y, h, slope, pix, mode, dsea) {
     const cell = hob ? 0.2 : 0.34;
     const pf = sstep(0.25, 0.6, farm + 0.35 * fbm(X * 0.08 + 3, Y * 0.08, 3));
     const favg = 0.5 * pf;
+    plAdd(hob || lat > 49 ? 'pasture' : 'arable', pf * 0.95);
     if (pix < cell * 0.22) {
       const f = fields(X, Y, cell, pix, hob);
       const t = sat((cell * 0.22 - pix) / (cell * 0.12)) * pf;
+      FIELDV = t * 0.85;
       blend(118, 128, 76, favg * (1 - t));
       const k = 0.4 + 0.6 * sat((cell * 0.08 - pix) / (cell * 0.05));
       blend(118 + (f[0] - 118) * k, 128 + (f[1] - 128) * k, 76 + (f[2] - 76) * k, t * 0.85);
@@ -559,13 +698,15 @@ function colorAt(X, Y, h, slope, pix, mode, dsea) {
       fr *= lit; fg *= lit; fb *= lit;
     }
     blend(fr, fg, fb, dens);
+    plAdd(T < 2 || Math.abs(lat) > 64 ? 'taiga' : (R.mt > 0.3 || gold > 0.3 || conifer > 0.6) ? 'beech' : 'forest', dens * (dk > 0.5 ? 1 : 0.95));
   }
   // marsh
   const marsh = F[7];
   if (marsh > 0.02) {
     blend(74, 84, 52, marsh * 0.8);
+    plAdd('bog', marsh * 0.85);
     const pools = fbmA(X, Y, 0.8, Math.max(pix, 0.002), 0.8, 12);
-    if (pools > 0.18) blend(46, 64, 62, sat((pools - 0.18) * 6) * marsh);
+    if (pools > 0.18) { blend(46, 64, 62, sat((pools - 0.18) * 6) * marsh); plRGB(30, 46, 44, sat((pools - 0.18) * 6) * marsh); }
   }
   // ash and slag of Mordor
   const ash = F[10];
@@ -574,9 +715,17 @@ function colorAt(X, Y, h, slope, pix, mode, dsea) {
     const af = sstep(0.25, 0.55, ash + 0.3 * fbmA(X, Y, 6, Math.max(pix, 0.003), 0.8, 44));
     blend(62 + 12 * an, 57 + 10 * an, 54 + 8 * an, af * 0.94);
     const dO = Math.hypot(X - 840, Y + 554);
+    // Mordor: Rangipo-like tephra, with black Icelandic lava fields spread over Gorgoroth and Hawaiian cinder and young
+    // flows about the Mountain
+    plAdd('ashplain', af * 0.94);
+    // lava fields end in sharp margins, crinkled at every scale
+    const lf = ash * 0.8 + 0.5 * fbm(X * 0.07 + 13, Y * 0.07 - 2, 4) + 0.12 * fbmA(X, Y, 2.5, Math.max(pix, 0.003), 0.8, 61);
+    plAdd('blacklava', af * sstep(0.63, 0.63 + Math.max(0.01, pix * 0.25), lf) * 0.92);
+    if (dO < 70) plAdd('cinder', sat(1 - dO / 70) * af * 0.85);
+    if (dO < 25) plAdd('lava', sat(1 - dO / 25) * af);
     if (dO < 30) {
       const flows = Math.abs(noise(Math.atan2(Y + 554, X - 840) * 6, dO * 0.25));
-      if (flows < 0.07) blend(98, 34, 16, (1 - flows / 0.07) * sat(1 - dO / 30) * 0.9);
+      if (flows < 0.07) { blend(98, 34, 16, (1 - flows / 0.07) * sat(1 - dO / 30) * 0.9); plRGB(98, 34, 16, (1 - flows / 0.07) * sat(1 - dO / 30) * 0.9); }
       blend(40, 36, 36, sat(1 - dO / 12) * 0.6);
     }
   }
@@ -588,6 +737,7 @@ function colorAt(X, Y, h, slope, pix, mode, dsea) {
     const rn = fbm(X * 0.3, Y * 0.3, 3);
     const dark = ash > 0.3 ? 0.55 : 0;
     blend((mix(124, 70, dark) + 14 * rn) * tw('k', 0), (mix(114, 64, dark) + 12 * rn) * tw('k', 1), (mix(104, 60, dark) + 10 * rn) * tw('k', 2), rock);
+    if (!dark) { plAdd('scree', rock); plAdd('rock', rock * sstep(0.55, 0.9, slope + 0.3 * rn)); }
   }
   const Tsnow = T + 8.5 + 8 * slope * (1 - 0.6 * R.mt) - 2.5 * R.mt * (1 - R.vly);   // in ranges snow lies on the high ridges between the valleys
   let snow = sstep(-1, -4.5, Tsnow);
@@ -596,12 +746,32 @@ function colorAt(X, Y, h, slope, pix, mode, dsea) {
     const sn = fbmA(X, Y, 2, Math.max(pix, 0.002), 0.8, 14);
     snow = sat(snow + sn * 0.35 * snow);
     blend(238, 242, 247, snow);
+    plAdd('neve', snow);
   }
+  if (PL.n) photo(X, Y, pix);
   // beaches
   if (s < 0.025 && h < 8 && slope < 0.5) blend(204, 190, 152, sat(1 - s / 0.025) * 0.8);
   // lakes at coarse scale
   if (F[15] > 0.55 && pix > 0.3) blend(26, 58, 74, sstep(0.55, 0.75, F[15]));
   return tmp3;
+}
+
+/* Repaint the land from the real patches gathered in PL, layer over layer as the procedural colour was built, and
+   lay the result over it (keeping a little of the procedural colour, which carries the analogue tints). */
+const pc = [0, 0, 0];
+let FIELDV = 0;
+function photo(X, Y, pix) {
+  let i0 = 0;
+  for (let i = PL.n - 1; i > 0; i--) if (PL.t[i] > 0.985) { i0 = i; break; }
+  let c = PL.k[i0] < 0 ? PL.c.subarray(i0 * 3, i0 * 3 + 3) : txColor(PL.k[i0], X, Y, pix);
+  pc[0] = c[0]; pc[1] = c[1]; pc[2] = c[2];
+  for (let i = i0 + 1; i < PL.n; i++) {
+    const t = PL.t[i];
+    c = PL.k[i] < 0 ? PL.c.subarray(i * 3, i * 3 + 3) : txColor(PL.k[i], X, Y, pix, t < 0.3);   // a thin overlay needs no fine detail
+    pc[0] += (c[0] - pc[0]) * t; pc[1] += (c[1] - pc[1]) * t; pc[2] += (c[2] - pc[2]) * t;
+  }
+  // where the hedged fields are drawn (close zoom), keep them and let the real patch only colour them
+  blend(pc[0], pc[1], pc[2], 0.82 * (1 - 0.55 * FIELDV));
 }
 
 function hypsoColor(X, Y, h, slope, pix) {

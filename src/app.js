@@ -26,6 +26,7 @@ try {
 /* ---------------- rasters ---------------- */
 lstep('Raising the Misty Mountains…', 14);
 await sleep(30);
+await RASTERS.loadTextures();
 const DATA = RASTERS.build(GEO);
 GEN.init(DATA);
 lstep('Filling the Great Sea…', 38);
@@ -930,6 +931,8 @@ const PANELS = {
     <p class="note">Arda Atlas renders Middle-earth as if it were a real planet seen from orbit. Coastlines, ranges, rivers, forests and places are hand-placed from Tolkien's maps and his own statements of scale (Hobbiton at the latitude of Oxford, Minas Tirith some 600 miles south). Everything else is generated on your device, deterministically: elevation, satellite colour, farm fields, tree crowns, rooftops and weather.</p>
     <div class="eyebrow">How it works</div>
     <p class="note">Authored vectors are rasterised into 16 field layers (land, mountains, forest, aridity, farmland…). Web Workers turn those fields into terrain and imagery tiles on demand with fractal noise, so detail continues to about 2 metres per pixel. MapLibre GL draws the globe and 3D terrain; three.js draws the ground view.</p>
+    <div class="eyebrow">Earth imagery</div>
+    <p class="note">The ground is textured with small patches of real satellite imagery from Earth landscapes like each part of Middle-earth: mostly New Zealand (Waikato pasture, Mackenzie tussock, Fiordland forest, the Southern Alps, the Rangipo Desert), with Iceland and Hawaiʻi for the lava of Mordor and other lands where New Zealand has no match. Only texture and colour are taken; the shapes of Middle-earth are not. New Zealand imagery sourced from LINZ, CC BY 4.0. Contains modified Copernicus Sentinel data (2022–2023). NASA Landsat WELD, MODIS and Blue Marble imagery via NASA GIBS (public domain).</p>
     <div class="eyebrow">Accuracy</div>
     <p class="note">Positions follow the published maps closely but not exactly. Population figures are estimates and are labelled as such; Tolkien gave very few. Distant lands such as the Dark Land and the Land of the Sun come from the early cosmology maps, and the New Lands after the Downfall are invented.</p>
     <p class="note">A fan work. Middle-earth and its names belong to the Tolkien Estate.</p>`,
