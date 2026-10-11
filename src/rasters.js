@@ -1,6 +1,6 @@
 /* Rasterises the authored geography into the field rasters used by GEN. */
 const RASTERS = (() => {
-const RES = 4, X0 = -2300, X1 = 3100, Y0 = -2900, Y1 = 1000;
+const RES = 4, X0 = -2300, X1 = 3800, Y0 = -3200, Y1 = 1500;
 const W = (X1 - X0) / RES, H = (Y1 - Y0) / RES;
 const GW = 1440, GH = 720;
 
@@ -168,8 +168,12 @@ function build(GEO) {
   const lines = (list, width, val) => { for (const f of list) { path(f.pts); ctx.lineWidth = width(f); ctx.strokeStyle = grey(val(f)); ctx.stroke(); } };
   const ch = [];
 
-  begin(); polys([{ pts: GEO.COAST }].concat(GEO.ISLANDS), () => 1);
+  // the coast: the books' coast with the unwritten shores reshaped (src/shores.js), its new islands and inland seas
+  const SH = self.SHORES, COAST = SH ? SH.coast : GEO.COAST;
+  const ISL = GEO.ISLANDS.concat(SH ? SH.islands.map(pts => ({ pts })) : []), SEAS = SH ? SH.seas.map(pts => ({ pts })) : [];
+  begin(); polys([{ pts: COAST }].concat(ISL), () => 1);
   const landRaw = grab();
+  if (SEAS.length) { begin(); polys(SEAS, () => 1); const sm = grab(); for (let i = 0; i < landRaw.length; i++) if (sm[i] > 127) landRaw[i] = 0; }
   ch[0] = boxBlur(landRaw, W, H, 1, 2);
   ch[1] = boxBlur(landRaw, W, H, 18, 3);
   // rivers cut through the branch ridges (a branch must never dam a river the books run through its valley)
@@ -189,6 +193,19 @@ function build(GEO) {
   begin(); polys(GEO.GRASS, f => f.v); ch[13] = boxBlur(grab(), W, H, 6, 3);
   begin(); polys(GEO.ICE, f => f.v); ch[14] = boxBlur(grab(), W, H, 3, 2);
   begin(); polys(GEO.LAKES, () => 1); ch[15] = boxBlur(grab(), W, H, 1, 1);
+  // In the unwritten lands (east of Rhûn, the far south, the north) the forests and ice are only rough guesses
+  // drawn as polygons: give them the ragged, broken edges real forests and ice fields have.
+  {
+    const fb = boxBlur(ch[4], W, H, 6, 2), ib = boxBlur(ch[14], W, H, 5, 2);
+    for (let j = 0; j < H; j++) for (let i = 0; i < W; i++) {
+      const x = X0 + (i + 0.5) * RES, y = Y1 - (j + 0.5) * RES, k = j * W + i;
+      const unwritten = GEN.sstep(1300, 1700, x) + GEN.sstep(-1250, -1650, y) + GEN.sstep(420, 560, y);
+      if (unwritten <= 0) continue;
+      const u = Math.min(1, unwritten), n = GEN.fbm(x * 0.018 + 3, y * 0.018 - 9, 5), n2 = GEN.fbm(x * 0.05 - 4, y * 0.05 + 2, 3);
+      if (fb[k] > 0) { const v = 255 * GEN.sstep(0.42, 0.62, 0.6 * fb[k] / 255 + 0.55 * n + 0.25 * n2) * (fb[k] / 255 > 0.08 ? 1 : 0); ch[4][k] = ch[4][k] * (1 - u) + v * u; }
+      if (ib[k] > 0) { const v = 255 * GEN.sstep(0.3, 0.6, ib[k] / 255 + 0.35 * n + 0.15 * n2); ch[14][k] = ch[14][k] * (1 - u) + v * u; }
+    }
+  }
 
   // ---------- global raster ----------
   const gc = document.createElement('canvas');
@@ -199,11 +216,15 @@ function build(GEO) {
   const ggrab = () => { const d = g.getImageData(0, 0, GW, GH).data; const o = new Float32Array(GW * GH); for (let i = 0; i < o.length; i++) o[i] = d[i * 4] / 255; return o; };
   const mePoly = pts => { g.beginPath(); pts.forEach((p, i) => { const q = gp(GEN.toLL(p[0], p[1])); i ? g.lineTo(q[0], q[1]) : g.moveTo(q[0], q[1]); }); g.closePath(); };
   const llPoly = pts => { g.beginPath(); pts.forEach((p, i) => { const q = gp(p); i ? g.lineTo(q[0], q[1]) : g.moveTo(q[0], q[1]); }); g.closePath(); };
+  // the Dark Land and the Land of the Sun, where the early cosmology maps put them, shaped from Earth landmasses
+  // turned and warped (src/shores.js); a rough outline if that file is missing
   const DARK = [[18, 6], [30, 4], [45, 2], [60, -4], [75, -12], [85, -25], [82, -38], [70, -48], [50, -52], [35, -45], [25, -32], [20, -18], [16, -6]];
   const SUN = [[88, 55], [100, 62], [120, 64], [140, 58], [150, 45], [148, 30], [140, 15], [128, 5], [112, 0], [100, 8], [92, 20], [88, 35]];
   gbegin(); g.fillStyle = '#fff';
-  mePoly(GEO.COAST); g.fill(); GEO.ISLANDS.forEach(i => { mePoly(i.pts); g.fill(); });
-  llPoly(DARK); g.fill(); llPoly(SUN); g.fill();
+  mePoly(COAST); g.fill(); ISL.forEach(i => { mePoly(i.pts); g.fill(); });
+  if (SH) Object.values(SH.far).forEach(parts => parts.forEach(pts => { llPoly(pts); g.fill(); }));
+  else { llPoly(DARK); g.fill(); llPoly(SUN); g.fill(); }
+  g.globalCompositeOperation = 'source-over'; g.fillStyle = '#000'; SEAS.forEach(sea => { mePoly(sea.pts); g.fill(); });
   const gl0 = ggrab();
   const glb = (() => { const u = new Uint8Array(GW * GH); for (let i = 0; i < u.length; i++) u[i] = gl0[i] * 255; return boxBlur(u, GW, GH, 5, 2); })();
   const gl = new Float32Array(GW * GH);
@@ -215,7 +236,7 @@ function build(GEO) {
       const lon = (x + 0.5) / GW * 360 - 180;
       const k = y * GW + x;
       const inME = lon > -40 && lon < 72 && lat > 8 && lat < 75;
-      let l = inME ? gl0[k] : GEN.sat((glb[k] / 255 - 0.5 + 0.38 * GEN.fbm(lon * 0.09 + 2, lat * 0.09 - 7, 5)) * 5);
+      let l = inME || SH ? gl0[k] : GEN.sat((glb[k] / 255 - 0.5 + 0.38 * GEN.fbm(lon * 0.09 + 2, lat * 0.09 - 7, 5)) * 5);
       const inW = GEN.sstep(-178, -168, lon) * GEN.sstep(-58, -68, lon);
       const inE = GEN.sstep(150, 158, lon) * GEN.sstep(179, 175, lon);
       const wx = lon + 22 * GEN.fbm(lon * 0.02, lat * 0.025 + 4, 4), wy = lat + 16 * GEN.fbm(lon * 0.02 + 8, lat * 0.025, 4);

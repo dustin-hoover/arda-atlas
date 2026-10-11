@@ -72,3 +72,26 @@ The owner asked for New Zealand first: its landscapes span most of what Middle-e
 pasture, tussock high country, beech and podocarp forest, glaciated alps, braided rivers, raised bogs, a volcanic
 desert), and LINZ publishes the whole country at 10 m under an open licence. The places were chosen as landscape
 analogues for the ground described in the books, not for any other reason.
+
+## Shores of the unwritten lands
+
+Only the north-west of Middle-earth has a coast from the books' maps (traced from Christopher Tolkien's general map,
+Forochel round to the coast of Harad). The rest of the old outline - the north shore, the east coast and the far
+south - and the Dark Land and the Land of the Sun were smooth guesses. `tools/continents/reshape.py` replaces them
+with real-looking shores built from Earth's (Natural Earth 1:10m land, public domain), written to `src/shores.js`:
+
+| Stretch | Earth coast moved onto it |
+|---|---|
+| north shore, west half | the Norwegian fjord coast, Stavanger to Lofoten |
+| north shore, east half | the Kola shore, the White Sea, Kanin and the Pechora coast |
+| east coast | the Okhotsk shore, Sakhalin, the Sea of Japan and Korea, mirrored |
+| south-east | the China coast with its offshore islands, mirrored |
+| south | the north shore of the Mediterranean, mirrored |
+| south-west, up to Harad | the west coast of India |
+| the Dark Land | South America, mirrored and turned |
+| the Land of the Sun | Australia, New Guinea and the island arcs north of them, turned on its side |
+
+Each region is moved whole (rotated, scaled, mirrored) so that two points on its real coast land on the ends of the
+stretch, slowly warped so that it never matches its source, and blended into its neighbours. The books' coast is kept
+exactly, and every named feature (ranges, forests, marshes, lakes, rivers, places) stays on land. In those unwritten
+lands the forest and ice outlines are broken into natural patchwork. The far side of the world is drawn dark.

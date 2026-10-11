@@ -859,7 +859,7 @@ function demTile(z, x, y, n) {
 function renderGrid(n, m, coordFn, pix, mode, shade, sun) {
   const W = n + 2, H = m + 2;
   const E = new Float32Array(W * H), S = new Float32Array(W * H);
-  const FS = new Float32Array(n * m * NCH), RS = new Float32Array(n * m * 7);
+  const FS = new Float32Array(n * m * NCH), RS = new Float32Array(n * m * 8);
   const XS = new Float64Array(W * H), YS = new Float64Array(W * H);
   for (let j = 0; j < H; j++) for (let i = 0; i < W; i++) {
     const k = j * W + i;
@@ -870,7 +870,7 @@ function renderGrid(n, m, coordFn, pix, mode, shade, sun) {
     if (i > 0 && j > 0 && i <= n && j <= m) {
       const q = (j - 1) * n + (i - 1);
       FS.set(F, q * NCH);
-      RS[q * 7] = R.s; RS[q * 7 + 1] = R.lat; RS[q * 7 + 2] = R.wm; RS[q * 7 + 3] = R.stream; RS[q * 7 + 4] = R.base; RS[q * 7 + 5] = R.mt; RS[q * 7 + 6] = R.vly;
+      RS[q * 8] = R.s; RS[q * 8 + 1] = R.lat; RS[q * 8 + 2] = R.wm; RS[q * 8 + 3] = R.stream; RS[q * 8 + 4] = R.base; RS[q * 8 + 5] = R.mt; RS[q * 8 + 6] = R.vly; RS[q * 8 + 7] = R.lon;
     }
   }
   const out = new Uint8ClampedArray(n * m * 4);
@@ -881,7 +881,7 @@ function renderGrid(n, m, coordFn, pix, mode, shade, sun) {
     const q = j * n + i;
     const X = XS[k], Y = YS[k];
     for (let c = 0; c < NCH; c++) F[c] = FS[q * NCH + c];
-    R.s = RS[q * 7]; R.lat = RS[q * 7 + 1]; R.wm = RS[q * 7 + 2]; R.stream = RS[q * 7 + 3]; R.base = RS[q * 7 + 4]; R.mt = RS[q * 7 + 5]; R.vly = RS[q * 7 + 6];
+    R.s = RS[q * 8]; R.lat = RS[q * 8 + 1]; R.wm = RS[q * 8 + 2]; R.stream = RS[q * 8 + 3]; R.base = RS[q * 8 + 4]; R.mt = RS[q * 8 + 5]; R.vly = RS[q * 8 + 6]; R.lon = RS[q * 8 + 7];
     const land = R.s > 0;
     const h = E[k];
     const hl = land ? E[k - 1] : 0, hr = land ? E[k + 1] : 0, hu = land ? E[k - W] : 0, hd = land ? E[k + W] : 0;
@@ -908,13 +908,28 @@ function renderGrid(n, m, coordFn, pix, mode, shade, sun) {
       r *= f; g *= f; b *= f;
     }
     if (mode === 0) { r = r * 0.96 + 4; g = g * 0.97 + 5; b = b * 0.98 + 9; }
+    const nt = nightAt(R.lon, R.lat);
+    if (nt > 0) { const k = 1 - nt; r *= k; g *= k; b *= k; }
     const o = q * 4;
     out[o] = r; out[o + 1] = g; out[o + 2] = b; out[o + 3] = 255;
   }
   return { rgba: out, E, W, H };
 }
 
+/* The far side of the world is left dark, like the night side of the Earth from space: nothing is known of it.
+   Day is centred between Middle-earth, the Dark Land and the Land of the Sun; dusk falls from 92° to 104° away. */
+const DAY_LON = 55 * D2R, DAY_LAT = 15 * D2R, DUSK0 = Math.cos(92 * D2R), DUSK1 = Math.cos(104 * D2R);
+function nightAt(lon, lat) {
+  const la = lat * D2R, c = Math.sin(la) * Math.sin(DAY_LAT) + Math.cos(la) * Math.cos(DAY_LAT) * Math.cos(lon * D2R - DAY_LON);
+  return c >= DUSK0 ? 0 : c <= DUSK1 ? 1 : sstep(DUSK0, DUSK1, c);
+}
 function imageryTile(z, x, y, n, mode) {
+  // a tile wholly on the night side is black: no need to build its ground
+  if (z >= 3) {
+    let all = true;
+    for (let j = 0; j <= 4 && all; j++) for (let i = 0; i <= 4 && all; i++) { const ll = tileLL(z, x, y, i * n / 4, j * n / 4, n); if (nightAt(ll[0], ll[1]) < 1) all = false; }
+    if (all) { const out = new Uint8ClampedArray(n * n * 4); for (let k = 3; k < out.length; k += 4) out[k] = 255; return { rgba: out, E: null, W: n + 2, H: n + 2 }; }
+  }
   const [, latc] = tileLL(z, x, y, n / 2, n / 2, n);
   const pix = EARTH_C * Math.cos(latc * D2R) / (n * Math.pow(2, z)) / MI;
   return renderGrid(n, n, (i, j) => { const ll = tileLL(z, x, y, i + 0.5, j + 0.5, n); return toXY(ll[0], ll[1]); }, pix, mode, true);
@@ -1195,7 +1210,7 @@ function buildingsNear(X, Y, rad) {
   return { list: out, special: sp };
 }
 
-return { setDoom, D2R, MI, EARTH_C, toLL, toXY, noise, fbm, fbmA, hash2, sat, sstep, mix, clamp, init, evaluate, F, R, CH, tempAt, moistAt,
+return { setDoom, nightAt, D2R, MI, EARTH_C, toLL, toXY, noise, fbm, fbmA, hash2, sat, sstep, mix, clamp, init, evaluate, F, R, CH, tempAt, moistAt,
   demTile, imageryTile, renderGrid, tileLL, drawVectors, buildingsNear, numenorField, orchardAt };
 })();
 if (typeof self !== 'undefined') self.GEN = GEN;

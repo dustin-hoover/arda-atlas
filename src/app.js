@@ -934,7 +934,7 @@ const PANELS = {
     <div class="eyebrow">Earth imagery</div>
     <p class="note">The ground is textured with small patches of real satellite imagery from Earth landscapes like each part of Middle-earth: mostly New Zealand (Waikato pasture, Mackenzie tussock, Fiordland forest, the Southern Alps, the Rangipo Desert), with Iceland and Hawaiʻi for the lava of Mordor and other lands where New Zealand has no match. Only texture and colour are taken; the shapes of Middle-earth are not. New Zealand imagery sourced from LINZ, CC BY 4.0. Contains modified Copernicus Sentinel data (2022–2023). NASA Landsat WELD, MODIS and Blue Marble imagery via NASA GIBS (public domain).</p>
     <div class="eyebrow">Accuracy</div>
-    <p class="note">Positions follow the published maps closely but not exactly. Population figures are estimates and are labelled as such; Tolkien gave very few. Distant lands such as the Dark Land and the Land of the Sun come from the early cosmology maps, and the New Lands after the Downfall are invented.</p>
+    <p class="note">Positions follow the published maps closely but not exactly. Population figures are estimates and are labelled as such; Tolkien gave very few. Distant lands such as the Dark Land and the Land of the Sun are placed after the early cosmology maps. Their shores, and the unwritten north, east and south coasts of Middle-earth, are ours: real Earth coastlines (Natural Earth, public domain) turned, mirrored and warped so that they look like real land. The far side of the world, of which nothing is told, is left in darkness.</p>
     <p class="note">A fan work. Middle-earth and its names belong to the Tolkien Estate.</p>`,
 };
 const PANEL_INIT = {
@@ -1293,7 +1293,7 @@ async function playTour(t) {
   const stopIf = () => tok !== tourTok;
   map.once('mousedown', stopTour); map.once('touchstart', stopTour); map.once('wheel', stopTour);
   if (t.orbit) {
-    cap.innerHTML = `<h3>Arda from orbit</h3><p>After the Downfall of Númenor the world was made round. Middle-earth sits in the northern hemisphere, with the New Lands far to the west.</p>`; cap.classList.add('open');
+    cap.innerHTML = `<h3>Arda from orbit</h3><p>After the Downfall of Númenor the world was made round. Middle-earth sits in the northern hemisphere, the Dark Land to the south and the Land of the Sun to the east; the far side of the world lies in darkness.</p>`; cap.classList.add('open');
     map.flyTo({ center: [10, 30], zoom: 1.2, pitch: 0, bearing: 0, duration: 4000 });
     await sleep(4200);
     let lng = 10;
