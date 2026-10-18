@@ -1,6 +1,6 @@
 /* Rasterises the authored geography into the field rasters used by GEN. */
 const RASTERS = (() => {
-const RES = 4, X0 = -2300, X1 = 3800, Y0 = -3200, Y1 = 1500;
+const RES = 4, X0 = -2300, X1 = 3800, Y0 = -3200, Y1 = 1900;
 const W = (X1 - X0) / RES, H = (Y1 - Y0) / RES;
 const GW = 1440, GH = 720;
 
@@ -199,11 +199,11 @@ function build(GEO) {
     const fb = boxBlur(ch[4], W, H, 6, 2), ib = boxBlur(ch[14], W, H, 5, 2);
     for (let j = 0; j < H; j++) for (let i = 0; i < W; i++) {
       const x = X0 + (i + 0.5) * RES, y = Y1 - (j + 0.5) * RES, k = j * W + i;
-      const unwritten = GEN.sstep(1300, 1700, x) + GEN.sstep(-1250, -1650, y) + GEN.sstep(420, 560, y);
+      const unwritten = GEN.sstep(1300, 1700, x) + GEN.sstep(-1250, -1650, y) + GEN.sstep(420, 560, y) + GEN.sstep(220, 300, y) * GEN.sstep(500, 650, x);
       if (unwritten <= 0) continue;
       const u = Math.min(1, unwritten), n = GEN.fbm(x * 0.018 + 3, y * 0.018 - 9, 5), n2 = GEN.fbm(x * 0.05 - 4, y * 0.05 + 2, 3);
       if (fb[k] > 0) { const v = 255 * GEN.sstep(0.42, 0.62, 0.6 * fb[k] / 255 + 0.55 * n + 0.25 * n2) * (fb[k] / 255 > 0.08 ? 1 : 0); ch[4][k] = ch[4][k] * (1 - u) + v * u; }
-      if (ib[k] > 0) { const v = 255 * GEN.sstep(0.3, 0.6, ib[k] / 255 + 0.35 * n + 0.15 * n2); ch[14][k] = ch[14][k] * (1 - u) + v * u; }
+      if (ib[k] > 0) { const v = 255 * GEN.sstep(0.48, 0.66, 0.55 * ib[k] / 255 + 0.6 * n + 0.3 * n2) * (ib[k] / 255 > 0.1 ? 1 : 0); ch[14][k] = ch[14][k] * (1 - u) + v * u; }   // pack ice and snowfields with leads between
     }
   }
 
@@ -246,12 +246,16 @@ function build(GEO) {
       if (inE > 0 && Math.abs(lat) < 60) l = Math.max(l, GEN.sat((n - 0.1) * 5) * inE);
       const darkS = GEN.sstep(-40, -55, lat) * GEN.sstep(-10, 10, lon) * GEN.sstep(95, 85, lon);
       if (darkS > 0) l = Math.max(l, GEN.sat((n + 0.2) * 4) * darkS * 0.0);
-      if (lat < -66) l = Math.max(l, GEN.sat((n + 0.35 + (-66 - lat) * 0.06) * 5));
-      if (lat > 76 && (lon < -70 || lon > 80)) l = Math.max(l, GEN.sat((n + (lat - 76) * 0.04) * 5));
+      // polar land only in the south (an ice continent), its outline noise in polar coordinates (no streaks at the pole)
+      if (lat < -66) { const pr = 90 + lat, np = GEN.fbm(pr * Math.cos(lon * Math.PI / 180) * 0.08 + 7, pr * Math.sin(lon * Math.PI / 180) * 0.08, 5); l = Math.max(l, GEN.sat((np + 0.35 + (-66 - lat) * 0.06) * 5)); }
       gl[k] = l;
       const r = 1 - Math.abs(GEN.noise(lon * 0.09 + 20, lat * 0.07));
       gm[k] = GEN.sstep(0.72, 0.95, r) * GEN.sat(0.45 + GEN.fbm(lon * 0.03, lat * 0.03, 3)) * 0.7;
-      gi[k] = GEN.sstep(70, 80, Math.abs(lat)) + (lat < -64 ? 1 : 0);
+      // polar ice with a ragged edge (pack ice, leads and bays), not a ring drawn along a parallel
+      // (noise taken in polar coordinates, so it does not streak toward the pole)
+      const pr = 90 - Math.abs(lat), pxp = pr * Math.cos(lon * Math.PI / 180), pyp = pr * Math.sin(lon * Math.PI / 180);
+      const ie = 10 * GEN.fbm(pxp * 0.05 + (lat > 0 ? 3 : 41), pyp * 0.05 - 2, 5);
+      gi[k] = GEN.sstep(18, 9, pr - ie) + (lat < -64 ? GEN.sstep(-62, -68, lat - ie * 0.6) : 0);
     }
   }
   // mountains of the authored ranges also in the global raster

@@ -164,7 +164,7 @@ function txLevel(lv, n, u, v, acc, w) {
 // Anti-repeat: the plane is cut into patch-sized cells, each showing the patch at its own offset, turn and mirror;
 // neighbouring cells cross-fade (variance kept) so no seam or repeat shows. Detail fades out where the whole patch
 // would be only a few dozen pixels across (the repeat would read as a pattern) - there the mean colour stands alone.
-const tacc = [0, 0, 0];
+const tacc = [0, 0, 0], DIR = [1, 0];
 function txPyr(pyr, res, xm, ym, pm, seed, out) {
   const N = Math.round(Math.sqrt(pyr[0].length / 3));
   const P = N * res / pm;                                 // patch size on screen, px
@@ -382,14 +382,47 @@ function evaluate(X, Y, pix) {
       const r = ridgedA(X, Y, 26, Math.max(pix * 1.1, 0.003));
       const mm = sstep(0, 0.35, mtn) * mtn;
       h += mm * 5200 * (0.12 + 0.88 * Math.pow(r, 1.35));
-      // glacial valleys: a branching network of U-shaped troughs cut deep between the ridges, as in the Alps
-      const wq = 1.6 * noise(X / 22 + 3.1, Y / 22 - 8.4), wr = 1.6 * noise(X / 22 - 6.7, Y / 22 + 2.2);
-      const u1 = 1 - Math.abs(noise(X / 15 + wq, Y / 15 + wr));
-      const u2 = 1 - Math.abs(noise(X / 5.5 + 2.1 * wq + 17, Y / 5.5 + 2.1 * wr - 9));
-      const c1 = sstep(0.5, 0.94, u1), c2 = sstep(0.62, 0.96, u2) * sstep(0.2, 0.75, 1 - c1 * 0.6);
+      // valleys that drain: troughs run downhill from the crest (along the slope of the range's own mass), with
+      // tributaries joining them at an angle and gullies feeding those, as in real mountains, instead of looping
+      // the direction of the slope at a point (from the range's mass, sampled wide so the 8-bit raster's steps
+      // do not make it wobble); where the slope is too gentle to read, a slowly turning default
+      const slopeDir = (x, y) => {
+        const ge = 10, gx = sample1(2, x + ge, y) - sample1(2, x - ge, y), gy = sample1(2, x, y + ge) - sample1(2, x, y - ge);
+        const gl = Math.hypot(gx, gy), gk = sstep(0.01, 0.05, gl), a0 = 3 * noise(x / 300 + 5, y / 300);
+        let ux = mix(Math.cos(a0), gl > 1e-6 ? -gy / gl : 1, gk), uy = mix(Math.sin(a0), gl > 1e-6 ? gx / gl : 0, gk);
+        const l = Math.hypot(ux, uy) || 1; DIR[0] = ux / l; DIR[1] = uy / l;
+      };
+      const wq = 0.9 * noise(X / 30 + 3.1, Y / 30 - 8.4);
+      // each pattern is laid out in local cells (coordinates from the cell's centre, blended between cells), so its
+      // spacing holds as its direction turns across a range; measured from one far origin it would crowd into stripes
+      const drain = (P, ang, seed) => {
+        const ca = Math.cos(ang), sa = Math.sin(ang);
+        const C = P * 2.2, gxc = X / C - 0.5, gyc = Y / C - 0.5, i0 = Math.floor(gxc), j0 = Math.floor(gyc);
+        const fx = sstep(0, 1, gxc - i0), fy = sstep(0, 1, gyc - j0);
+        let acc = 0;
+        for (let b = 0; b < 2; b++) for (let a2 = 0; a2 < 2; a2++) {
+          const w = (a2 ? fx : 1 - fx) * (b ? fy : 1 - fy);
+          if (w < 0.002) continue;
+          const ci = i0 + a2, cj = j0 + b, dx = X - (ci + 0.5) * C, dy = Y - (cj + 0.5) * C;
+          slopeDir((ci + 0.5) * C, (cj + 0.5) * C);                     // one direction per cell: straight-ish troughs, no wobble
+          const ux = DIR[0] * ca - DIR[1] * sa, uy = DIR[0] * sa + DIR[1] * ca;
+          const across = (dx * ux + dy * uy) / P + hash2(ci, cj, seed) * 7 + 0.35 * noise(X / (P * 1.7) + seed, Y / (P * 1.7));
+          const along = (dx * -uy + dy * ux) / (P * 1.8) + hash2(ci, cj, seed + 1) * 7;
+          acc = Math.max(acc, (1 - Math.abs(noise(across + seed, along - seed * 0.7))) * Math.min(1, w * 2.2));   // a cell's valleys fade out by its edge, where the next cell's take over: junctions, no seams
+        }
+        return acc;
+      };
+      const u1 = drain(13, 0.15 * noise(X / 60, Y / 60), 0);
+      const side = noise(X / 9 + 4, Y / 9 - 2) > 0 ? 1 : -1;
+      const u2 = drain(6.5, 0.6 * side, 17);
+      const u3 = 0;
+      // only the lines' cores are valleys (narrow floors, wide ridges between); tributaries fade out on the high
+      // ground and toward the main valleys' floors, gullies are slight
+      const c1 = sstep(0.5, 0.93, u1), c2 = sstep(0.68, 0.96, u2) * sstep(0.15, 0.6, 1 - c1) * sstep(0.05, 0.45, noise(X / 6 + 9, Y / 6 - 3)),   // tributaries here and there, never ranks of them
+        c3 = sstep(0.86, 0.99, u3) * (1 - c1) * (1 - c2 * 0.7) * 0.6;
       R.mt = sstep(0, 0.35, mtn);
       R.vly = Math.max(c1, c2 * 0.7);
-      h -= mm * 5200 * (0.38 * c1 * (2 - c1) + 0.16 * c2) + mm * 900 * fbmA(X, Y, 1.2, Math.max(pix * 1.1, 0.002), 0.85, 6) * (1 - c1);
+      h -= mm * 5200 * (0.5 * c1 * (2 - c1) + 0.2 * c2 + 0.05 * c3) + mm * 900 * fbmA(X, Y, 1.2, Math.max(pix * 1.1, 0.002), 0.85, 6) * (1 - c1);
     }
     // regional roughness: rolling country, low hills, broken ground
     const rough = sat(0.35 + 0.9 * fbm(X * 0.004 + 71, Y * 0.004 - 12, 3));
@@ -571,9 +604,12 @@ function colorAt(X, Y, h, slope, pix, mode, dsea) {
     }
     const ice = F[14];
     if (ice > 0.05) {
-      const floe = fbmA(X, Y, 8, Math.max(pix, 0.002), 0.9, 8);
+      // near the poles the map grid pinches to a point: take the floes' noise in polar coordinates there instead
+      let fX = X, fY = Y;
+      if (Math.abs(lat) > 62) { const pr = (90 - Math.abs(lat)) * 69, a = R.lon * D2R; fX = pr * Math.cos(a) + (lat > 0 ? 5000 : -5000); fY = pr * Math.sin(a); }
+      const floe = fbmA(fX, fY, 30, Math.max(pix * 2.5, 0.002), 0.85, 8);   // floes and leads, not a pixel dither
       const cov = sstep(0.1, 0.6, ice + 0.4 * floe);
-      if (TX && TXI.seaice !== undefined) { const c = txColor(TXI.seaice, X, Y, pix); blend(c[0], c[1], c[2], cov * 0.95); }
+      if (TX && TXI.seaice !== undefined) { const c = txColor(TXI.seaice, fX, fY, pix); blend(c[0], c[1], c[2], cov * 0.95); }
       else blend(222, 230, 238, cov * 0.95);
     }
     const lake = F[15];
@@ -609,7 +645,9 @@ function colorAt(X, Y, h, slope, pix, mode, dsea) {
   // the hills, savanna in the hot south, tundra in the cold north
   plAdd('tussock', 1);
   plAdd('steppe', sat((0.5 - veg) * 3) * (X > 1000 || wm < 1 ? 1 : 0.4));
-  plAdd('pasture', sstep(0.18, 0.55, veg + 0.15 * lc1) * (1 - 0.85 * sat(g * 1.5)) * (1 - sat((T - 15) / 6)));
+  plAdd('pasture', Math.max(sstep(0.18, 0.55, veg + 0.15 * lc1) * (1 - 0.85 * sat(g * 1.5)),
+    // the temperate west and the vales (Eriador, the Lone-lands, the vale of Anduin) are green, not steppe-brown
+    sstep(0.17, 0.36, Mst) * sstep(2, 6, T) * (1 - 0.55 * sat(g * 1.6)) * (1 - arid) * 0.85) * (1 - sat((T - 15) / 6)));
   plAdd('schist', sat(F[3] * 1.5) * (1 - 0.6 * veg) * sat(lc2 + 0.6));
   if (T > 18) plAdd('savanna', sat((T - 18) / 6) * (1 - veg) * 0.9);
   if (T < 3) plAdd('tundra', sat((3 - T) / 5));
