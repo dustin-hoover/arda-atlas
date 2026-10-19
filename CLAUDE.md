@@ -18,10 +18,15 @@ plan), got/PLAN.md. Starter code lives in `worlds/` (`npm run worlds` validates 
 - Canon data is in **miles**: X east, Y north of Hobbiton. `GEN.toLL(X,Y)` / `GEN.toXY(lon,lat)` convert
   with a sinusoidal mapping anchored at Hobbiton = (0°, 52°N), so ground miles are preserved.
 - Key anchors: Rivendell (421,17), Minas Tirith (725,-599), Orodruin (840,-554), Edoras (438,-479).
-- Hill country (`RELIEF`) and most forest outlines come from Karen Wynn Fonstad's atlas, sampled onto
-  the same frame (`tools/refit/fonstad.py`).
-- Positions are fitted to Christopher Tolkien's general map: `COAST` is traced from it and everything
-  else was moved onto it with a thin-plate-spline warp fitted to ~45 matching places.
+- **No published map's line-work is in the repo** (docs/otherworldly/LAWS.md I.2a: descriptions first,
+  published maps only as generalities, real Earth geography for detail). Positions were once read from
+  Christopher Tolkien's general map (a thin-plate-spline warp fitted to ~45 places); that is allowed.
+  Shapes are ours: `COAST` is only a coarse skeleton (tools/generalize/generalize.py), the drawn coast
+  is built on it from real Earth coastlines (tools/continents/reshape.py -> src/shores.js), forest and
+  marsh outlines were generalised far beyond any source line, and the atlas hill-country layer was
+  dropped (`RELIEF` is empty; foothills come from the ranges' geology).
+- Coastal places and river mouths are kept on the shore by `tools/continents/anchors.json`; after any
+  coast change, re-run the router (tools/routing/README.md) and `npm run audit`.
 - Shire Reckoning time `t` = days since 2 Yule T.A. 3018; `WX.parse('3019 3 25')` → t. Months 1–12 are
   Afteryule…Foreyule, 30 days each, with 3 Lithe days after month 6.
 

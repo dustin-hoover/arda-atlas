@@ -65,25 +65,59 @@ def sstep(a, b, x):
 # east coast and west along the south, back to the books' coast in Harad: land always on the right) is given a real
 # region of Earth, moved whole: two points on its real coast (land on their right, or on their left when mirrored)
 # are set on the two ends of the stretch, and everything around them comes along - gulfs, peninsulas, islands.
+# Sectors run round the whole coast skeleton (land on the right), from the Ice Bay of Forochel east along the north
+# shore, down the east coast, west along the south, and north up the west coast the books describe. Each is given
+# by the skeleton points it spans (a, b: Arda miles). On the west coast (written=True) the Earth coast only adds
+# detail - no more than ~18 miles either way of the skeleton - so the forms the books name stay where they are.
 SECTORS = [
-    # the north shore: the Arctic coast from the White Sea to the Lena - Kanin, Yamal and the Ob gulf, Gydan, Taymyr,
-    # with Novaya Zemlya and Severnaya Zemlya off it
-    dict(name='Arctic coast, White Sea to the Lena', mirror=False, p1=(40.5, 64.6), p2=(128.5, 72.6), s=(0.00, 0.27)),
-    # the east coast: Chukotka and Kamchatka round the Sea of Okhotsk to the Amur and the Tatar Strait, mirrored
-    dict(name='Kamchatka and the Sea of Okhotsk (mirrored)', mirror=True, p1=(135.5, 43.5), p2=(178.0, 64.6), s=(0.27, 0.52)),
-    # the south-east: the China coast, Leizhou and Hainan, the Gulf of Tonkin, mirrored
-    dict(name='South China coast (mirrored)', mirror=True, p1=(106.5, 20.5), p2=(122.0, 31.0), s=(0.52, 0.66)),
-    # the south: the north shore of the Mediterranean, Gibraltar to Iskenderun, mirrored - the Italian and Greek
-    # peninsulas, Anatolia's south coast, Sardinia, Sicily, Crete, Cyprus (Africa left out)
-    dict(name='Northern Mediterranean (mirrored)', mirror=True, p1=(-5.6, 36.0), p2=(36.0, 36.8), s=(0.66, 0.88),
+    dict(name='Arctic coast, White Sea to the Lena', mirror=False, p1=(40.5, 64.6), p2=(128.5, 72.6), a=(40, 656), b=(2574, 503)),
+    dict(name='Kamchatka and the Sea of Okhotsk (mirrored)', mirror=True, p1=(135.5, 43.5), p2=(178.0, 64.6), a=(2574, 503), b=(2620, -1540)),
+    dict(name='South China coast (mirrored)', mirror=True, p1=(106.5, 20.5), p2=(122.0, 31.0), a=(2620, -1540), b=(1654, -2440)),
+    dict(name='Northern Mediterranean (mirrored)', mirror=True, p1=(-5.6, 36.0), p2=(36.0, 36.8), a=(1654, -2440), b=(-294, -2394),
          exclude=[[(-20, 0), (-20, 35.95), (-5.4, 35.95), (-1.0, 35.3), (8.5, 37.0), (10.3, 37.5), (11.4, 37.15), (11.4, 34.0),
                    (20.0, 32.2), (25.0, 32.3), (33.0, 31.4), (34.3, 31.2), (35.0, 29.0), (60, 0)],
-                  # and the Levant and Syria beyond Iskenderun, and Iberia beyond Gibraltar (only open sea past the ends)
                   [(35.75, 25), (35.75, 36.6), (36.4, 37.4), (50, 40), (50, 25)], [(-20, 35.95), (-20, 46), (-5.7, 46), (-5.7, 35.95)]]),
-    # the south-west, up to Harad: the west coast of India, Kathiawar and the Gulf of Khambhat
-    dict(name='Western India', mirror=False, p1=(76.6, 8.6), p2=(69.0, 22.3), s=(0.88, 1.00)),
+    dict(name='Western India', mirror=False, p1=(76.6, 8.6), p2=(69.0, 22.3), a=(-294, -2394), b=(78, -1350)),
+    # the coasts the books describe: detail only
+    # (on the books' coast a real coast is laid along ours point by point: `line` follows it, land on the right)
+    dict(name='Atlantic Morocco, Cape Juby to Tangier', a=(78, -1350), b=(572, -773), written=True,
+         line=[(-12.9, 27.95), (-11.5, 28.3), (-10.3, 29.2), (-9.85, 30.63), (-9.6, 31.5), (-9.3, 32.3), (-8.7, 33.2), (-7.6, 33.6), (-6.8, 34.1), (-6.3, 35.0), (-5.95, 35.75)]),
+    dict(name='South coast of England, Dover to Land\'s End', a=(572, -773), b=(-6, -720), written=True,
+         line=[(1.4, 51.1), (0.3, 50.75), (-0.8, 50.75), (-1.5, 50.65), (-2.4, 50.6), (-3.4, 50.6), (-4.2, 50.3), (-5.0, 50.05), (-5.7, 50.05)],
+         exclude=[[(-6.0, 50.9), (2.5, 50.9), (2.5, 46), (-6.0, 46)]]),
+    dict(name='West and north coasts of Ireland, Mizen Head to Fair Head', a=(-6, -720), b=(-330, -104), written=True,
+         line=[(-9.8, 51.45), (-10.3, 52.0), (-9.9, 52.7), (-9.6, 53.2), (-10.1, 53.6), (-9.95, 54.2), (-8.8, 54.3), (-8.4, 54.9),
+               (-7.4, 55.4), (-6.6, 55.25), (-6.05, 55.2)]),
+    dict(name='Norwegian coast, Stavanger to the Varanger', a=(-330, -104), b=(40, 656), written=True,
+         line=[(5.5, 58.9), (4.9, 60.4), (4.9, 61.5), (5.6, 62.4), (7.3, 63.2), (9.0, 63.8), (11.0, 65.0), (12.5, 66.5), (13.6, 67.8),
+               (16.0, 68.9), (18.5, 69.8), (21.5, 70.3), (24.5, 71.0), (27.5, 70.9), (30.0, 70.4), (31.0, 70.0)]),
 ]
+WRITTEN_A = 32.0   # miles: the most the Earth detail may move the books' coast skeleton
 SRES = 3.0       # km per pixel of a sector's Earth raster
+HALF = 160.0     # km of a strip either side of its line
+STEP = 1.5       # km per strip pixel
+
+def build_strip(st):
+    """Earth land along a real coast, in (along, across) coordinates: signed distance (km, + land) per strip pixel."""
+    pts = np.array(st['line'], float)
+    lon, lat = [pts[0, 0]], [pts[0, 1]]
+    for (a0, b0), (a1, b1) in zip(pts[:-1], pts[1:]):
+        km = math.hypot((a1 - a0) * 111.32 * math.cos(math.radians((b0 + b1) / 2)), (b1 - b0) * 111.32)
+        n = max(1, int(km / STEP))
+        for k in range(1, n + 1): lon.append(a0 + (a1 - a0) * k / n); lat.append(b0 + (b1 - b0) * k / n)
+    lon, lat = np.array(lon), np.array(lat)
+    dx = np.gradient(lon) * 111.32 * np.cos(np.radians(lat)); dy = np.gradient(lat) * 111.32
+    dx = ndimage.gaussian_filter1d(dx, 25, mode='nearest'); dy = ndimage.gaussian_filter1d(dy, 25, mode='nearest')
+    l = np.hypot(dx, dy); tx, ty = dx / l, dy / l
+    nx, ny = ty, -tx                                         # to the right: toward the land
+    L = float(np.hypot(np.diff(lon) * 111.32 * np.cos(np.radians(lat[:-1])), np.diff(lat) * 111.32).sum())
+    v = np.arange(-HALF, HALF + STEP, STEP)
+    LON = lon[:, None] + v[None, :] * nx[:, None] / (111.32 * np.cos(np.radians(lat[:, None])))
+    LAT = lat[:, None] + v[None, :] * ny[:, None] / 111.32
+    _, at = earth_mask(LON.min() - 1, LON.max() + 1, LAT.min() - 1, LAT.max() + 1, 0.01)
+    M = at(LON, LAT).astype(bool)
+    sdf = (ndimage.distance_transform_edt(M) - ndimage.distance_transform_edt(~M)) * STEP
+    return dict(sdf=sdf, L=L, nu=len(lon), nv=len(v))
 
 def sector_sdf(sec, margin=1600.0):
     """Earth land around the sector, in a local km plane centred between p1 and p2: signed distance (km, + land)."""
@@ -110,7 +144,7 @@ def geo():
     import subprocess
     js = ("global.self=global;require('%s/src/geo.js');const G=self.GEO;console.log(JSON.stringify({COAST:G.COAST,ISLANDS:G.ISLANDS,"
           "RANGES:G.RANGES,FORESTS:G.FORESTS,ARID:G.ARID,MARSHES:G.MARSHES,LAKES:G.LAKES,FARMS:G.FARMS,GRASS:G.GRASS,ICE:G.ICE,UPLIFT:G.UPLIFT,"
-          "RIVERS:G.RIVERS.map(r=>({pts:r.pts})),PLACES:G.PLACES.filter(p=>p[2]!=null).map(p=>[p[2],p[3]]),SEA:G.SEA_LABELS}))") % ROOT
+          "RIVERS:G.RIVERS.map(r=>({name:r.name,pts:r.pts})),PLACES:G.PLACES.filter(p=>p[2]!=null).map(p=>[p[2],p[3]]),PLACESN:G.PLACES.filter(p=>p[2]!=null).map(p=>[p[0],p[2],p[3]]),SEA:G.SEA_LABELS}))") % ROOT
     return json.loads(subprocess.check_output(['node', '-e', js]))
 
 G = geo()
@@ -128,11 +162,13 @@ def line_mask(lines):
     for pts, w in lines: d.line([px(p) for p in pts], fill=1, width=max(1, int(round(w / RES))))
     return np.array(im, bool)
 
-C = G['COAST']; IA, IB = 1140, 151          # the books' coast runs from IB (Harad) to IA (Forochel) in index order
-kept = C[IB:IA + 1]
-env = C[IA:] + C[:IB + 1]                  # the guessed outline: north shore, east coast, south, round to Harad
+C = G['COAST']                              # the coast skeleton (src/geo.js; tools/generalize/generalize.py)
+area = lambda P: sum(P[k][0] * P[(k + 1) % len(P)][1] - P[(k + 1) % len(P)][0] * P[k][1] for k in range(len(P)))
+if area(C) > 0: C = C[::-1]                # clockwise in x-east, y-north: land on the right
+k0 = min(range(len(C)), key=lambda k: math.dist(C[k], (40, 656)))
+env = C[k0:] + C[:k0 + 1]                  # the whole loop, from the Ice Bay of Forochel round to it again
 land0 = poly_mask([C])
-d0 = (ndimage.distance_transform_edt(land0) - ndimage.distance_transform_edt(~land0)) * RES     # miles, + inland
+ANCH = json.load(open(os.path.join(HERE, 'anchors.json')))
 
 def dense(pts, step=1.0):
     out, s = [], [0.0]
@@ -145,81 +181,127 @@ def dense(pts, step=1.0):
 envd, envs = dense(env)
 Ls = envs[-1]
 S_env = np.full((H, W), -1.0)
-for (x, y), s in zip(envd, envs):
+for (x, y), sv in zip(envd, envs):
     i, j = int((x - X0) / RES), int((Y1 - y) / RES)
-    if 0 <= i < W and 0 <= j < H: S_env[j, i] = s
+    if 0 <= i < W and 0 <= j < H: S_env[j, i] = sv
 dist_env, idx = ndimage.distance_transform_edt(S_env < 0, return_indices=True)
 s_near = S_env[idx[0], idx[1]]; dist_env *= RES
-keptd, _ = dense(kept)
-K = np.ones((H, W), bool)
-for x, y in keptd:
-    i, j = int((x - X0) / RES), int((Y1 - y) / RES)
-    if 0 <= i < W and 0 <= j < H: K[j, i] = False
-dist_kept = ndimage.distance_transform_edt(K) * RES
-d_env = np.where(land0, dist_env, -dist_env)                  # signed distance to the guessed outline, + inland
+d_env = np.where(land0, dist_env, -dist_env)                  # signed distance to the skeleton, + inland
+def s_at(p): return float(envs[min(range(len(envd)), key=lambda k: (envd[k][0] - p[0]) ** 2 + (envd[k][1] - p[1]) ** 2)])
+for sec in SECTORS:
+    sec['sa'] = s_at(sec['a']); sec['sb'] = s_at(sec['b'])
+    if sec['sb'] <= sec['sa']: sec['sb'] = Ls                 # the last stretch closes the loop
 
-# how much each place is reshaped: nowhere near the books' coast, fully along the guessed outline
-w = sstep(0, 260, s_near) * sstep(Ls, Ls - 260, s_near) * sstep(-40, 160, dist_kept - dist_env)
-
-# sectors: each moved onto its stretch; blended where they meet
 def env_at(sv):
     k = int(np.searchsorted(envs, sv)); k = min(max(k, 0), len(envd) - 1); return complex(*envd[k])
 Qx = X0 + (np.arange(W) + 0.5) * RES; Qy = Y1 - (np.arange(H) + 0.5) * RES
 Q = Qx[None, :] + 1j * Qy[:, None]
 f_new = np.zeros((H, W)); wsum = np.zeros((H, W))
 near = np.abs(d_env) < 900
-# a slow warp of the borrowed ground, so that no borrowed coast matches its source
 rw = np.random.RandomState(5)
 WARP = (ndimage.gaussian_filter(rw.randn(H, W), 140 / RES) + 1j * ndimage.gaussian_filter(rw.randn(H, W), 140 / RES))
-WARP *= 75.0 / np.abs(WARP).std()                                 # km
-# and a continental-scale bend (miles): broad lobes and bights, so the outline is nowhere a smooth round curve
+WARP *= 75.0 / np.abs(WARP).std()                                 # km: no borrowed coast matches its source
 BEND = (ndimage.gaussian_filter(rw.randn(H, W), 380 / RES) + 1j * ndimage.gaussian_filter(rw.randn(H, W), 380 / RES))
-BEND *= 190.0 / np.abs(BEND).std()
+BEND *= 190.0 / np.abs(BEND).std()                                # miles: broad lobes and bights on the unwritten coasts
+written = np.zeros((H, W))
 for sec in SECTORS:
+    sa, sb = sec['sa'], sec['sb']
+    if sec.get('written'):
+        st = build_strip(sec)
+        kpm = st['L'] / (sb - sa)                                    # Earth km per Arda mile along the coast
+        u = (s_near - sa) * kpm
+        v = d_env * kpm
+        ui = np.clip((u / STEP).astype(int), 0, st['nu'] - 1); vi = np.clip(((v + HALF) / STEP).astype(int), 0, st['nv'] - 1)
+        dev = st['sdf'][ui, vi] / kpm - d_env                         # the real coast's departure from its own line, in miles
+        dev = np.where(np.abs(v) < HALF - 5, dev, 0)
+        fs = d_env + WRITTEN_A * np.tanh(dev / WRITTEN_A)
+        ramp = 60.0
+        win = sstep(sa - ramp, sa + ramp, s_near) * sstep(sb + ramp, sb - ramp, s_near)
+        if sb >= Ls - 1: win = sstep(sa - ramp, sa + ramp, s_near)
+        win = ndimage.gaussian_filter(win * near, 10 / RES)
+        written += win
+        f_new += win * fs; wsum += win
+        print(sec['name'], 'scale %.2f km/mi' % kpm, 'miles', round(sa), round(sb), file=sys.stderr)
+        continue
     E = sector_sdf(sec)
-    sa, sb = sec['s'][0] * Ls, sec['s'][1] * Ls
     Ea, Eb = env_at(sa), env_at(sb)
     a = Eb - Ea; b = E['q2'] - E['q1']
-    wv = (Q + BEND - Ea) / a
+    wv = (Q + (0 if sec.get('written') else BEND) - Ea) / a
     if sec['mirror']: wv = np.conj(wv)
-    P = E['q1'] + wv * b + WARP                                  # km in the sector's plane
-    kpm = abs(b) / abs(a)                                        # Earth km per Arda mile
+    P = E['q1'] + wv * b + WARP
+    kpm = abs(b) / abs(a)
     i = np.clip(((P.real + E['R']) / SRES).astype(int), 0, E['n'] - 1); j = np.clip(((E['R'] - P.imag) / SRES).astype(int), 0, E['n'] - 1)
     edge = np.maximum(np.abs(P.real), np.abs(P.imag))
     fs = E['sdf'][j, i] / kpm
-    feather = sstep(E['R'] - 20, E['R'] - 400, edge)              # fade to the old outline before the raster's edge
-    ramp = 260.0
+    if sec.get('written'): fs = d_env + WRITTEN_A * np.tanh((fs - d_env) / WRITTEN_A)
+    feather = sstep(E['R'] - 20, E['R'] - 400, edge)
+    ramp = 120.0 if sec.get('written') else 260.0
     win = sstep(sa - ramp, sa + ramp, s_near) * sstep(sb + ramp, sb - ramp, s_near)
-    if sec['s'][0] == 0: win = sstep(sb + ramp, sb - ramp, s_near)
-    if sec['s'][1] == 1: win = sstep(sa - ramp, sa + ramp, s_near)
-    win = ndimage.gaussian_filter(win * near, 40 / RES) * feather    # smooth: no straight seams where sectors meet
+    if sa < 1: win = sstep(sb + ramp, sb - ramp, s_near)
+    if sb >= Ls - 1: win = sstep(sa - ramp, sa + ramp, s_near)
+    win = ndimage.gaussian_filter(win * near, 40 / RES) * feather
+    if sec.get('written'): written += win
     f_new += win * fs; wsum += win
     print(sec['name'], 'scale %.2f km/mi' % kpm, 'miles', round(sa), round(sb), file=sys.stderr)
-f_new = (f_new + np.maximum(0, 1 - wsum) * d_env) / np.maximum(wsum, 1)      # where no sector reaches, the old outline
-# deep inland stays land, the far ocean stays sea apart from islands the sectors bring
+f_new = (f_new + np.maximum(0, 1 - wsum) * d_env) / np.maximum(wsum, 1)
+written = np.clip(written / np.maximum(wsum, 1e-6), 0, 1) * (wsum > 0.05)
 f_new = np.where(d_env > 700, np.maximum(f_new, d_env - 700), f_new)
-# (further out off the east coast, where an island arc lies)
-cap = -620 + 120 * sstep(0.64 * Ls, 0.70 * Ls, s_near) + 330 * sstep(0.84 * Ls, 0.90 * Ls, s_near)   # less far out in the south (the Dark Land) and south-west (the Straits)
-_cn = ndimage.gaussian_filter(np.random.RandomState(8).randn(H, W), 30 / RES); cap += 90 * _cn / _cn.std()   # ragged, never a straight cut
+cap = -620 + 120 * sstep(0.64 * Ls, 0.70 * Ls, s_near) + 330 * sstep(0.84 * Ls, 0.90 * Ls, s_near)
+cap = cap * (1 - written) - 60 * written                          # the books' coast: islands close in only
+_cn = ndimage.gaussian_filter(np.random.RandomState(8).randn(H, W), 30 / RES); cap += 90 * _cn / _cn.std() * (1 - written)
+f = np.where(d_env < cap, np.minimum(f_new, -1 - (cap - d_env)), f_new)
 
-f_new = np.where(d_env < cap, np.minimum(f_new, -1 - (cap - d_env)), f_new)
-f = (1 - w) * d0 + w * f_new
+def disk(p): return np.hypot(Qx[None, :] - p[0], Qy[:, None] - p[1])
+def seg_dist(pts):
+    d = np.full((H, W), 1e9)
+    for (ax, ay), (bx, by) in zip(pts[:-1], pts[1:]):
+        dx, dy = bx - ax, by - ay; l2 = dx * dx + dy * dy or 1
+        t = np.clip(((Qx[None, :] - ax) * dx + (Qy[:, None] - ay) * dy) / l2, 0, 1)
+        d = np.minimum(d, np.hypot(Qx[None, :] - ax - t * dx, Qy[:, None] - ay - t * dy))
+    return d
 
-# everything the books and our geography put there stays land
-# (regional washes - deserts, grassland, uplift - may lose their coastal fringe; named features may not)
+# everything the books name stays on land, with a ragged margin of at least ~25 miles (a range that runs out to
+# sea becomes a mountainous peninsula); places on the coast and river mouths are handled apart, below
+coastal = {c[0] for c in ANCH['coastal']}
 prot = poly_mask([r['pts'] for k in ('FORESTS', 'MARSHES', 'LAKES') for r in G[k] if 'pts' in r])
-prot |= line_mask([(r['pts'], r['w']) for r in G['RANGES']]) | line_mask([(r['pts'], 4) for r in G['RIVERS']])
-prot |= line_mask([([p, p], 10) for p in G['PLACES']])
+prot |= line_mask([(r['pts'], r['w']) for r in G['RANGES']])
+prot |= line_mask([([q[1:], q[1:]], 10) for q in G['PLACESN'] if q[0] not in coastal])
 prot &= land0
-# the land reaches at least ~25 miles beyond each of them, with a ragged natural edge (a range running out to sea
-# becomes a mountainous peninsula, not a straight-sided causeway)
 pd = ndimage.distance_transform_edt(~prot) * RES
 rng = np.random.RandomState(11)
 ragged = ndimage.gaussian_filter(rng.randn(H, W), 6 / RES); ragged /= ragged.std()
 f = np.maximum(f, 25 + 9 * ragged - pd)
+# rivers run on land to their mouths
+for r in G['RIVERS']:
+    f = np.maximum(f, (3 - seg_dist(r['pts'])) * (written > 0.5) - 1e3 * (written <= 0.5))   # on the books' coast only
+# the Gulf of Lhûn, as the books describe it: a long gulf reaching in from the sea to the Grey Havens at its head,
+# Forlond on its northern shore and Harlond on its southern (our own line, from those places' positions)
+gw = seg_dist([(-440, -26), (-370, -14), (-318, -22), (-268, -14), (-226, -19), (-195, -10), (-176, -9)])
+gx = np.clip((Qx[None, :] + 174) / -266, 0, 1)                   # 0 at the head, 1 at the mouth
+gr = ndimage.gaussian_filter(np.random.RandomState(21).randn(H, W), 3 / RES); gr /= gr.std()
+f = np.minimum(f, gw - (6 + 19 * gx ** 1.2) * (1 + 0.3 * gr))   # wide enough at its head to be drawn
+# places on the coast: on land, with open sea beside them where it lay (at the renderer's scale: its own warp of
+# the coast reaches ~7 miles, its land raster is 4 miles a pixel)
+for name, x, y, sx, sy in ANCH['coastal']:
+    dx, dy = sx - x, sy - y; l = math.hypot(dx, dy) or 1; dx, dy = dx / l, dy / l
+    f = np.minimum(f, disk((x + dx * 25, y + dy * 25)) - 14)          # sea from ~11 miles off
+# river mouths: an estuary along the river's last miles, opening to the sea
+mouths = {m[0]: m for m in ANCH['mouths']}
+for r in G['RIVERS']:
+    if r.get('name') not in mouths: continue
+    name, x, y, sx, sy = mouths[r['name']]
+    dx, dy = sx - x, sy - y; l = math.hypot(dx, dy) or 1; dx, dy = dx / l, dy / l
+    f = np.minimum(f, disk((x + dx * 20, y + dy * 20)) - 13)          # open sea beyond the mouth
+    f = np.minimum(f, seg_dist([(x - dx * 6, y - dy * 6), (x + dx * 10, y + dy * 10)]) - 4)   # the estuary
+# the coastal places themselves stay on land, last of all (a harbour town at a river mouth keeps its ground)
+for name, x, y, sx, sy in ANCH['coastal']:
+    if name == 'Mithlond': continue
+    f = np.maximum(f, 9 - disk((x, y)))
+# the Grey Havens stand on the very shore at the gulf's head (the ground view builds their quays against it):
+# water right up to them from the west, land from them eastward
+f = np.minimum(f, disk((-176, -9)) - 4.5)
+f = np.maximum(f, 5 - disk((-166, -7.6)))
 land = f > 0
-land &= ~((~land0) & (w < 0.02))                               # no new land off the books' coast
-# the main land, its lakes and inland seas, and new islands
 lab, n = ndimage.label(land)
 main = lab[int((Y1 - 0) / RES), int((0 - X0) / RES)]
 mainland = ndimage.binary_fill_holes(lab == main)
@@ -240,16 +322,10 @@ def rings(mask, min_area, tol=0.7):
         out.append([[round(X0 + (c - 0.5) * RES, 1), round(Y1 - (rr - 0.5) * RES, 1)] for rr, c in r[:-1]])
     return out
 
-# main coast: the contour, with the books' coast spliced back in exactly
-ring = max(rings(mainland, 1e6, tol=0.6), key=len)
-ia = min(range(len(ring)), key=lambda k: math.dist(ring[k], C[IA])); ib = min(range(len(ring)), key=lambda k: math.dist(ring[k], C[IB]))
-area = lambda P: sum(P[k][0] * P[(k + 1) % len(P)][1] - P[(k + 1) % len(P)][0] * P[k][1] for k in range(len(P)))
-if (area(ring) > 0) != (area(C) > 0): ring = ring[::-1]; ia, ib = len(ring) - 1 - ia, len(ring) - 1 - ib
-new_part = ring[ia:] + ring[:ib + 1] if ia > ib else ring[ia:ib + 1]
-coast = [list(p) for p in kept] + new_part[1:-1]
+coast = max(rings(mainland, 1e6, tol=0.6), key=len)
 islands = [r for r in rings(land & ~mainland, 40) if not any(math.dist(r[0], i['pts'][0]) < 30 for i in G['ISLANDS'])]
 inland_seas = rings(seas, 600)
-print('coast pts', len(coast), 'new part', len(new_part), 'islands', len(islands), 'inland seas', len(inland_seas), file=sys.stderr)
+print('coast pts', len(coast), 'islands', len(islands), 'inland seas', len(inland_seas), file=sys.stderr)
 
 # ---------------------------------------------------------------- far continents (lon/lat)
 def transplant(name, src_box, centre_src, centre_dst, rot_deg, mirror, scale, warp_km, seed, res=0.1, box_dst=None):
@@ -303,4 +379,5 @@ for r in islands: d.polygon([px(p) for p in r], fill=(90, 140, 70))
 for r in inland_seas: d.polygon([px(p) for p in r], fill=(30, 50, 90))
 d.line([px(p) for p in C] + [px(C[0])], fill=(255, 255, 255), width=1)
 im.resize((W // 2, H // 2)).save(os.path.join(CACHE, 'preview.png'))
+im.crop((int((-450 - X0) / RES), int((Y1 - 750) / RES), int((900 - X0) / RES), int((Y1 + 1450) / RES))).save(os.path.join(CACHE, 'preview_west.png'))
 print('wrote src/shores.js', os.path.getsize(os.path.join(ROOT, 'src', 'shores.js')) // 1024, 'KB', file=sys.stderr)

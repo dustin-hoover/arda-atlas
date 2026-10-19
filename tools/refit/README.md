@@ -1,5 +1,11 @@
 # Refitting the atlas to a published map
 
+> **Status: positions only.** Under the project's law (docs/otherworldly/LAWS.md I.2a) nothing traced is kept.
+> The coast this pipeline traced has been replaced by a coarse skeleton (tools/generalize/generalize.py) whose
+> detail comes from real Earth coasts (tools/continents/reshape.py), and the Fonstad outlines below were
+> generalised (forests, marshes) or dropped (hill country). What remains from this folder is where places lie.
+
+
 Scripts used to fit `src/geo.js` to Christopher Tolkien's general map of Middle-earth
 (the redrawn 1920×2130 copy on Tolkien Gateway). The image itself is copyrighted and is not in the
 repo; download it as `ct.png` into this folder to re-run anything. Positions only are taken from it.

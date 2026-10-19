@@ -13,6 +13,14 @@ monetised, the project gets a review by an intellectual-property lawyer.
    positions and are kept out of git (see `.gitignore`: `tools/refit/*.png`). Coastlines, mountains and
    forests are generalised and redrawn by our own procedures; when a position comes from reading a map, the
    ledger says so, and a shape must never reproduce the map's line-work.
+2a. **Three layers, in this order.** (1) *Descriptions first:* what the text says decides what exists and how
+   it relates (a range runs north to south, a bay lies south of a city, a forest is vast and dark). (2) *Published
+   maps only as generalities:* a map may be read for rough positions and proportions, never for outlines; nothing
+   in the repo may follow a published map's line-work, at any scale where it could be recognised. (3) *Real Earth
+   geography for the detail:* coastline intricacy, elevations, valley and ridge structure, land cover and texture
+   come from real Earth data (public-domain or openly licensed, credited), turned, mirrored, scaled and warped so
+   that no Earth place is recognisable either. The aim: every shape is our own, so the map could never be taken
+   for a copy of anyone's map.
 3. **Books first, never screens.** Canon is the published text. Film and TV adaptations (and their sets,
    costumes, actors and music) are not sources. Character sprites come from the text's descriptions (hair,
    eyes, build, dress) and must not resemble any actor or a studio's character design.
