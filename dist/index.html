@@ -835,18 +835,19 @@ function blend(r, g, b, t) { tmp3[0] += (r - tmp3[0]) * t; tmp3[1] += (g - tmp3[
 // farmland: Voronoi parcels subdivided into strip fields, with hedgerows
 const FC = [[190,170,112],[170,152,104],[150,140,96],[104,124,66],[88,112,58],[124,104,78],[112,92,70],[140,134,90],[96,116,64],[118,128,74]];
 function fields(X, Y, cell, pix, hobbit) {
-  // irregular parcels (a jittered lattice in a warped frame that turns slowly across the land, so no two farms line
-  // up): each parcel its own crop, stubble or plough and its own furrow direction, hedged round
-  const th0 = 0.9 * noise(X * 0.03 + 11, Y * 0.03 - 7) + (hobbit ? 0.3 : 0.9);
+  // irregular parcels (a jittered lattice in a warped frame): each parcel its own crop, stubble or plough and its own
+  // furrow direction, hedged round. Field systems differ by district - their lie and the size of their fields - but
+  // within one the frame is fixed (a frame turning across the land, measured from a far origin, bends into arcs)
+  const rg = noise(X * 0.045 + 11, Y * 0.045 - 7), k3 = rg > 0.22 ? 1 : rg < -0.22 ? 2 : 0;
+  const th0 = [0.35, 1.05, 1.62][k3] + (hobbit ? -0.4 : 0), sz = [1, 1.3, 0.82][k3];
   const c = Math.cos(th0), s = Math.sin(th0);
   const wx = X + cell * 0.3 * noise(X / cell * 0.35, Y / cell * 0.35), wy = Y + cell * 0.3 * noise(X / cell * 0.35 + 7, Y / cell * 0.35 - 3);
-  const sz = 1 + 0.35 * noise(X * 0.07 - 5, Y * 0.07 + 2);           // farms of larger and smaller fields
   const u = (wx * c + wy * s) / (cell * sz), v = (-wx * s + wy * c) / (cell * sz * 0.72);
   const iu = Math.floor(u), iv = Math.floor(v);
-  let d1 = 9, d2 = 9, ci = 0, cj = 0;
+  let d1 = 9, d2 = 9, ci = k3 * 99991, cj = 0;
   for (let j = -1; j <= 1; j++) for (let i = -1; i <= 1; i++) {
-    const a = iu + i, b = iv + j;
-    const dx = u - (a + 0.1 + 0.8 * hash2(a, b, 31)), dy = v - (b + 0.1 + 0.8 * hash2(a, b, 32)), d = dx * dx + dy * dy;
+    const a = iu + i + k3 * 99991, b = iv + j;
+    const dx = u - (a - k3 * 99991 + 0.1 + 0.8 * hash2(a, b, 31)), dy = v - (b + 0.1 + 0.8 * hash2(a, b, 32)), d = dx * dx + dy * dy;
     if (d < d1) { d2 = d1; d1 = d; ci = a; cj = b; } else if (d < d2) d2 = d;
   }
   const edge = (Math.sqrt(d2) - Math.sqrt(d1)) * 0.5 * cell * sz * 0.8;     // miles to the parcel's edge (near enough)
