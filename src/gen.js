@@ -31,21 +31,20 @@ const P = new Uint8Array(512);
   for (let i = 0; i < 512; i++) P[i] = p[i & 255];
 })(3019);
 
+// gradient noise; the gradients from tables (same values as a switch on the hash, much faster in the hot loop)
+const GXT = new Float64Array([1, -1, 1, -1, 1.41, -1.41, 0, 0]), GYT = new Float64Array([1, 1, -1, -1, 0, 0, 1.41, -1.41]);
 function noise(x, y) {
   let X = Math.floor(x), Y = Math.floor(y);
   x -= X; y -= Y; X &= 255; Y &= 255;
   const u = x * x * x * (x * (x * 6 - 15) + 10), v = y * y * y * (y * (y * 6 - 15) + 10);
   const a = P[X] + Y, b = P[X + 1] + Y;
-  const g00 = grad(P[a], x, y), g10 = grad(P[b], x - 1, y), g01 = grad(P[a + 1], x, y - 1), g11 = grad(P[b + 1], x - 1, y - 1);
+  const h00 = P[a] & 7, h10 = P[b] & 7, h01 = P[a + 1] & 7, h11 = P[b + 1] & 7, x1 = x - 1, y1 = y - 1;
+  const g00 = GXT[h00] * x + GYT[h00] * y, g10 = GXT[h10] * x1 + GYT[h10] * y;
+  const g01 = GXT[h01] * x + GYT[h01] * y1, g11 = GXT[h11] * x1 + GYT[h11] * y1;
   const l0 = g00 + u * (g10 - g00), l1 = g01 + u * (g11 - g01);
   return (l0 + v * (l1 - l0)) * 1.25;
 }
-function grad(h, x, y) {
-  switch (h & 7) {
-    case 0: return x + y; case 1: return -x + y; case 2: return x - y; case 3: return -x - y;
-    case 4: return x * 1.41; case 5: return -x * 1.41; case 6: return y * 1.41; default: return -y * 1.41;
-  }
-}
+function grad(h, x, y) { h &= 7; return GXT[h] * x + GYT[h] * y; }
 function fbm(x, y, oct) {
   let s = 0, a = 0.5, n = 0;
   for (let i = 0; i < oct; i++) {
@@ -100,7 +99,7 @@ const CH = { land:0, cont:1, mtn:2, hill:3, forest:4, gold:5, dark:6, marsh:7, a
 function init(data) {
   M = data.main; G = data.glob; PEAKS = data.peaks || []; RANGEPAL = data.ranges || []; NUM = data.numenor; FLATS = data.flats || [];
   if (data.vectors) initVectors(data.vectors);
-  initTex(data.tex); MOUTHS = data.mouths || []; PINS = data.pins || [];
+  initTex(data.tex); MOUTHS = data.mouths || []; PINS = data.pins || []; initValleys(data.valleys);
 }
 
 /* ---------------- photographic land cover ----------------
@@ -110,6 +109,42 @@ function init(data) {
    different rotations and offsets mixed by noise so the repeat does not show. The colour is the analogue's own mean
    colour times that detail. */
 let TX = null, MOUTHS = [], PINS = [];
+/* The ranges' drainage network (rasters.js): segments binned on an 8-mile grid for lookup. */
+let VS = null, VOFF = null, VIDX = null;
+const VC = 8, VX0 = -2400, VY0 = -3300, VNX = Math.ceil(6300 / VC), VNY = Math.ceil(5300 / VC);
+const valleyW = A => Math.min(8, 1.8 + 1.0 * Math.sqrt(A / 6));        // half-width in miles, by area drained
+function initValleys(v) {
+  VS = v && v.length ? v : null; if (!VS) return;
+  const n = VS.length / 5, cnt = new Int32Array(VNX * VNY + 1), cells = [];
+  for (let s = 0; s < n; s++) {
+    const o = s * 5, w = valleyW(VS[o + 4]) + 2.5;
+    const i0 = Math.max(0, Math.floor((Math.min(VS[o], VS[o + 2]) - w - VX0) / VC)), i1 = Math.min(VNX - 1, Math.floor((Math.max(VS[o], VS[o + 2]) + w - VX0) / VC));
+    const j0 = Math.max(0, Math.floor((Math.min(VS[o + 1], VS[o + 3]) - w - VY0) / VC)), j1 = Math.min(VNY - 1, Math.floor((Math.max(VS[o + 1], VS[o + 3]) + w - VY0) / VC));
+    for (let j = j0; j <= j1; j++) for (let i = i0; i <= i1; i++) { cells.push(j * VNX + i, s); cnt[j * VNX + i + 1]++; }
+  }
+  for (let i = 1; i < cnt.length; i++) cnt[i] += cnt[i - 1];
+  VOFF = cnt; VIDX = new Int32Array(cells.length / 2); const fill = Int32Array.from(cnt);
+  for (let t = 0; t < cells.length; t += 2) VIDX[fill[cells[t]]++] = cells[t + 1];
+}
+// how much of a valley floor (X, Y) lies in: 0 on the ridges, rising to 1 on the floor of a big valley; small valleys
+// are shallower. Valley sides are concave, floors flat where the valley is wide.
+function valleyAt(X, Y) {
+  if (!VS) return 0;
+  const qx = X + 0.9 * noise(X / 5 + 3, Y / 5), qy = Y + 0.9 * noise(X / 5, Y / 5 - 6);     // meanders: no straight runs
+  const i = Math.floor((qx - VX0) / VC), j = Math.floor((qy - VY0) / VC);
+  if (i < 0 || j < 0 || i >= VNX || j >= VNY) return 0;
+  const c = j * VNX + i;
+  let best = 0;
+  for (let t = VOFF[c]; t < VOFF[c + 1]; t++) {
+    const o = VIDX[t] * 5, ax = VS[o], ay = VS[o + 1], dx = VS[o + 2] - ax, dy = VS[o + 3] - ay, A = VS[o + 4];
+    const L = dx * dx + dy * dy, u = L ? Math.max(0, Math.min(1, ((qx - ax) * dx + (qy - ay) * dy) / L)) : 0;
+    const d = Math.hypot(ax + u * dx - qx, ay + u * dy - qy), w = valleyW(A);
+    if (d >= w) continue;
+    const v = sstep(w, w * 0.22, d) * (0.35 + 0.65 * sat(Math.log(A / 6) / Math.log(60)));
+    if (v > best) best = v;
+  }
+  return best;
+}
 // bright specks in a forest patch (tracks, a stream, a slip) repeat as marks: forests keep only gentle highlights
 const CLAMP = { forest: 1.2, beech: 1.25, taiga: 1.25 };
 const TXI = {};
@@ -384,7 +419,10 @@ function evaluate(X, Y, pix) {
     if (mtn > 0.002) {
       const r = ridgedA(X, Y, 26, Math.max(pix * 1.1, 0.003));
       const mm = sstep(0, 0.35, mtn) * mtn;
-      h += mm * 5200 * (0.12 + 0.88 * Math.pow(r, 1.35));
+      // the main valleys: the ranges' drainage network, tributaries joining trunks as real valleys do; inside them
+      // the crags give way to the valley's own smoother floor and sides
+      const u1 = valleyAt(X, Y);
+      h += mm * 5200 * (0.12 + 0.88 * Math.pow(r, 1.35)) * (1 - 0.65 * u1);
       // valleys that drain: troughs run downhill from the crest (along the slope of the range's own mass), with
       // tributaries joining them at an angle and gullies feeding those, as in real mountains, instead of looping
       // the direction of the slope at a point (from the range's mass, sampled wide so the 8-bit raster's steps
@@ -415,13 +453,12 @@ function evaluate(X, Y, pix) {
         }
         return acc;
       };
-      const u1 = drain(13, 0.15 * noise(X / 60, Y / 60), 0);
       const side = noise(X / 9 + 4, Y / 9 - 2) > 0 ? 1 : -1;
       const u2 = drain(6.5, 0.6 * side, 17);
       const u3 = 0;
       // only the lines' cores are valleys (narrow floors, wide ridges between); tributaries fade out on the high
       // ground and toward the main valleys' floors, gullies are slight
-      const c1 = sstep(0.5, 0.93, u1), c2 = sstep(0.68, 0.96, u2) * sstep(0.15, 0.6, 1 - c1) * sstep(0.05, 0.45, noise(X / 6 + 9, Y / 6 - 3)),   // tributaries here and there, never ranks of them
+      const c1 = u1, c2 = sstep(0.68, 0.96, u2) * sstep(0.15, 0.6, 1 - c1) * sstep(0.05, 0.45, noise(X / 6 + 9, Y / 6 - 3)),   // tributaries here and there, never ranks of them
         c3 = sstep(0.86, 0.99, u3) * (1 - c1) * (1 - c2 * 0.7) * 0.6;
       R.mt = sstep(0, 0.35, mtn);
       R.vly = Math.max(c1, c2 * 0.7);
@@ -431,6 +468,8 @@ function evaluate(X, Y, pix) {
     const rough = sat(0.35 + 0.9 * fbm(X * 0.004 + 71, Y * 0.004 - 12, 3));
     h += (25 + 190 * rough) * (0.5 + 0.5 * fbmA(X, Y, 14, Math.max(pix * 1.1, 0.01), 0.75, 3)) * (1 - F[15]);
     h += (12 + 420 * mtn + 140 * hill + 30 * inland) * fbmA(X, Y, 3, Math.max(pix * 1.1, 0.002), 0.8, 2);
+    // rolling lowland: swells and hollows of a few tens of metres over a mile or two, so the ground reads close up
+    h += (14 + 26 * rough) * fbmA(X * 0.8 + 41, Y * 0.8 - 13, 2.5, Math.max(pix * 1.1, 0.004), 0.75, 81) * (1 - F[15]) * (1 - sat(mtn * 3));
     // drainage: a procedural stream network carved into the land
     let str = 0;
     {
@@ -725,7 +764,7 @@ function colorAt(X, Y, h, slope, pix, mode, dsea) {
   fd = Math.max(fd * (0.7 + 0.3 * sat(Mst + 0.3)), wild * (wm < 1 ? 1 : 0.55));
   const treeline = 2600 - Math.max(0, Math.abs(lat) - 40) * 55;
   // montane forest: dark conifers fill the valleys and lower slopes of wet ranges
-  if (R.mt > 0.05) fd = Math.max(fd, R.mt * sat((Mst - 0.22) * 3) * (1 - arid) * (0.35 + 0.65 * R.vly) * sstep(0.3, 0.55, 0.5 + 0.6 * fbm(X * 0.4 + 9, Y * 0.4 - 4, 3) + 0.4 * R.vly));
+  if (R.mt > 0.05) fd = Math.max(fd, R.mt * sat((Mst - 0.22) * 3) * (1 - arid) * (0.35 + 0.65 * R.vly) * sstep(0.3, 0.55, 0.5 + 0.6 * fbm(X * 0.4 + 9, Y * 0.4 - 4, 3) + 0.7 * R.vly));
   fd *= sstep(treeline, treeline - 500, h);
   fd *= 1 - sstep(0.55, 0.9, slope) * 0.6;
   if (fd > 0.01) {
@@ -799,7 +838,7 @@ function colorAt(X, Y, h, slope, pix, mode, dsea) {
     blend((mix(124, 70, dark) + 14 * rn) * tw('k', 0), (mix(114, 64, dark) + 12 * rn) * tw('k', 1), (mix(104, 60, dark) + 10 * rn) * tw('k', 2), rock);
     if (!dark) { plAdd('scree', rock); plAdd('rock', rock * sstep(0.55, 0.9, slope + 0.3 * rn)); }
   }
-  const Tsnow = T + 8.5 + 8 * slope * (1 - 0.6 * R.mt) - 2.5 * R.mt * (1 - R.vly);   // in ranges snow lies on the high ridges between the valleys
+  const Tsnow = T + 8.5 + 8 * slope * (1 - 0.6 * R.mt) - 2.5 * R.mt * (1 - R.vly) - 3.5 * ASPN + 2 * ASPS;   // in ranges snow lies on the high ridges between the valleys
   let snow = sstep(-1, -4.5, Tsnow);
   snow = Math.max(snow, F[14] * 0.9 * sstep(0.2, 0.7, F[14] + 0.3 * fbm(X * 0.05, Y * 0.05, 3)));
   if (snow > 0.01) {
@@ -825,7 +864,7 @@ let FIELDV = 0, FDN = 0, FARMP = 0;
    small to draw (from orbit and middle zoom) - regional tone (soils, moisture: tens of miles), a mosaic of wild
    ground (dry grass, bracken, heath, scrub: miles down to yards) and the texture of canopy. Never flat at any scale. */
 function groundVariety(X, Y, pix, vegShare, veg, T) {
-  const r1 = fbmA(X, Y, 140, Math.max(pix * 2, 8), 0.7, 71), r2 = fbmA(X, Y, 35, Math.max(pix * 2, 2.5), 0.6, 72);
+  const r1 = fbmA(X, Y, 140, Math.max(pix * 2, 14), 0.7, 71), r2 = fbmA(X, Y, 35, Math.max(pix * 2, 4), 0.6, 72);
   const k = 1 + 0.06 * r1 + 0.05 * r2;
   tmp3[0] *= k + 0.05 * r2; tmp3[1] *= k + 0.01 * r1; tmp3[2] *= k - 0.03 * r2;
   if (vegShare <= 0.02) return;
@@ -834,8 +873,8 @@ function groundVariety(X, Y, pix, vegShare, veg, T) {
     // patches of a few miles down to a few hundred yards, with irregular (warped) outlines
     // (turned off the noise lattice and warped, so no patch shows the grid it was drawn on)
     const qx = X * 0.83 - Y * 0.56, qy = X * 0.56 + Y * 0.83;
-    const wx = qx + 2.6 * fbm(qx * 0.16 + 3, qy * 0.16, 3), wy = qy + 2.6 * fbm(qx * 0.16, qy * 0.16 - 7, 3);
-    const a = fbmA(wx, wy, 5, Math.max(pix * 1.5, 0.02), 0.75, 73), b = fbmA(wy * 0.97 + 9, -wx * 0.97, 1.4, Math.max(pix * 1.5, 0.008), 0.8, 74);
+    const wx = qx + 2.6 * fbm(qx * 0.16 + 3, qy * 0.16, 2), wy = qy + 2.6 * fbm(qx * 0.16, qy * 0.16 - 7, 2);
+    const a = fbmA(wx, wy, 5, Math.max(pix * 2, 0.04), 0.75, 73), b = fbmA(wy * 0.97 + 9, -wx * 0.97, 1.4, Math.max(pix * 2, 0.015), 0.8, 74);
     const temperate = sstep(-2, 4, T) * (1 - sstep(20, 26, T));
     blend(156, 142, 98, sstep(0.12, 0.42, a) * 0.32 * wild);                               // dry grass, sun-bleached
     blend(100, 104, 60, sstep(0.05, 0.3, b) * sstep(-0.3, 0.1, a) * 0.3 * wild * temperate);  // bracken and rough grazing
@@ -845,7 +884,7 @@ function groundVariety(X, Y, pix, vegShare, veg, T) {
   if (FDN > 0.02) {
     // canopy: clusters of crowns lit and shaded, and gaps (seen from middle zoom, where single crowns are too small)
     // and stands of different age and kind: lighter broadleaf, darker conifer, in patches of a mile or two
-    const c1 = fbmA(X, Y, 0.9, Math.max(pix * 1.2, 0.006), 0.85, 75), c2 = fbmA(X, Y, 6, Math.max(pix * 1.5, 0.05), 0.7, 76);
+    const c1 = fbmA(X, Y, 0.9, Math.max(pix * 1.5, 0.006), 0.85, 75), c2 = fbmA(X, Y, 6, Math.max(pix * 2, 0.1), 0.7, 76);
     const kk = 1 + FDN * (0.24 * c1 * sstep(0.003, 0.012, pix) + 0.16 * c2);
     tmp3[0] *= kk * (1 + 0.06 * c2 * FDN); tmp3[1] *= kk * (1 + 0.04 * c2 * FDN); tmp3[2] *= kk;
   }
@@ -946,19 +985,21 @@ function demTile(z, x, y, n) {
 }
 
 /* Imagery for an arbitrary grid of points. coords(i,j) → [X,Y]. */
+let ASPN = 0, ASPS = 0;                  // how far the surface being coloured faces north / south (snow lies longer on north faces)
 function renderGrid(n, m, coordFn, pix, mode, shade, sun) {
-  const W = n + 2, H = m + 2;
+  // a margin of B cells round the grid: the hillshade and the sky-view shading below read the ground a few cells off
+  const B = shade ? 4 : 1, W = n + 2 * B, H = m + 2 * B;
   const E = new Float32Array(W * H), S = new Float32Array(W * H);
   const FS = new Float32Array(n * m * NCH), RS = new Float32Array(n * m * 8);
   const XS = new Float64Array(W * H), YS = new Float64Array(W * H);
   for (let j = 0; j < H; j++) for (let i = 0; i < W; i++) {
     const k = j * W + i;
-    const c = coordFn(i - 1, j - 1);
+    const c = coordFn(i - B, j - B);
     XS[k] = c[0]; YS[k] = c[1];
     E[k] = evaluate(c[0], c[1], pix);
     S[k] = R.s;
-    if (i > 0 && j > 0 && i <= n && j <= m) {
-      const q = (j - 1) * n + (i - 1);
+    if (i >= B && j >= B && i < n + B && j < m + B) {
+      const q = (j - B) * n + (i - B);
       FS.set(F, q * NCH);
       RS[q * 8] = R.s; RS[q * 8 + 1] = R.lat; RS[q * 8 + 2] = R.wm; RS[q * 8 + 3] = R.stream; RS[q * 8 + 4] = R.base; RS[q * 8 + 5] = R.mt; RS[q * 8 + 6] = R.vly; RS[q * 8 + 7] = R.lon;
     }
@@ -967,7 +1008,7 @@ function renderGrid(n, m, coordFn, pix, mode, shade, sun) {
   const cellM = pix * MI;
   const sx = sun ? sun[0] : -0.55, sy = sun ? sun[1] : 0.55, sz = sun ? sun[2] : 0.63;
   for (let j = 0; j < m; j++) for (let i = 0; i < n; i++) {
-    const k = (j + 1) * W + (i + 1);
+    const k = (j + B) * W + (i + B);
     const q = j * n + i;
     const X = XS[k], Y = YS[k];
     for (let c = 0; c < NCH; c++) F[c] = FS[q * NCH + c];
@@ -978,6 +1019,7 @@ function renderGrid(n, m, coordFn, pix, mode, shade, sun) {
     const dx = land ? (Math.max(hr, 0) - Math.max(hl, 0)) / (2 * cellM) : 0, dy = land ? (Math.max(hu, 0) - Math.max(hd, 0)) / (2 * cellM) : 0;
     const gm = Math.sqrt(dx * dx + dy * dy);
     const slope = sat(gm / 1.2);
+    ASPN = land && gm > 1e-6 ? sat(-dy / gm) * sstep(0.04, 0.3, slope) : 0; ASPS = land && gm > 1e-6 ? sat(dy / gm) * sstep(0.04, 0.3, slope) : 0;
     let dsea;
     if (mode === 1) {
       const gsx = (S[k + 1] - S[k - 1]) / 2, gsy = (S[k - W] - S[k + W]) / 2;
@@ -995,6 +1037,12 @@ function renderGrid(n, m, coordFn, pix, mode, shade, sun) {
       let f = mode === 1 ? 0.55 + 0.6 * lam : 0.4 + 0.8 * lam;
       if (mt > 0) f = mix(f, 0.27 + 1.0 * lam, mt);       // mountains: deep shadow faces, bright sunlit ones
       f = clamp(f, 0.28 - 0.14 * mt, 1.25 + 0.1 * mt);
+      if (mode === 0 && B > 1) {
+        // sky-view: hollows and valley floors see less of the sky and lie darker, ridges and crests catch more light
+        const ring = (r) => (Math.max(E[k - r], 0) + Math.max(E[k + r], 0) + Math.max(E[k - r * W], 0) + Math.max(E[k + r * W], 0)) * 0.25 - h;
+        const ao = (0.6 * ring(2) / (2 * cellM) + 0.4 * ring(4) / (4 * cellM)) * ex / 1.5;
+        f *= (1 - 0.32 * sat(ao * 1.4)) * (1 + 0.12 * sat(-ao * 1.4));
+      }
       r *= f; g *= f; b *= f;
     }
     if (mode === 0) { r = r * 0.96 + 4; g = g * 0.97 + 5; b = b * 0.98 + 9; }
@@ -1301,6 +1349,6 @@ function buildingsNear(X, Y, rad) {
 }
 
 return { setDoom, nightAt, D2R, MI, EARTH_C, toLL, toXY, noise, fbm, fbmA, hash2, sat, sstep, mix, clamp, init, evaluate, F, R, CH, tempAt, moistAt,
-  demTile, imageryTile, renderGrid, tileLL, drawVectors, buildingsNear, numenorField, orchardAt };
+  demTile, imageryTile, renderGrid, tileLL, drawVectors, buildingsNear, numenorField, orchardAt, valleyAt };
 })();
 if (typeof self !== 'undefined') self.GEN = GEN;

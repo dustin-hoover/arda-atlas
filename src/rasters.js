@@ -157,6 +157,59 @@ function rangeField(RANGES0, rmask) {
   return o;
 }
 
+/* Drainage of the ranges and hills: water finds its way down a rough model of their height (the range and hill
+   fields plus broad noise, so neighbouring streams wander and meet), filling hollows on the way, to the lowland or an
+   authored river. Flow accumulates downstream; every channel draining more than a few cells becomes a valley, its
+   tributaries joining it like the branches of a tree. Returned as segments (x0, y0, x1, y1, drained area in cells)
+   for GEN, which carves each into a valley widening and deepening with the area it drains. */
+function drainage(mt, hl, rmask) {
+  const N = W * H, hp = new Float32Array(N), act = new Uint8Array(N);
+  for (let j = 0; j < H; j++) for (let i = 0; i < W; i++) {
+    const k = j * W + i, m = mt[k] / 255, hh = hl[k] / 255;
+    if (m < 0.02 && hh < 0.05) continue;
+    act[k] = 1;
+    const x = X0 + (i + 0.5) * RES, y = Y1 - (j + 0.5) * RES, mm = Math.min(1, m / 0.35) * m;
+    hp[k] = mm * 5200 * 0.55 + hh * 700 + (220 + 900 * mm) * GEN.fbm(x / 40 + 7, y / 40 - 3, 4) + 520 * GEN.fbm(x / 11 - 2, y / 11 + 5, 3) * mm + 200 * GEN.fbm(x / 5 + 9, y / 5, 2) * mm;
+  }
+  // priority flood from the outlets (lowland or river beside an active cell): each cell drains to the one it was
+  // reached from, so hollows fill and every cell finds a way out
+  const par = new Int32Array(N).fill(-1), seen = new Uint8Array(N), order = new Int32Array(N); let no = 0;
+  const hk = new Float32Array(N), hi = new Int32Array(N); let hn = 0;
+  const push = (k, v) => { let c = hn++; hk[c] = v; hi[c] = k; while (c > 0) { const p = (c - 1) >> 1; if (hk[p] <= hk[c]) break; const tv = hk[p], ti = hi[p]; hk[p] = hk[c]; hi[p] = hi[c]; hk[c] = tv; hi[c] = ti; c = p; } };
+  const pop = () => { const k = hi[0], v = hk[0]; hn--; hk[0] = hk[hn]; hi[0] = hi[hn]; let c = 0; for (;;) { const l = 2 * c + 1, r = l + 1; let m = c; if (l < hn && hk[l] < hk[m]) m = l; if (r < hn && hk[r] < hk[m]) m = r; if (m === c) break; const tv = hk[m], ti = hi[m]; hk[m] = hk[c]; hi[m] = hi[c]; hk[c] = tv; hi[c] = ti; c = m; } POPV = v; return k; };
+  let POPV = 0;
+  const D8 = [[1, 0], [-1, 0], [0, 1], [0, -1], [1, 1], [-1, 1], [1, -1], [-1, -1]];
+  for (let j = 1; j < H - 1; j++) for (let i = 1; i < W - 1; i++) {
+    const k = j * W + i;
+    if (!act[k]) continue;
+    let out = rmask[k] > 60;
+    if (!out) for (const [a, b] of D8) if (!act[k + b * W + a]) { out = true; break; }
+    if (out) { seen[k] = 1; push(k, hp[k]); }
+  }
+  while (hn > 0) {
+    const k = pop(), v = POPV; order[no++] = k;
+    const i = k % W, j = (k / W) | 0;
+    for (const [a, b] of D8) {
+      const ii = i + a, jj = j + b; if (ii < 1 || jj < 1 || ii >= W - 1 || jj >= H - 1) continue;
+      const q = jj * W + ii;
+      if (seen[q] || !act[q]) continue;
+      seen[q] = 1; par[q] = k; push(q, Math.max(hp[q], v + 0.01));
+    }
+  }
+  const acc = new Float32Array(N);
+  for (let t = no - 1; t >= 0; t--) { const k = order[t]; acc[k] += 1; if (par[k] >= 0) acc[par[k]] += acc[k]; }
+  // segments for channels draining at least AMIN cells; each node a little off its cell's centre (no grid shows)
+  const AMIN = 6, segs = [];
+  const node = k => { const i = k % W, j = (k / W) | 0; return [X0 + (i + 0.5 + 0.7 * (GEN.hash2(i, j, 51) - 0.5)) * RES, Y1 - (j + 0.5 + 0.7 * (GEN.hash2(i, j, 52) - 0.5)) * RES]; };
+  for (let t = 0; t < no; t++) {
+    const k = order[t], p = par[k];
+    if (p < 0 || acc[k] < AMIN) continue;
+    const a = node(k), b = node(p);
+    segs.push(a[0], a[1], b[0], b[1], acc[k]);
+  }
+  return Float32Array.from(segs);
+}
+
 function build(GEO) {
   const cv = document.createElement('canvas');
   cv.width = W; cv.height = H;
@@ -180,9 +233,11 @@ function build(GEO) {
   ch[1] = boxBlur(landRaw, W, H, 18, 3);
   // rivers cut through the branch ridges (a branch must never dam a river the books run through its valley)
   begin(); lines(GEO.RIVERS, f => (f.rank <= 2 ? 22 : 14) / RES, () => 1); const rmask = boxBlur(grab(), W, H, 2, 2);
-  ch[2] = boxBlur(rangeField(GEO.RANGES, rmask), W, H, 1, 2);
+  const rf = rangeField(GEO.RANGES, rmask);
+  ch[2] = boxBlur(rf, W, H, 1, 2);
   begin(); lines(GEO.HILLS, f => f.w / RES, f => f.h / 1200); polys(GEO.RELIEF || [], f => f.v); ch[3] = boxBlur(grab(), W, H, 2, 2);
   { const foot = boxBlur(ch[2], W, H, 7, 3); for (let i = 0; i < foot.length; i++) ch[3][i] = Math.max(ch[3][i], Math.min(255, foot[i] * 1.6)); }
+  const valleys = drainage(ch[2], ch[3], rmask);
   begin(); polys(GEO.FORESTS, f => f.dens); ch[4] = boxBlur(grab(), W, H, 1, 2);
   begin(); polys(GEO.FORESTS.filter(f => f.gold), f => f.gold); ch[5] = boxBlur(grab(), W, H, 1, 2);
   begin(); polys(GEO.FORESTS.filter(f => f.dark), f => f.dark); ch[6] = boxBlur(grab(), W, H, 2, 2);
@@ -291,6 +346,7 @@ function build(GEO) {
     numenor: GEO.NUMENOR,
     // river mouths and harbours the coast is pinned to (src/shores.js): the renderer's own wobble of the shore fades out there
     pins: SH && SH.pins || [],
+    valleys,
     tex: TEX,
     // river mouths: where each river reaching the sea ends, for sediment plumes in the imagery
     mouths: GEO.RIVERS.filter(r => r.w1 >= 40).map(r => { const p = r.pts[r.pts.length - 1]; return { x: p[0], y: p[1], w: r.w1 }; }),
