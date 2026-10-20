@@ -97,7 +97,9 @@ function rangeField(RANGES0, rmask) {
   const sst = (a, b, x) => { const t = Math.max(0, Math.min(1, (x - a) / (b - a))); return t * t * (3 - 2 * t); };
   const n1 = (x, k) => GEN.noise(x, k);
   const ends = RANGES.map(r => [r.pts[0], r.pts[r.pts.length - 1]]);
-  const nearOther = (p, self) => RANGES.some((o, j) => j !== self && o.pts.some(q => Math.hypot(q[0] - p[0], q[1] - p[1]) < 30));
+  // an end that meets another range, or faces another part of the same range across a gap (the Ered Luin, cut by the
+  // Gulf of Lhûn), stays high instead of dying away into foothills
+  const nearOther = (p, self) => RANGES.some((o, j) => j !== self && o.pts.some(q => Math.hypot(q[0] - p[0], q[1] - p[1]) < (o.name === RANGES[self].name ? 70 : 30)));
   RANGES.forEach((r, ri) => {
     const g = r.geo || GEOLOGY[r.name] || { verge: 1, asym: 0.3, folds: 0.3, spurs: 0.6, worn: 0.2 };
     const P = r.pts, S = [0];

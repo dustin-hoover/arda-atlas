@@ -276,8 +276,8 @@ for r in G['RIVERS']:
     f = np.maximum(f, (3 - seg_dist(r['pts'])) * (written > 0.5) - 1e3 * (written <= 0.5))   # on the books' coast only
 # the Gulf of Lhûn, as the books describe it: a long gulf reaching in from the sea to the Grey Havens at its head,
 # Forlond on its northern shore and Harlond on its southern (our own line, from those places' positions)
-gw = seg_dist([(-440, -26), (-370, -14), (-318, -22), (-268, -14), (-226, -19), (-195, -10), (-176, -9)])
-gx = np.clip((Qx[None, :] + 174) / -266, 0, 1)                   # 0 at the head, 1 at the mouth
+gw = seg_dist([(-440, -26), (-370, -14), (-318, -22), (-268, -14), (-226, -19), (-195, -8), (-172, -3), (-152, 0)])
+gx = np.clip((Qx[None, :] + 152) / -288, 0, 1)                   # 0 at the head, 1 at the mouth
 gr = ndimage.gaussian_filter(np.random.RandomState(21).randn(H, W), 3 / RES); gr /= gr.std()
 f = np.minimum(f, gw - (6 + 19 * gx ** 1.2) * (1 + 0.3 * gr))   # wide enough at its head to be drawn
 # places on the coast: on land, with open sea beside them where it lay (at the renderer's scale: its own warp of
@@ -286,10 +286,7 @@ for name, x, y, sx, sy in ANCH['coastal']:
     dx, dy = sx - x, sy - y; l = math.hypot(dx, dy) or 1; dx, dy = dx / l, dy / l
     f = np.minimum(f, disk((x + dx * 25, y + dy * 25)) - 14)          # sea from ~11 miles off
 # river mouths: an estuary along the river's last miles, opening to the sea
-mouths = {m[0]: m for m in ANCH['mouths']}
-for r in G['RIVERS']:
-    if r.get('name') not in mouths: continue
-    name, x, y, sx, sy = mouths[r['name']]
+for name, x, y, sx, sy in ANCH['mouths']:
     dx, dy = sx - x, sy - y; l = math.hypot(dx, dy) or 1; dx, dy = dx / l, dy / l
     f = np.minimum(f, disk((x + dx * 20, y + dy * 20)) - 13)          # open sea beyond the mouth
     f = np.minimum(f, seg_dist([(x - dx * 6, y - dy * 6), (x + dx * 10, y + dy * 10)]) - 4)   # the estuary
@@ -299,8 +296,16 @@ for name, x, y, sx, sy in ANCH['coastal']:
     f = np.maximum(f, 9 - disk((x, y)))
 # the Grey Havens stand on the very shore at the gulf's head (the ground view builds their quays against it):
 # water right up to them from the west, land from them eastward
-f = np.minimum(f, disk((-176, -9)) - 4.5)
-f = np.maximum(f, 5 - disk((-166, -7.6)))
+f = np.maximum(f, 4 - disk((-157, -13.5)))
+# (the Lune enters at the head, just north-east of them)
+# the Mouths of Anduin: the river spreads into a marshy delta below Pelargir and empties into the Bay of Belfalas
+# through many channels; the delta's front is the coast (the fan and channels are in src/geo.js)
+AX, AY = 621.1, -738.2
+rr = disk((AX, AY)); ang = np.degrees(np.arctan2(Qy[:, None] - AY, Qx[None, :] - AX)) % 360
+infan = sstep(150, 162, ang) * sstep(266, 254, ang)
+front = 52 + 5 * gr
+f = np.where(infan > 0.5, np.maximum(f, np.minimum(front - rr, 8)), f)              # the delta is land...
+f = np.where((infan > 0.5) & (rr < front + 22), np.minimum(f, front - rr), f)          # ...and the open bay just beyond it
 land = f > 0
 lab, n = ndimage.label(land)
 main = lab[int((Y1 - 0) / RES), int((0 - X0) / RES)]
