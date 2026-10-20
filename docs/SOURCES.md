@@ -27,6 +27,6 @@ Places: 120. Grades: map 36, warp 49, text 20, atlas 8, invented 7. References c
 | ok | 5 Mar 3019: Théoden and Gandalf come to Isengard at noon; the parley with Saruman. | LR AppB | 0 mi away | ≤ 4 mi |
 | ok | 15 Mar 3019: Aragorn comes up Anduin to the Harlond in the Battle of the Pelennor Fields. | LR AppB | 0 mi away | ≤ 4 mi |
 | ok | 25 Mar 3019: the Ring is destroyed in the Sammath Naur. | LR AppB | 1 mi away | ≤ 4 mi |
-| ok | 29 Sept 3021: Frodo and Bilbo depart over Sea with the Three Keepers. | LR AppB | 0 mi away | ≤ 3 mi |
+| ok | 29 Sept 3021: Frodo and Bilbo depart over Sea with the Three Keepers. | LR AppB | 1 mi away | ≤ 3 mi |
 
 All firm statements hold. "note" marks places where Tolkien's own notes disagree with his published map; the map is kept.

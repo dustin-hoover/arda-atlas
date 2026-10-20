@@ -146,7 +146,7 @@ const placeFeats = PL.map(p => pt(p.X, p.Y, { id: p.id, name: p.name, type: p.ty
 const peakFeats = GEO.PEAKS.filter(p => p.kind !== 'seamount' && !['The Hill', 'Edoras hill', 'Hill of Guard', 'Bree-hill', 'Carrock', 'Dol Guldur', 'Cerin Amroth'].includes(p.name))
   .map(p => pt(p.x, p.y, { name: p.name, icon: p.kind === 'volcano' ? 'i-volcano' : 'i-peak', minz: p.r > 6 ? 6 : 8 }));
 const rangeFeats = GEO.RANGES.filter(r => r.label).map(r => ({ type: 'Feature', geometry: { type: 'LineString', coordinates: lineLL(r.pts) }, properties: { name: r.name.toUpperCase().split('').join(' ') } }));
-const riverFeats = GEO.RIVERS.map(r => ({ type: 'Feature', geometry: { type: 'LineString', coordinates: lineLL(r.pts) }, properties: { name: /Rivers of|Southern|Great River of|River of the East|Red River/.test(r.name) ? '' : r.name, rank: r.rank } }));
+const riverFeats = GEO.RIVERS.map(r => ({ type: 'Feature', geometry: { type: 'LineString', coordinates: lineLL(r.pts) }, properties: { name: r.nolabel || /Rivers of|Southern|Great River of|River of the East|Red River/.test(r.name) ? '' : r.name, rank: r.rank } }));
 const lakeFeats = GEO.LAKES.map(l => ({ type: 'Feature', geometry: { type: 'Polygon', coordinates: [ring(l)] }, properties: { name: l.name } }));
 const forestLabelFeats = GEO.FORESTS.filter(f => !/woods of|forests of|taiga|eastern woods|woods of lindon|Forest of the Beornings/i.test(f.name)).map(f => { const c = centroid(f.pts); return pt(c[0], c[1], { name: f.name, big: f.pts.length > 12 ? 1 : 0 }); });
 const marshLabelFeats = GEO.MARSHES.filter(m => !/Southern/.test(m.name)).map(m => { const c = centroid(m.pts); return pt(c[0], c[1], { name: m.name }); });
@@ -1007,7 +1007,7 @@ const INDEX = [];
 PL.forEach(p => INDEX.push({ name: p.name, alt: p.realm, kind: p.type, X: p.X, Y: p.Y, place: p }));
 GEO.PEAKS.filter(p => p.kind !== 'seamount').forEach(p => { if (!PLN[p.name]) INDEX.push({ name: p.name, alt: p.alt, kind: 'peak', X: p.x, Y: p.y, peak: p }); });
 GEO.RANGES.filter(r => r.label).forEach(r => { const m = r.pts[Math.floor(r.pts.length / 2)]; INDEX.push({ name: r.name, alt: r.alt, kind: 'range', X: m[0], Y: m[1] }); });
-GEO.RIVERS.filter(r => r.rank <= 4 && !/Rivers of|Southern|Great River|River of the East|Red River/.test(r.name)).forEach(r => { const m = r.pts[Math.floor(r.pts.length / 2)]; INDEX.push({ name: r.name, alt: r.alt, kind: 'river', X: m[0], Y: m[1] }); });
+GEO.RIVERS.filter(r => r.rank <= 4 && !r.nolabel && !/Rivers of|Southern|Great River|River of the East|Red River/.test(r.name)).forEach(r => { const m = r.pts[Math.floor(r.pts.length / 2)]; INDEX.push({ name: r.name, alt: r.alt, kind: 'river', X: m[0], Y: m[1] }); });
 GEO.LAKES.forEach(l => { const c = centroid(l.pts); INDEX.push({ name: l.name, alt: l.alt, kind: 'lake', X: c[0], Y: c[1] }); });
 GEO.FORESTS.filter(f => !/woods of|forests of|taiga|eastern woods/i.test(f.name)).forEach(f => { const c = centroid(f.pts); INDEX.push({ name: f.name, alt: f.alt, kind: 'forest', X: c[0], Y: c[1] }); });
 GEO.MARSHES.forEach(m => { const c = centroid(m.pts); INDEX.push({ name: m.name, alt: m.alt, kind: 'marsh', X: c[0], Y: c[1] }); });

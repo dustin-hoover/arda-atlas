@@ -100,7 +100,7 @@ const CH = { land:0, cont:1, mtn:2, hill:3, forest:4, gold:5, dark:6, marsh:7, a
 function init(data) {
   M = data.main; G = data.glob; PEAKS = data.peaks || []; RANGEPAL = data.ranges || []; NUM = data.numenor; FLATS = data.flats || [];
   if (data.vectors) initVectors(data.vectors);
-  initTex(data.tex); MOUTHS = data.mouths || [];
+  initTex(data.tex); MOUTHS = data.mouths || []; PINS = data.pins || [];
 }
 
 /* ---------------- photographic land cover ----------------
@@ -109,7 +109,7 @@ function init(data) {
    mip pyramids of brightness ratios (patch / its mean), sampled in world metres at the pixel's footprint, twice at
    different rotations and offsets mixed by noise so the repeat does not show. The colour is the analogue's own mean
    colour times that detail. */
-let TX = null, MOUTHS = [];
+let TX = null, MOUTHS = [], PINS = [];
 // bright specks in a forest patch (tracks, a stream, a slip) repeat as marks: forests keep only gentle highlights
 const CLAMP = { forest: 1.2, beech: 1.25, taiga: 1.25 };
 const TXI = {};
@@ -341,8 +341,11 @@ function peakAt(X, Y, pix) {
 function evaluate(X, Y, pix) {
   R.mt = 0; R.vly = 0;
   // domain warp for organic outlines
-  const w1x = fbm(X * 0.0062 + 11.3, Y * 0.0062 + 7.1, 3) * 4, w1y = fbm(X * 0.0062 - 5.2, Y * 0.0062 + 19.7, 3) * 4;
-  const w2x = noise(X * 0.035 + 3.3, Y * 0.035 - 1.1) * 3.2, w2y = noise(X * 0.035 - 8.4, Y * 0.035 + 2.2) * 3.2;
+  // (none at the river mouths and harbours the coast is pinned to: the shore stays where it was put)
+  let pk = 1;
+  for (let i = 0; i < PINS.length; i++) { const dx = X - PINS[i][0], dy = Y - PINS[i][1], d2 = dx * dx + dy * dy; if (d2 < 400) pk = Math.min(pk, sstep(2, 20, Math.sqrt(d2))); }
+  const w1x = fbm(X * 0.0062 + 11.3, Y * 0.0062 + 7.1, 3) * 4 * pk, w1y = fbm(X * 0.0062 - 5.2, Y * 0.0062 + 19.7, 3) * 4 * pk;
+  const w2x = noise(X * 0.035 + 3.3, Y * 0.035 - 1.1) * 3.2 * pk, w2y = noise(X * 0.035 - 8.4, Y * 0.035 + 2.2) * 3.2 * pk;
   const WX = X + w1x + w2x, WY = Y + w1y + w2y;
   const ll = toLL(WX, WY);
   const lat = LAT0 + Y / MLAT, lon = ll[0];
@@ -366,7 +369,7 @@ function evaluate(X, Y, pix) {
   }
 
   const cd = fbmA(X, Y, 28, Math.max(pix * 1.2, 0.0015), 0.92, 1);
-  const s = land - 0.5 + cd * 0.2;
+  const s = land - 0.5 + cd * 0.2 * (0.25 + 0.75 * pk);
   R.s = s; R.stream = 0;
   let h;
   if (s > 0) {
@@ -507,29 +510,28 @@ function blend(r, g, b, t) { tmp3[0] += (r - tmp3[0]) * t; tmp3[1] += (g - tmp3[
 // farmland: Voronoi parcels subdivided into strip fields, with hedgerows
 const FC = [[190,170,112],[170,152,104],[150,140,96],[104,124,66],[88,112,58],[124,104,78],[112,92,70],[140,134,90],[96,116,64],[118,128,74]];
 function fields(X, Y, cell, pix, hobbit) {
-  // a rotated grid of blocks; each block split into strips of varying width
-  const th = 0.6 * noise(X * 0.05 + 11, Y * 0.05 - 7) + (hobbit ? 0.3 : 0.9);
-  const c = Math.cos(th), s = Math.sin(th);
-  let u = (X * c + Y * s) / cell, v = (-X * s + Y * c) / cell;
-  u += 0.18 * noise(u * 0.35, v * 0.35); v += 0.18 * noise(u * 0.35 + 5, v * 0.35 - 3);
-  const bi = Math.floor(u), bj = Math.floor(v * 0.7);
-  const fu = u - bi, fv = v * 0.7 - bj;
-  const pid = hash2(bi, bj, 11);
-  const vert = hash2(bi, bj, 13) < 0.5;
-  const ns = 1 + Math.floor(hash2(bi, bj, 15) * (hobbit ? 3 : 5));
-  const q = vert ? fu : fv;
-  const sid = Math.floor(q * ns);
-  const k = hash2(sid + bi * 7, bj, 17);
-  let col;
-  if (pid < 0.3) col = FC[3 + Math.floor(k * 2)];
-  else col = FC[Math.floor(k * FC.length)];
-  const eu = Math.min(fu, 1 - fu) * cell, ev = Math.min(fv, 1 - fv) * cell / 0.7;
-  const es = Math.min(q * ns - sid, sid + 1 - q * ns) / ns * cell * (vert ? 1 : 1 / 0.7);
-  const edge = Math.min(eu, ev);
+  // irregular parcels (a jittered lattice in a warped frame that turns slowly across the land, so no two farms line
+  // up): each parcel its own crop, stubble or plough and its own furrow direction, hedged round
+  const th0 = 0.9 * noise(X * 0.03 + 11, Y * 0.03 - 7) + (hobbit ? 0.3 : 0.9);
+  const c = Math.cos(th0), s = Math.sin(th0);
+  const wx = X + cell * 0.3 * noise(X / cell * 0.35, Y / cell * 0.35), wy = Y + cell * 0.3 * noise(X / cell * 0.35 + 7, Y / cell * 0.35 - 3);
+  const sz = 1 + 0.35 * noise(X * 0.07 - 5, Y * 0.07 + 2);           // farms of larger and smaller fields
+  const u = (wx * c + wy * s) / (cell * sz), v = (-wx * s + wy * c) / (cell * sz * 0.72);
+  const iu = Math.floor(u), iv = Math.floor(v);
+  let d1 = 9, d2 = 9, ci = 0, cj = 0;
+  for (let j = -1; j <= 1; j++) for (let i = -1; i <= 1; i++) {
+    const a = iu + i, b = iv + j;
+    const dx = u - (a + 0.1 + 0.8 * hash2(a, b, 31)), dy = v - (b + 0.1 + 0.8 * hash2(a, b, 32)), d = dx * dx + dy * dy;
+    if (d < d1) { d2 = d1; d1 = d; ci = a; cj = b; } else if (d < d2) d2 = d;
+  }
+  const edge = (Math.sqrt(d2) - Math.sqrt(d1)) * 0.5 * cell * sz * 0.8;     // miles to the parcel's edge (near enough)
+  const pid = hash2(ci, cj, 11), k = hash2(ci, cj, 17);
+  const col = pid < 0.3 ? FC[3 + Math.floor(k * 2)] : FC[Math.floor(k * FC.length)];
+  const th = th0 + (hash2(ci, cj, 19) - 0.5) * 1.2, ct = Math.cos(th), st = Math.sin(th);
   const hedgeW = hobbit ? 0.006 : 0.004;
-  let hedge = edge < hedgeW + pix * 0.5 ? sat(1 - (edge - hedgeW) / (pix + 1e-6)) : 0;
-  if (es < 0.0015 + pix * 0.5 && pid >= 0.3 && pix < 0.006) hedge = Math.max(hedge, 0.2 * sat(1 - (es - 0.0015) / (pix + 1e-6)));
-  const tram = (pix < cell * 0.03) ? 0.05 * Math.sin((vert ? fv : fu) * cell / 0.004) : 0;
+  // (only where a hedge is at least a pixel and a half wide: thinner lines shimmer into moiré in tilted views)
+  const hedge = edge < hedgeW + pix * 0.5 ? sat(1 - (edge - hedgeW) / (pix + 1e-6)) * sstep(hedgeW * 1.4, hedgeW * 0.6, pix) : 0;
+  const tram = 0.05 * Math.sin((X * ct + Y * st) / 0.004) * sstep(0.0035, 0.0015, pix);   // furrows, only where several pixels apart
   const trees = hedge > 0.5 && hash2(Math.floor(X / 0.007), Math.floor(Y / 0.007), 21) < 0.3 ? 1 : 0;
   const orch = pid >= 0.3 && pid < 0.42 && edge > 0.008 ? 1 : 0;      // orchard parcel
   return [col[0] * (1 + tram), col[1] * (1 + tram), col[2] * (1 + tram), hedge, trees, orch, th];
@@ -620,7 +622,7 @@ function colorAt(X, Y, h, slope, pix, mode, dsea) {
   const T = tempAt(lat, h);
   const Mst = moistAt(X, Y, lat, wm);
   const arid = F[8];
-  PL.n = 0; FIELDV = 0;
+  PL.n = 0; FIELDV = 0; FDN = 0; FARMP = 0;
   // ---- base ground ----
   const veg = sat(Mst * 1.35 - 0.15);
   setc(134, 124, 84);                            // dry steppe
@@ -685,7 +687,7 @@ function colorAt(X, Y, h, slope, pix, mode, dsea) {
     const pf = sstep(0.25, 0.6, farm + 0.35 * fbm(X * 0.08 + 3, Y * 0.08, 3));
     const favg = 0.5 * pf;
     plAdd(hob || lat > 49 ? 'pasture' : 'arable', pf * 0.95);
-    if (pix < cell * 0.22) {
+    if (pix < cell * 0.1) {
       const f = fields(X, Y, cell, pix, hob);
       const t = sat((cell * 0.22 - pix) / (cell * 0.12)) * pf;
       FIELDV = t * 0.85;
@@ -700,10 +702,19 @@ function colorAt(X, Y, h, slope, pix, mode, dsea) {
         if (o) { const cr = sat((r - o.d) / Math.max(pix, 0.0003) + 0.5); blend(54, 86, 38, cr * t * sat((0.006 - pix) / 0.003)); }
       }
     } else {
-      blend(118, 128, 76, favg);
+      // middle zoom: single fields are too small to draw, but the patchwork still shows (each run of fields its own
+      // crop or stubble); further out the blocks of farms, then only their average and the regional variety
+      // (each level fades out before its parcels shrink to a couple of pixels: no shimmer or moiré)
+      const ta = pf * sstep(cell * 0.6, cell * 0.25, pix), tb = pf * sstep(cell * 3.2, cell * 1.2, pix) * (1 - ta / Math.max(pf, 1e-6));
+      blend(118, 128, 76, favg * (1 - ta - tb));
+      if (tb > 0.01) { const f = fields(X + 31, Y - 17, cell * 5, pix, hob); blend(f[0], f[1], f[2], tb * 0.7); }
+      if (ta > 0.01) { const f = fields(X, Y, cell, pix, hob); blend(f[0], f[1], f[2], ta * 0.8); }
+      const t = ta + tb;
+      FIELDV = t;
       const fn = fbm(X / cell * 0.8, Y / cell * 0.8, 3);
-      tmp3[0] *= 1 + 0.08 * fn * pf; tmp3[1] *= 1 + 0.06 * fn * pf;
+      tmp3[0] *= 1 + 0.08 * fn * pf * (1 - t); tmp3[1] *= 1 + 0.06 * fn * pf * (1 - t);
     }
+    FARMP = pf;
   }
   // natural woodland and forests
   let fd = F[4];
@@ -727,7 +738,16 @@ function colorAt(X, Y, h, slope, pix, mode, dsea) {
     if (RP.w > 0) { fr *= tw('f', 0); fg *= tw('f', 1); fb *= tw('f', 2); }
     const mott = fbmA(X, Y, 0.6, Math.max(pix, 0.002), 0.7, 9);
     fr *= 1 + 0.12 * mott; fg *= 1 + 0.14 * mott; fb *= 1 + 0.1 * mott;
-    let dens = sstep(0.3, 0.52, fd + 0.28 * fbmA(X, Y, 4, Math.max(pix, 0.003), 0.8, 40));
+    // the edge is a ragged zone, never a line: the canopy breaks into clumps and lone trees, then scrub, then grass
+    const en = fbmA(X, Y, 10, Math.max(pix, 0.003), 0.8, 40), cl = fbmA(X, Y, 0.35, Math.max(pix, 0.002), 0.85, 41);
+    let dens = sstep(0.32, 0.5, fd + 0.38 * en + 0.1 * cl);
+    // glades and thinner stands inside the wood (heath, bog, windthrow, old clearings)
+    dens *= 1 - 0.55 * sstep(0.3, 0.5, fbmA(X * 0.9 + 40, Y * 0.9, 3, Math.max(pix, 0.01), 0.8, 42)) * sat(fd * 1.5);
+    const fringe = sstep(0.08, 0.3, fd + 0.15 * en) * (1 - dens);
+    if (fringe > 0) {
+      blend(70, 82, 48, fringe * 0.35);                                   // scrub and bracken before the trees
+      dens = Math.max(dens, fringe * sstep(0.25, 0.5, cl + 0.25 * sat(fd * 2)) * 0.95);   // copses and lone trees
+    }
     if (pix < 0.008) {
       const c = canopy(X, Y, gold > 0.5 ? 0.012 : 0.0065);
       const gap = c < -0.5;
@@ -736,6 +756,7 @@ function colorAt(X, Y, h, slope, pix, mode, dsea) {
       fr *= lit; fg *= lit; fb *= lit;
     }
     blend(fr, fg, fb, dens);
+    FDN = dens;
     plAdd(T < 2 || Math.abs(lat) > 64 ? 'taiga' : (R.mt > 0.3 || gold > 0.3 || conifer > 0.6) ? 'beech' : 'forest', dens * (dk > 0.5 ? 1 : 0.95));
   }
   // marsh
@@ -787,6 +808,7 @@ function colorAt(X, Y, h, slope, pix, mode, dsea) {
     plAdd('neve', snow);
   }
   if (PL.n) photo(X, Y, pix);
+  groundVariety(X, Y, pix, (1 - desert) * (1 - snow) * (1 - rock) * (1 - sat(ash * 2)) * (1 - marsh), veg, T);
   // beaches
   if (s < 0.025 && h < 8 && slope < 0.5) blend(204, 190, 152, sat(1 - s / 0.025) * 0.8);
   // lakes at coarse scale
@@ -797,7 +819,36 @@ function colorAt(X, Y, h, slope, pix, mode, dsea) {
 /* Repaint the land from the real patches gathered in PL, layer over layer as the procedural colour was built, and
    lay the result over it (keeping a little of the procedural colour, which carries the analogue tints). */
 const pc = [0, 0, 0];
-let FIELDV = 0;
+let FIELDV = 0, FDN = 0, FARMP = 0;
+/* After the real patches: the variety real imagery has at every scale, which the patches lose where they are too
+   small to draw (from orbit and middle zoom) - regional tone (soils, moisture: tens of miles), a mosaic of wild
+   ground (dry grass, bracken, heath, scrub: miles down to yards) and the texture of canopy. Never flat at any scale. */
+function groundVariety(X, Y, pix, vegShare, veg, T) {
+  const r1 = fbmA(X, Y, 140, Math.max(pix * 2, 8), 0.7, 71), r2 = fbmA(X, Y, 35, Math.max(pix * 2, 2.5), 0.6, 72);
+  const k = 1 + 0.06 * r1 + 0.05 * r2;
+  tmp3[0] *= k + 0.05 * r2; tmp3[1] *= k + 0.01 * r1; tmp3[2] *= k - 0.03 * r2;
+  if (vegShare <= 0.02) return;
+  const wild = vegShare * (1 - FARMP * 0.9) * (1 - FDN);
+  if (wild > 0.02) {
+    // patches of a few miles down to a few hundred yards, with irregular (warped) outlines
+    // (turned off the noise lattice and warped, so no patch shows the grid it was drawn on)
+    const qx = X * 0.83 - Y * 0.56, qy = X * 0.56 + Y * 0.83;
+    const wx = qx + 2.6 * fbm(qx * 0.16 + 3, qy * 0.16, 3), wy = qy + 2.6 * fbm(qx * 0.16, qy * 0.16 - 7, 3);
+    const a = fbmA(wx, wy, 5, Math.max(pix * 1.5, 0.02), 0.75, 73), b = fbmA(wy * 0.97 + 9, -wx * 0.97, 1.4, Math.max(pix * 1.5, 0.008), 0.8, 74);
+    const temperate = sstep(-2, 4, T) * (1 - sstep(20, 26, T));
+    blend(156, 142, 98, sstep(0.12, 0.42, a) * 0.32 * wild);                               // dry grass, sun-bleached
+    blend(100, 104, 60, sstep(0.05, 0.3, b) * sstep(-0.3, 0.1, a) * 0.3 * wild * temperate);  // bracken and rough grazing
+    blend(50, 66, 38, sstep(0.22, 0.45, -b) * sstep(-0.25, 0.15, -a) * 0.42 * wild * veg);   // scrub, gorse and thicket
+    blend(110, 94, 76, sstep(0.25, 0.5, -a) * sstep(-0.1, 0.25, b) * 0.28 * wild);         // heath
+  }
+  if (FDN > 0.02) {
+    // canopy: clusters of crowns lit and shaded, and gaps (seen from middle zoom, where single crowns are too small)
+    // and stands of different age and kind: lighter broadleaf, darker conifer, in patches of a mile or two
+    const c1 = fbmA(X, Y, 0.9, Math.max(pix * 1.2, 0.006), 0.85, 75), c2 = fbmA(X, Y, 6, Math.max(pix * 1.5, 0.05), 0.7, 76);
+    const kk = 1 + FDN * (0.24 * c1 * sstep(0.003, 0.012, pix) + 0.16 * c2);
+    tmp3[0] *= kk * (1 + 0.06 * c2 * FDN); tmp3[1] *= kk * (1 + 0.04 * c2 * FDN); tmp3[2] *= kk;
+  }
+}
 function photo(X, Y, pix) {
   let i0 = 0;
   for (let i = PL.n - 1; i > 0; i--) if (PL.t[i] > 0.985) { i0 = i; break; }

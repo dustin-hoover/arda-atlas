@@ -289,6 +289,8 @@ function build(GEO) {
     })(),
     flats: GEO.PLACES.filter(p => p[7] && p[7].r >= 0.3 && p[7].culture !== 'minastirith').map(p => ({ x: p[2], y: p[3], r: p[7].r * 1.6 + 0.3, lift: p[7].culture === 'hobbit' ? 30 : 20, sea: p[1] === 'port' ? 1 : 0 })),
     numenor: GEO.NUMENOR,
+    // river mouths and harbours the coast is pinned to (src/shores.js): the renderer's own wobble of the shore fades out there
+    pins: SH && SH.pins || [],
     tex: TEX,
     // river mouths: where each river reaching the sea ends, for sediment plumes in the imagery
     mouths: GEO.RIVERS.filter(r => r.w1 >= 40).map(r => { const p = r.pts[r.pts.length - 1]; return { x: p[0], y: p[1], w: r.w1 }; }),

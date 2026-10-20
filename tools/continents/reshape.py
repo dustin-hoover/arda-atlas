@@ -205,6 +205,7 @@ BEND = (ndimage.gaussian_filter(rw.randn(H, W), 380 / RES) + 1j * ndimage.gaussi
 BEND *= 190.0 / np.abs(BEND).std()                                # miles: broad lobes and bights on the unwritten coasts
 written = np.zeros((H, W))
 for sec in SECTORS:
+    if os.environ.get('FAST') and os.path.exists(os.path.join(CACHE, 'field_pre_pins.npz')): break
     sa, sb = sec['sa'], sec['sb']
     if sec.get('written'):
         st = build_strip(sec)
@@ -271,41 +272,94 @@ pd = ndimage.distance_transform_edt(~prot) * RES
 rng = np.random.RandomState(11)
 ragged = ndimage.gaussian_filter(rng.randn(H, W), 6 / RES); ragged /= ragged.std()
 f = np.maximum(f, 25 + 9 * ragged - pd)
-# rivers run on land to their mouths
+# (FAST=1 reuses the field computed up to here by the last full run, for quick work on what follows)
+_ck = os.path.join(CACHE, 'field_pre_pins.npz')
+if os.environ.get('FAST') and os.path.exists(_ck): _z = np.load(_ck); f = _z['f']; written = _z['written']
+else: np.savez_compressed(_ck, f=f, written=written)
+# the rivers' mouths and the places on the coast are pinned exactly, at the end (below); before that, a report of
+# where each river first meets this coast (REPORT=1 prints it; the rivers in src/geo.js were trimmed from it)
+def ocean_of(f):
+    lab, n = ndimage.label(f > 0)
+    return ~ndimage.binary_fill_holes(lab == lab[int((Y1 - 0) / RES), int((0 - X0) / RES)])
+def on(f, p):
+    i, j = int((p[0] - X0) / RES), int((Y1 - p[1]) / RES)
+    return 0 <= i < W and 0 <= j < H and f[j, i] > 0
+if os.environ.get('REPORT'):
+    for r in G['RIVERS']:
+        pts, _ = dense(r['pts'], 0.5); runs, cur = [], None
+        for k, q in enumerate(pts):
+            if not on(f, q): cur = cur or [k, k]; cur[1] = k
+            elif cur: runs.append(cur); cur = None
+        if cur: runs.append(cur)
+        for a0, a1 in runs:
+            if (a1 - a0) * 0.5 > 0.75: print('%-22s over sea %.1f mi from (%.1f, %.1f)%s' % (r['name'], (a1 - a0) * 0.5, *pts[a0], ' to its end' if a1 == len(pts) - 1 else ''))
+    sys.exit()
+# rivers run on land: on the books' coast in a narrow strip, in the unwritten lands the coast gives way to them
+# (the borrowed Earth shores there had bays and gulfs across their courses; the books' and early maps' rivers
+# cross land to the sea)
+wr = np.zeros((H, W), bool)
+# the unwritten lands (as the renderer reckons them, src/rasters.js): east of Rhûn, the far south, the north
+QX, QY = Qx[None, :], Qy[:, None]
+unwr = (sstep(1300, 1700, QX) + sstep(-1250, -1650, QY) + sstep(420, 560, QY) > 0.5) & (written <= 0.5)
+ocean_pre = ocean_of(f)
 for r in G['RIVERS']:
-    f = np.maximum(f, (3 - seg_dist(r['pts'])) * (written > 0.5) - 1e3 * (written <= 0.5))   # on the books' coast only
+    d = seg_dist(r['pts'])
+    f = np.maximum(f, np.where(unwr, -1e3, 3 - d))
+    band = 30 + 8 * ragged - d
+    f = np.maximum(f, np.where(unwr, band, -1e3)); wr |= (band > -4) & unwr
 # the Gulf of Lhûn, as the books describe it: a long gulf reaching in from the sea to the Grey Havens at its head,
 # Forlond on its northern shore and Harlond on its southern (our own line, from those places' positions)
-gw = seg_dist([(-440, -26), (-370, -14), (-318, -22), (-268, -14), (-226, -19), (-195, -8), (-172, -3), (-152, 0)])
-gx = np.clip((Qx[None, :] + 152) / -288, 0, 1)                   # 0 at the head, 1 at the mouth
+gw = seg_dist([(-440, -26), (-370, -14), (-318, -22), (-268, -14), (-226, -19), (-195, -8), (-176, -4), (-163, -7)])
+gx = np.clip((Qx[None, :] + 163) / -277, 0, 1)                   # 0 at the head, 1 at the mouth
 gr = ndimage.gaussian_filter(np.random.RandomState(21).randn(H, W), 3 / RES); gr /= gr.std()
-f = np.minimum(f, gw - (6 + 19 * gx ** 1.2) * (1 + 0.3 * gr))   # wide enough at its head to be drawn
-# places on the coast: on land, with open sea beside them where it lay (at the renderer's scale: its own warp of
-# the coast reaches ~7 miles, its land raster is 4 miles a pixel)
-for name, x, y, sx, sy in ANCH['coastal']:
-    dx, dy = sx - x, sy - y; l = math.hypot(dx, dy) or 1; dx, dy = dx / l, dy / l
-    f = np.minimum(f, disk((x + dx * 25, y + dy * 25)) - 14)          # sea from ~11 miles off
-# river mouths: an estuary along the river's last miles, opening to the sea
-for name, x, y, sx, sy in ANCH['mouths']:
-    dx, dy = sx - x, sy - y; l = math.hypot(dx, dy) or 1; dx, dy = dx / l, dy / l
-    f = np.minimum(f, disk((x + dx * 20, y + dy * 20)) - 13)          # open sea beyond the mouth
-    f = np.minimum(f, seg_dist([(x - dx * 6, y - dy * 6), (x + dx * 10, y + dy * 10)]) - 4)   # the estuary
-# the coastal places themselves stay on land, last of all (a harbour town at a river mouth keeps its ground)
-for name, x, y, sx, sy in ANCH['coastal']:
-    if name == 'Mithlond': continue
-    f = np.maximum(f, 9 - disk((x, y)))
-# the Grey Havens stand on the very shore at the gulf's head (the ground view builds their quays against it):
-# water right up to them from the west, land from them eastward
-f = np.maximum(f, 4 - disk((-157, -13.5)))
-# (the Lune enters at the head, just north-east of them)
+f = np.minimum(f, gw - (4 + 21 * gx ** 1.2) * (1 + 0.3 * gr))
 # the Mouths of Anduin: the river spreads into a marshy delta below Pelargir and empties into the Bay of Belfalas
-# through many channels; the delta's front is the coast (the fan and channels are in src/geo.js)
+# through many channels; the delta's front is the coast (the fan and channels are in src/geo.js, which end on it)
 AX, AY = 621.1, -738.2
 rr = disk((AX, AY)); ang = np.degrees(np.arctan2(Qy[:, None] - AY, Qx[None, :] - AX)) % 360
 infan = sstep(150, 162, ang) * sstep(266, 254, ang)
-front = 52 + 5 * gr
+front = 53.5 + 1.5 * gr
 f = np.where(infan > 0.5, np.maximum(f, np.minimum(front - rr, 8)), f)              # the delta is land...
-f = np.where((infan > 0.5) & (rr < front + 22), np.minimum(f, front - rr), f)          # ...and the open bay just beyond it
+f = np.where((infan > 0.5) & (rr < front + 22), np.minimum(f, front - rr), f)          # ...and the open Bay of Belfalas beyond it,
+bay = sstep(170, 180, ang) * sstep(266, 254, ang) * sstep(front + 60, front + 40, rr)  # reaching in (south of the Gilrain) to meet it
+f = np.where(bay > 0.5, np.minimum(f, (front - rr) * 0.5 - 3 * (bay - 0.5)), f)
+
+# pins: at each river mouth and coastal place the shore runs straight across, a fraction of a mile seaward of it,
+# the borrowed detail fading back in over ~20 miles; where no sea lay near, a channel is cut to the open sea (the
+# coast drawn in to the place). The coast is traced from this field at sub-mile accuracy (below).
+def pin(f, p, d, off, rin, rout):
+    proj = (Qx[None, :] - p[0]) * d[0] + (Qy[:, None] - p[1]) * d[1]
+    w = sstep(rout, rin, disk(p))
+    return f * (1 - w) + np.clip(off - proj, -3, 3) * w
+def channel(f, p, d, off):
+    s = (p[0] + d[0] * (off + 1.5), p[1] + d[1] * (off + 1.5))
+    sea = ocean_of(f) & (f < -2)
+    i, j = int((s[0] - X0) / RES), int((Y1 - s[1]) / RES)
+    if sea[j, i]: return f
+    dist, ix = ndimage.distance_transform_edt(~sea, return_indices=True)
+    t = (X0 + (ix[1][j, i] + 0.5) * RES, Y1 - (ix[0][j, i] + 0.5) * RES)
+    print('  channel %.0f mi from (%.0f, %.0f)' % (math.dist(s, t), *p), file=sys.stderr)
+    dx, dy = t[0] - s[0], t[1] - s[1]; l2 = dx * dx + dy * dy or 1
+    u = np.clip(((Qx[None, :] - s[0]) * dx + (Qy[:, None] - s[1]) * dy) / l2, 0, 1)
+    dd = np.hypot(Qx[None, :] - s[0] - u * dx, Qy[:, None] - s[1] - u * dy)
+    return np.minimum(f, dd - (2.5 + 4 * u))
+def unit(a, b): l = math.hypot(b[0] - a[0], b[1] - a[1]) or 1; return ((b[0] - a[0]) / l, (b[1] - a[1]) / l)
+PINS = [(m[0], (m[1], m[2]), unit(m[1:3], m[3:5]), 0.5) for m in ANCH['mouths']] + \
+       [(c[0], (c[1], c[2]), unit(c[1:3], c[3:5]), 0.6) for c in ANCH['coastal']]
+for name, p, d, off in PINS:
+    tight = name in ('Mithlond', 'Lhûn') or name.startswith('Ethir') or name == 'Anduin'
+    f = pin(f, p, d, off, 1.5 if tight else 3, 4 if tight else 10)
+for name, p, d, off in PINS:
+    f = channel(f, p, d, off)
+for name, p, d, off in PINS:                                      # again, last: a channel must not take a pin's ground
+    f = pin(f, p, d, off, 1.0, 2.5)
+# gulfs and bays the rivers' land has now closed off from the sea were never there: fill them
+lab0, _ = ndimage.label(f > 0)
+hole = ndimage.binary_fill_holes(lab0 == lab0[int((Y1 - 0) / RES), int((0 - X0) / RES)]) & (f <= 0)
+hl, hn = ndimage.label(hole)
+for k in range(1, hn + 1):
+    m = hl == k
+    if (m & wr & ocean_pre).any(): f[m] = np.maximum(f[m], 1.0); print('  filled a closed-off sea of', int(m.sum() * RES * RES), 'sq mi', file=sys.stderr)
 land = f > 0
 lab, n = ndimage.label(land)
 main = lab[int((Y1 - 0) / RES), int((0 - X0) / RES)]
@@ -327,7 +381,15 @@ def rings(mask, min_area, tol=0.7):
         out.append([[round(X0 + (c - 0.5) * RES, 1), round(Y1 - (rr - 0.5) * RES, 1)] for rr, c in r[:-1]])
     return out
 
-coast = max(rings(mainland, 1e6, tol=0.6), key=len)
+# the mainland's outline from the field itself (interpolated between grid points, so pins land within a fraction
+# of a mile, not a whole 2-mile cell); its lakes and seas are traced apart, below
+fm = np.clip(f, -6, 6)
+fm = np.where(ndimage.binary_dilation(mainland, iterations=3), fm, -6)
+fm = np.where(ndimage.binary_erosion(mainland, iterations=3), 6, fm)
+cs = find_contours(np.pad(fm, 1, constant_values=-6), 0.0)
+r = approximate_polygon(max(cs, key=len), tolerance=0.18)
+coast = [[round(X0 + (c - 0.5) * RES, 2), round(Y1 - (q - 0.5) * RES, 2)] for q, c in r[:-1]]
+if area(coast) > 0: coast = coast[::-1]
 islands = [r for r in rings(land & ~mainland, 40) if not any(math.dist(r[0], i['pts'][0]) < 30 for i in G['ISLANDS'])]
 inland_seas = rings(seas, 600)
 print('coast pts', len(coast), 'islands', len(islands), 'inland seas', len(inland_seas), file=sys.stderr)
@@ -374,7 +436,8 @@ js = ('/* Shores for the unwritten edges of Arda, made from Earth\'s coastlines 
       '   tools/continents/reshape.py; Natural Earth data, public domain). coast replaces GEO.COAST for drawing the land:\n'
       '   the books\' coast is kept exactly and only the guessed north, east and south shores change. */\n'
       'const SHORES = ' + json.dumps({'coast': coast, 'islands': islands, 'seas': inland_seas, 'far': far,
-                                     'sectors': [s['name'] for s in SECTORS]}, separators=(',', ':')) + ';\n'
+                                     'sectors': [s['name'] for s in SECTORS],
+                                     'pins': [[round(p[0], 2), round(p[1], 2)] for _, p, _, _ in PINS]}, separators=(',', ':')) + ';\n'
       'if (typeof self !== "undefined") self.SHORES = SHORES;\n')
 open(os.path.join(ROOT, 'src', 'shores.js'), 'w').write(js)
 # preview
