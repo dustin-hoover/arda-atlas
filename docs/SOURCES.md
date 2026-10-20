@@ -14,7 +14,7 @@ Places: 120. Grades: map 36, warp 49, text 20, atlas 8, invented 7. References c
 | note | Tolkien's note on the Baynes map: Minas Tirith is about 900 miles east of Hobbiton. | Baynes · medium | 725 mi (-19%) | 900 ± 90 mi |
 | note | The same note puts Minas Tirith at about the latitude of Ravenna (about 510 mi south of Oxford). | Baynes · medium | 599 mi (+17%) | 510 ± 51 mi |
 | ok | Reaching Hollin, the Company had come about forty-five leagues from Rivendell as the crow flies. | LR II.3 · medium | 139 mi (+3%) | 135 ± 16 mi |
-| ok | Éomer: Aragorn, Legolas and Gimli ran forty-five leagues in under four days. | LR III.2 | 118 mi (-12%) | 135 ± 20 mi |
+| ok | Éomer: Aragorn, Legolas and Gimli ran forty-five leagues in under four days. | LR III.2 | 119 mi (-12%) | 135 ± 20 mi |
 | ok | 23 Sept 3018: Frodo leaves Bag End. | LR AppB | 0 mi away | ≤ 2 mi |
 | ok | 29 Sept 3018: Frodo reaches Bree at night. | LR AppB | 4 mi away | ≤ 4 mi |
 | ok | 6 Oct 3018: the camp under Weathertop is attacked at night. | LR AppB | 4 mi away | ≤ 6 mi |
@@ -27,6 +27,6 @@ Places: 120. Grades: map 36, warp 49, text 20, atlas 8, invented 7. References c
 | ok | 5 Mar 3019: Théoden and Gandalf come to Isengard at noon; the parley with Saruman. | LR AppB | 0 mi away | ≤ 4 mi |
 | ok | 15 Mar 3019: Aragorn comes up Anduin to the Harlond in the Battle of the Pelennor Fields. | LR AppB | 0 mi away | ≤ 4 mi |
 | ok | 25 Mar 3019: the Ring is destroyed in the Sammath Naur. | LR AppB | 1 mi away | ≤ 4 mi |
-| ok | 29 Sept 3021: Frodo and Bilbo depart over Sea with the Three Keepers. | LR AppB | 1 mi away | ≤ 3 mi |
+| ok | 29 Sept 3021: Frodo and Bilbo depart over Sea with the Three Keepers. | LR AppB | 0 mi away | ≤ 3 mi |
 
 All firm statements hold. "note" marks places where Tolkien's own notes disagree with his published map; the map is kept.
