@@ -954,19 +954,26 @@ function colorAt(X, Y, h, slope, pix, mode, dsea) {
     tmp3[0] *= 1 + 0.05 * n; tmp3[1] *= 1 + 0.06 * n; tmp3[2] *= 1 + 0.05 * n;
     if (TX) {
       // water colours read from real coasts: sand shallows, the inshore shelf, open water; silt plumes off river mouths
-      const W = TX.water, a = sstep(1, 30, depth + 6 * n), b = sstep(25, 260, depth);
-      let wr = mix(mix(W.shallow[0], W.shelf[0], a), W.deep[0], b), wg = mix(mix(W.shallow[1], W.shelf[1], a), W.deep[1], b), wb = mix(mix(W.shallow[2], W.shelf[2], a), W.deep[2], b);
+      // a pale turquoise band within a mile or two of the shore, teal-blue over the continental shelf, deep navy beyond;
+      // sand showing through right at the water's edge (our own colours, read from many real coasts)
+      const W = TX.water, near = sstep(-0.085, -0.004, R.s + 0.012 * n), shelfT = sstep(900, 60, depth + 40 * n);
+      let wr = mix(W.deep[0] + 2, 14, shelfT), wg = mix(W.deep[1] + 6, 54, shelfT), wb = mix(W.deep[2] + 16, 86, shelfT);
+      wr = mix(wr, 48, near * 0.7); wg = mix(wg, 132, near * 0.7); wb = mix(wb, 132, near * 0.7);
+      const edge = sstep(-0.014, -0.001, R.s);
+      wr = mix(wr, W.shallow[0] + 40, edge * 0.5); wg = mix(wg, W.shallow[1] + 20, edge * 0.5); wb = mix(wb, W.shallow[2], edge * 0.5);
+      const b = 1 - shelfT;
       const cold = 1 - warm;
       wr = mix(wr, wr * 0.8, cold * b); wg = mix(wg, wg * 0.85, cold * b);
       let pl = 0;
       for (const m of MOUTHS) {
         const dx = X - m.x, dy = Y - m.y;
         if (Math.abs(dx) > 40 || Math.abs(dy) > 40) continue;
-        const r = 3 + Math.sqrt(m.w) * 0.6;
-        const d = Math.sqrt(dx * dx + dy * dy) * (1 + 0.45 * noise(X * 0.25 + 3, Y * 0.25 - 1));
+        const r = 3.5 + Math.sqrt(m.w) * 0.85;
+        const d = Math.sqrt(dx * dx + dy * dy) * (1 + 0.55 * noise(X * 0.2 + 3, Y * 0.2 - 1) + 0.25 * noise(X * 0.8 - 5, Y * 0.8));
         pl = Math.max(pl, sat(1 - d / r));
       }
-      if (pl > 0) { pl = Math.pow(pl, 0.7) * sstep(120, 5, depth); wr = mix(wr, W.plume[0] * 0.9 + 20, pl * 0.7); wg = mix(wg, W.plume[1] * 0.85 + 10, pl * 0.7); wb = mix(wb, W.plume[2] * 0.75, pl * 0.7); }
+      // silt off the river mouths: tan clouds fading and breaking up seaward
+      if (pl > 0) { pl = Math.pow(pl, 1.1) * sstep(300, 5, depth); wr = mix(wr, 150, pl * 0.6); wg = mix(wg, 128, pl * 0.6); wb = mix(wb, 84, pl * 0.55); }
       blend(wr, wg, wb, 0.9);
     }
     const ice = F[14];
@@ -980,7 +987,8 @@ function colorAt(X, Y, h, slope, pix, mode, dsea) {
       else blend(222, 230, 238, cov * 0.95);
     }
     const lake = F[15];
-    if (lake > 0.4 && depth < 5) blend(24, 58, 74, 0.8);
+    // lakes darker and clearer than the sea, with a paler rim of shallows
+    if (lake > 0.4 && depth < 5) { blend(16, 40, 54, 0.85); blend(40, 92, 96, sstep(0.75, 0.45, lake) * 0.6); }
     if (depth < 3 && pix < 0.01) blend(210, 214, 206, sat(1 - depth / 3) * 0.35);
     return tmp3;
   }
@@ -1093,28 +1101,37 @@ function colorAt(X, Y, h, slope, pix, mode, dsea) {
   fd *= sstep(treeline, treeline - 500, h);
   fd *= 1 - sstep(0.55, 0.9, slope) * 0.6;
   if (fd > 0.01) {
+    const dk = F[6];
     const conifer = sat(sstep(8, 1, T + 0.004 * 0) + sstep(treeline - 1200, treeline - 400, h));
     let fr = mix(50, 30, conifer), fg = mix(70, 50, conifer), fb = mix(36, 34, conifer);
-    const dk = F[6];
     if (dk > 0) { fr = mix(fr, 22, dk); fg = mix(fg, 36, dk); fb = mix(fb, 24, dk); }
     const gold = F[5];
     if (gold > 0) { const gm = gold * (0.35 + 0.35 * sat(0.5 + fbm(X * 0.6, Y * 0.6, 3))); fr = mix(fr, 168, gm); fg = mix(fg, 140, gm); fb = mix(fb, 52, gm); }
     if (T > 22) { fr *= 0.8; fg *= 1.05; }
     if (RP.w > 0) { fr *= tw('f', 0); fg *= tw('f', 1); fb *= tw('f', 2); }
+    // north-facing slopes and valley floors lie in shadow longer: their woods read darker
+    { const sh = 1 - 0.14 * ASPN - 0.07 * R.vly + 0.05 * ASPS; fr *= sh; fg *= sh; fb *= sh; }
+    if (gold > 0.3) { const lg = 1 + 0.12 * gold; fr *= lg; fg *= lg; }          // Lórien's crowns catch the light
     const mott = fbmA(X, Y, 0.6, Math.max(pix, 0.002), 0.7, 9);
     fr *= 1 + 0.12 * mott; fg *= 1 + 0.14 * mott; fb *= 1 + 0.1 * mott;
     // the edge is a ragged zone, never a line: the canopy breaks into clumps and lone trees, then scrub, then grass
     const en = fbmA(X, Y, 10, Math.max(pix, 0.003), 0.8, 40), cl = fbmA(X, Y, 0.35, Math.max(pix, 0.002), 0.85, 41);
     let dens = sstep(0.32, 0.5, fd + 0.38 * en + 0.1 * cl);
+    // the great dark woods (Mirkwood) close over entirely; lighter woods (the Trollshaws, Chetwood, Ithilien) are patchy
+    if (dk > 0.85) dens = Math.max(dens, sstep(0.18, 0.4, fd + 0.2 * en));
+    const patchy = sat((0.93 - F[4]) * 4) * (1 - sat(dk * 2));
+    if (patchy > 0) dens *= 1 - patchy * 0.75 * sstep(-0.05, 0.3, fbmA(X * 0.8 - 17, Y * 0.8 + 5, 2, Math.max(pix, 0.01), 0.8, 43));
     // glades and thinner stands inside the wood (heath, bog, windthrow, old clearings)
-    dens *= 1 - 0.55 * sstep(0.3, 0.5, fbmA(X * 0.9 + 40, Y * 0.9, 3, Math.max(pix, 0.01), 0.8, 42)) * sat(fd * 1.5);
+    dens *= 1 - 0.55 * (1 - sat(F[6] * 1.15)) * sstep(0.3, 0.5, fbmA(X * 0.9 + 40, Y * 0.9, 3, Math.max(pix, 0.01), 0.8, 42)) * sat(fd * 1.5);   // (few in the dark woods)
     const fringe = sstep(0.08, 0.3, fd + 0.15 * en) * (1 - dens);
     if (fringe > 0) {
       blend(70, 82, 48, fringe * 0.35);                                   // scrub and bracken before the trees
       dens = Math.max(dens, fringe * sstep(0.25, 0.5, cl + 0.25 * sat(fd * 2)) * 0.95);   // copses and lone trees
     }
     if (pix < 0.008) {
-      const c = canopy(X, Y, gold > 0.5 ? 0.012 : 0.0065);
+      // crowns: broad in Lórien; in the old dark woods (Fangorn, the Old Forest) of every size, with gaps where giants fell
+      const og = dk > 0.45 && dk < 0.85 ? 1 : 0;
+      const c = canopy(X, Y, gold > 0.5 ? 0.012 : 0.0065 * (1 + og * 0.6 * (0.5 + 0.5 * noise(X / 0.05, Y / 0.05))));
       const gap = c < -0.5;
       const lit = 1 + 0.32 * c * sat((0.008 - pix) / 0.004);
       if (gap) dens *= sat(1 - (0.8 - fd) * 1.5);
