@@ -288,7 +288,7 @@ const style = {
     { id: 'journeys-av', type: 'symbol', source: 'journey-pos', filter: ['has', 'icon'], layout: { 'icon-image': ['get', 'icon'], 'icon-anchor': 'bottom', 'icon-offset': [0, -3], 'icon-size': ['interpolate', ['linear'], ['zoom'], 3, 0.8, 7, 1.05, 10, 1.3], 'icon-allow-overlap': true, 'icon-ignore-placement': true, 'symbol-sort-key': ['-', 0, ['get', 'n']] } },
     { id: 'journeys-pos-label', type: 'symbol', source: 'journey-pos', layout: { 'text-field': ['get', 'name'], 'text-font': TXT_UIB, 'text-size': 12.5, 'text-offset': ['case', ['has', 'icon'], ['literal', [0, 0.55]], ['literal', [0, -1.1]]], 'text-anchor': ['case', ['has', 'icon'], 'top', 'bottom'], 'text-allow-overlap': false, 'text-optional': true }, paint: { 'text-color': ['get', 'color'], 'text-halo-color': 'rgba(0,0,0,0.85)', 'text-halo-width': 1.5 } },
   ]),
-  sky: { 'sky-color': '#7fa7d0', 'horizon-color': '#d6e4ee', 'fog-color': '#c9d6e0', 'horizon-fog-blend': 0.6, 'sky-horizon-blend': 0.6, 'fog-ground-blend': 0.85, 'atmosphere-blend': ['interpolate', ['linear'], ['zoom'], 0, 1, 5, 1, 8, 0] },
+  sky: { 'sky-color': '#7fa7d0', 'horizon-color': '#d6e4ee', 'fog-color': '#becede', 'horizon-fog-blend': 0.75, 'sky-horizon-blend': 0.55, 'fog-ground-blend': 0.55, 'atmosphere-blend': ['interpolate', ['linear'], ['zoom'], 0, 1, 5, 1, 8, 0] },
 };
 // region labels respect their zoom windows
 style.layers.find(l => l.id === 'regions').filter = ['all', ['<=', ['get', 'minz'], ['zoom']], ['>=', ['get', 'maxz'], ['zoom']]];
@@ -789,8 +789,9 @@ function updateSky() {
   const day = GEN.sat((el + 4) / 14), dusk = Math.max(0, 1 - Math.abs(el - 1) / 7);
   const mixc = (a, b, t) => '#' + a.map((v, i) => Math.round(v + (b[i] - v) * t).toString(16).padStart(2, '0')).join('');
   const sky = mixc([14, 22, 44], [110, 160, 210], day), hor = mixc(mixc([30, 36, 60], [214, 228, 238], day).match(/\w\w/g).map(h => parseInt(h, 16)), [236, 170, 120], dusk * 0.8);
-  const fog = mixc([26, 32, 50], [200, 212, 222], day);
-  map.setSky({ 'sky-color': sky, 'horizon-color': hor, 'fog-color': fog, 'horizon-fog-blend': 0.6, 'sky-horizon-blend': 0.6, 'fog-ground-blend': 0.85, 'atmosphere-blend': ['interpolate', ['linear'], ['zoom'], 0, 1, 5, 1, 8, 0] });
+  // aerial perspective: a blue-grey haze thickening toward the horizon, warmer at dusk, as in real oblique imagery
+  const fog = mixc(mixc([26, 32, 50], [190, 206, 222], day).match(/\w\w/g).map(h => parseInt(h, 16)), [222, 186, 150], dusk * 0.5);
+  map.setSky({ 'sky-color': sky, 'horizon-color': hor, 'fog-color': fog, 'horizon-fog-blend': 0.75, 'sky-horizon-blend': 0.55, 'fog-ground-blend': 0.55, 'atmosphere-blend': ['interpolate', ['linear'], ['zoom'], 0, 1, 5, 1, 8, 0] });
 }
 map.on('moveend', updateSky);
 

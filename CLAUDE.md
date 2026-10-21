@@ -25,8 +25,15 @@ plan), got/PLAN.md. Starter code lives in `worlds/` (`npm run worlds` validates 
   is built on it from real Earth coastlines (tools/continents/reshape.py -> src/shores.js), forest and
   marsh outlines were generalised far beyond any source line, and the atlas hill-country layer was
   dropped (`RELIEF` is empty; foothills come from the ranges' geology).
-- Coastal places and river mouths are kept on the shore by `tools/continents/anchors.json`; after any
-  coast change, re-run the router (tools/routing/README.md) and `npm run audit`.
+- Coastal places and river mouths are pinned to the shore by `tools/continents/anchors.json` (reshape.py
+  straightens the coast there; the renderer's coast wobble fades out at the pins). `npm run audit` first runs
+  `tools/qa/qa_geo.js`, which fails if a river runs over sea > 0.75 mi, a mouth or anchored port is > 1 mi
+  from shore, the coast crosses itself or the island count changes. After any coast change, re-run the router
+  (tools/routing/README.md) and `npm run audit`. `FAST=1 python3 tools/continents/reshape.py` reuses the
+  cached field to iterate on pins in seconds.
+- Mountain valleys come from a drainage network (rasters.js `drainage`, priority flood into the lowland and the
+  authored rivers); a frame that turns across the land must never be measured from a far origin (it bends into
+  arcs or stripes) - fix the frame per district or per cell.
 - Shire Reckoning time `t` = days since 2 Yule T.A. 3018; `WX.parse('3019 3 25')` → t. Months 1–12 are
   Afteryule…Foreyule, 30 days each, with 3 Lithe days after month 6.
 
