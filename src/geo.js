@@ -316,13 +316,13 @@ const PLACES = [
   ['Rivendell','elven',420.5,17.5,'elves','Imladris','The Last Homely House east of the Sea, hidden in a steep valley of the Bruinen.',{pop:1500,rank:1,culture:'elf',r:0.6}],
   ['Fornost','ruin',99.4,99.4,'dunedain','Arnor','Fornost Erain, Norbury of the Kings, capital of Arthedain; the ruin is called Deadmen\'s Dike.',{culture:'ruin',r:0.4,rank:2}],
   ['Annúminas','ruin',2.3,89.2,'dunedain','Arnor','Ancient first capital of Arnor on the shore of Lake Evendim.',{culture:'ruin',r:0.5,rank:2}],
-  ['Mithlond','port',-157,-7.6,'elves','Lindon','The Grey Havens at the head of the Gulf of Lune, from which the Elves take ship into the West.',{pop:2000,rank:1,culture:'elf',r:0.8,havens:1}],
+  ['Mithlond','port',-157,-7.6,'elves','Lindon','The Grey Havens at the head of the Gulf of Lune, Círdan\'s haven since the ruin of Beleriand, from which the Elves take ship into the West.',{pop:2000,rank:1,culture:'elf',r:0.8,havens:1}],
   ['Harlond (Lindon)','port',-245.9,-49.5,'elves','Lindon','Southern haven on the Gulf of Lune.',{r:0.4,rank:4,culture:'elf'}],
   ['Forlond','port',-323.9,23.9,'elves','Lindon','Northern haven on the Gulf of Lune.',{r:0.35,rank:4,culture:'elf'}],
   ['Elostirion','tower',-83.3,-13.7,'elves','Emyn Beraid','Tallest of the White Towers, holding a palantír that looks only West.',{rank:3}],
-  ['Tharbad','ruin',196,-173.9,'dunedain','Enedwaith','Ruined river-town and bridge where the Greenway crossed the Greyflood.',{culture:'ruin',r:0.25,rank:3}],
-  ['Lond Daer','ruin',32.6,-355.8,'dunedain','Enedwaith','Ruined Númenórean haven at the mouths of the Greyflood.',{rank:4}],
-  ['Ost-in-Edhil','ruin',331.1,-134.3,'elves','Eregion','Ruined city of the Elven-smiths of Eregion, where the Rings of Power were forged.',{rank:3}],
+  ['Tharbad','ruin',196,-173.9,'dunedain','Enedwaith','Ruined river-town and bridge where the Greenway crossed the Greyflood, once kept by Gondor and Arnor together.',{culture:'ruin',r:0.25,rank:3}],
+  ['Lond Daer','ruin',32.6,-355.8,'dunedain','Enedwaith','Ruined Númenórean haven at the mouths of the Greyflood: Vinyalondë, the New Haven of Tar-Aldarion, later Lond Daer Enedh, the great port of the Middle Way.',{rank:4}],
+  ['Ost-in-Edhil','ruin',331.1,-134.3,'elves','Eregion','Ruined city of the Elven-smiths of Eregion, where Celebrimbor forged the Rings of Power and Sauron, fair-seeming as Annatar, taught the smiths.',{rank:3}],
   ['West-gate of Moria','dwarven',380,-159.2,'dwarves','Khazad-dûm','The Doors of Durin, opened by the word friend, beside the dark pool of the Sirannon.',{rank:2}],
   ['Khazad-dûm','dwarven',401.9,-171.8,'dwarves','Khazad-dûm','Moria, the Dwarrowdelf: greatest of the dwarf-realms, abandoned since the Balrog woke.',{rank:1}],
   ['Dimrill Gate','dwarven',424.3,-189.6,'dwarves','Khazad-dûm','The Great Gates of Moria opening onto Azanulbizar, the Dimrill Dale.',{rank:3}],
@@ -336,7 +336,7 @@ const PLACES = [
   ['Beorn\'s house','landmark',565.5,48.1,'men','Vales of Anduin','Timber hall of the skin-changer Beorn amid fields of clover and bees.',{rank:3,culture:'beorning',r:0.25}],
   ['Rhosgobel','landmark',611.6,-20,'other','Mirkwood','Home of Radagast the Brown on the western eaves of Mirkwood.',{rank:4}],
   ['Thranduil\'s Halls','elven',713.5,81,'elves','Woodland Realm','The great cave-palace of the Elvenking beside the Forest River.',{pop:3000,rank:2,culture:'elf',r:0.3}],
-  ['Dol Guldur','fortress',609.2,-194.2,'orcs','Mirkwood','The Hill of Sorcery in southern Mirkwood, Sauron\'s hold before his return to Mordor.',{rank:2}],
+  ['Dol Guldur','fortress',609.2,-194.2,'orcs','Mirkwood','The Hill of Sorcery in southern Mirkwood, once Amon Lanc, the Naked Hill, seat of Oropher\'s Silvan realm; Sauron\'s hold before his return to Mordor.',{rank:2}],
   ['Esgaroth','town',766.5,97.5,'men','Long Lake','Lake-town, built on piles upon the Long Lake.',{pop:3000,rank:2,culture:'lake',r:0.5}],
   ['Dale','city',769,128.4,'men','Dale','City of the Bardings in the valley before the Lonely Mountain, rebuilt by King Bard.',{pop:6000,rank:1,culture:'dale',r:0.8}],
   ['Erebor','dwarven',768.4,138,'dwarves','Erebor','The Kingdom under the Mountain, restored by Dáin Ironfoot.',{pop:5000,rank:1}],
@@ -352,7 +352,7 @@ const PLACES = [
   ['Lossarnach','village',692,-618,'gondor','Gondor','Farm-villages of the Lossarnach, whose folk came to the City under Forlong the Fat.',{pop:2000,rank:4,culture:'gondor',r:0.45}],
   ['Caras Galadhon','elven',457.1,-254.8,'elves','Lothlórien','City of the Trees, where Celeborn and Galadriel dwell in a hill-crowned grove of mallorn.',{pop:5000,rank:1,culture:'lorien',r:0.9}],
   ['Cerin Amroth','landmark',454.1,-242.6,'elves','Lothlórien','A green mound at the heart of old Lórien where elanor and niphredil bloom.',{rank:5}],
-  ['Egladil','landmark',489.1,-297,'elves','Lothlórien','The Tongue, the green angle between Silverlode and Anduin.',{rank:5}],
+  ['Egladil','landmark',489.1,-297,'elves','Lothlórien','The Tongue, the Naith of Lórien: the green angle between Silverlode and Anduin.',{rank:5}],
   // Rohan
   ['Edoras','city',438,-479.4,'rohirrim','Rohan','The courts of the Mark on a green hill, crowned by the golden hall Meduseld.',{pop:5000,rank:1,culture:'rohan',r:0.55}],
   ['Meduseld','landmark',438.2,-479.3,'rohirrim','Rohan','Golden Hall of the Kings of Rohan.',{rank:4}],
@@ -365,15 +365,15 @@ const PLACES = [
   ['Orthanc','tower',334,-379.14,'other','Isengard','The unbreakable black tower of Isengard, 500 feet tall.',{rank:4}],
   ['Wellinghall','landmark',402.1,-349.5,'ents','Fangorn','Treebeard\'s dwelling beneath the last mountain.',{rank:5}],
   ['Derndingle','landmark',387.8,-354.7,'ents','Fangorn','Hollow dell where the Entmoot gathered.',{rank:5}],
-  ['Edhellond','ruin',399.7,-659.2,'elves','Belfalas','Ruined elf-haven near the mouth of the Morthond.',{rank:4}],
+  ['Edhellond','ruin',399.7,-659.2,'elves','Belfalas','Ruined elf-haven near the mouth of the Morthond, where Silvan Elves of Lórien and Belfalas kept ships; Amroth waited here for Nimrodel.',{rank:4}],
   // Gondor
   ['Minas Tirith','city',725.1,-599.1,'gondor','Gondor','The Tower of Guard, seven-tiered white city on the knee of Mindolluin, capital of Gondor.',{pop:50000,rank:1,culture:'minastirith',r:0.42}],
   ['Osgiliath','ruin',738.9,-604.6,'gondor','Gondor','Ruined ancient capital spanning the Anduin.',{rank:2,culture:'osgiliath',r:1.2}],
   ['Harlond','port',734.4,-606.5,'gondor','Gondor','River-quays of Minas Tirith on the Anduin.',{rank:4}],
-  ['Pelargir','city',659.8,-727,'gondor','Lebennin','Great port of Gondor on the Anduin, where Aragorn took the black fleet.',{pop:20000,rank:1,culture:'gondor',r:0.9}],
-  ['Dol Amroth','city',410.8,-716.5,'gondor','Belfalas','Castle-city of Prince Imrahil on its sea-promontory.',{pop:15000,rank:1,culture:'gondor',r:0.8}],
+  ['Pelargir','city',659.8,-727,'gondor','Lebennin','Great port of Gondor on the Anduin, built by the Faithful of Númenor in the Second Age; where Aragorn took the black fleet.',{pop:20000,rank:1,culture:'gondor',r:0.9}],
+  ['Dol Amroth','city',410.8,-716.5,'gondor','Belfalas','Castle-city of Prince Imrahil on its sea-promontory, named for Amroth, Elven-king of Lórien, lost in the bay.',{pop:15000,rank:1,culture:'gondor',r:0.8}],
   ['Linhir','town',505.2,-726.4,'gondor','Lebennin','Town at the mouth of Gilrain where the Corsairs were battled.',{pop:3000,rank:3,culture:'gondor',r:0.4}],
-  ['Erech','landmark',451.6,-512.4,'gondor','Morthond','Hill with the black Stone of Erech, where Isildur\'s oathbreakers were summoned.',{rank:3}],
+  ['Erech','landmark',451.6,-512.4,'gondor','Morthond','Hill with the black Stone of Erech, brought by Isildur out of Númenor, where the oathbreakers swore and were summoned.',{rank:3}],
   ['Calembel','town',436.8,-534.2,'gondor','Lamedon','Town on the Ciril in Lamedon.',{pop:1500,rank:4,culture:'gondor',r:0.3}],
   ['Ethring','town',498.2,-551.3,'gondor','Lamedon','Town on the Ringló crossing.',{pop:1200,rank:4,culture:'gondor',r:0.3}],
   ['Cair Andros','fortress',711.3,-563.2,'gondor','Anórien','Island fortress guarding the northern crossing of the Anduin.',{rank:3}],
@@ -391,7 +391,7 @@ const PLACES = [
   ['Erelas','tower',609.8,-550.6,'gondor','Anórien','Beacon hill.',{rank:5}],
   ['Min-Rimmon','tower',582.4,-540.4,'gondor','Anórien','Beacon hill.',{rank:5}],
   ['Calenhad','tower',556,-529.8,'gondor','Anórien','Beacon hill.',{rank:5}],
-  ['Halifirien','tower',529.4,-519.9,'gondor','Anórien','Westernmost beacon, on the border with Rohan in the Firien Wood.',{rank:5}],
+  ['Halifirien','tower',529.4,-519.9,'gondor','Anórien','Westernmost beacon, on the border with Rohan in the Firien Wood: Amon Anwar, the Hill of Awe, where Elendil\'s tomb was hidden and Cirion and Eorl swore their oath.',{rank:5}],
   // Mordor
   ['Barad-dûr','fortress',895.4,-532.8,'orcs','Mordor','The Dark Tower of Sauron on a spur of the Ash Mountains.',{rank:1,culture:'mordor',r:0.8}],
   ['Orodruin','landmark',840.1,-554,'orcs','Mordor','Mount Doom, the volcano where the One Ring was forged and unmade.',{rank:1}],
@@ -404,7 +404,11 @@ const PLACES = [
   ['Isenmouthe','fortress',808.8,-490.5,'orcs','Mordor','Carach Angren, walled gap between Udûn and Gorgoroth.',{rank:3}],
   ['Sea of Núrnen','landmark',1039.5,-724.6,'men','Mordor','Bitter inland sea of southern Mordor.',{rank:5}],
   // East & South
-  ['Umbar','city',406,-1092.9,'haradrim','Umbar','Haven of the Corsairs, a great natural harbour behind the Cape of Umbar.',{pop:30000,rank:1,culture:'harad',r:0.9}],
+  ['Field of Celebrant','landmark',488,-322,'other','Calenardhon','Parth Celebrant: the grassland between the Silverlode and the Limlight where in T.A. 2510 Eorl the Young rode out of the North and broke the Balchoth and the Orcs about the army of Gondor; Calenardhon was given to his people after.',{rank:4}],
+  ['Sarn Gebir','landmark',598.2,-407.3,'other','Anduin','Rapids of the Great River among the rocks above the Argonath, about which boats must be carried along the western bank.',{rank:4}],
+  ['Mouths of Entwash','landmark',668,-528,'other','Rohan','Where the Entwash runs out into the Anduin through a maze of reedy channels and fens, north of the Wetwang.',{rank:4}],
+  ['Andrast','landmark',60,-640,'gondor','Anfalas','The Long Cape (Ras Morthil): the mountainous westernmost promontory of Gondor, beyond the Lefnui.',{rank:4}],
+  ['Umbar','city',472,-1112,'haradrim','Umbar','City of the Corsairs, at the head of the long land-locked firth behind the great cape. Once the greatest haven of Númenor in Middle-earth, where Ar-Pharazôn landed to humble Sauron; held after the Kin-strife by the rebels of Castamir and their heirs, the Corsairs.',{pop:30000,rank:1,culture:'harad',r:0.9}],
   ['Dorwinion vineyards','landmark',1090.8,-179.2,'men','Rhûn','Vine-lands on the shores of the Sea of Rhûn whose wine reached even Thranduil\'s halls.',{rank:4}],
   ['Khand','landmark',1212.7,-1021.6,'men','Khand','Land of the Variags south-east of Mordor.',{rank:4}],
   ['Tents of the Easterlings','town',1365.5,-162.1,'men','Rhûn','Seasonal camp-towns of the Easterling tribes.',{pop:8000,rank:3,culture:'east',r:0.6}],
@@ -417,7 +421,7 @@ const REGION_LABELS = [
   ['ERIADOR',157.9,69.3,'region',3.2,7,1.2],['RHOVANION',684.1,-27.3,'region',3.2,7,1.2],['FORODWAITH',763.3,287.5,'region',3,6.5,1.1],
   ['RHÛN',1481.1,-26.6,'region',3,6.5,1.3],['HARAD',722.1,-1765.1,'region',2.6,6,1.4],['NEAR HARAD',684.6,-1258.9,'region',4,7,0.9],['FAR HARAD',572.4,-2112.1,'region',3.5,7,1],
   ['KHAND',1240.8,-978.9,'region',4,7.5,0.8],['MORDOR',986.8,-581.1,'realm',3.4,7.5,1.1],['GONDOR',541.7,-627.2,'realm',3.4,7.5,1.1],['ROHAN',492.3,-434,'realm',3.4,7.5,1.1],
-  ['LINDON',-447.2,107.7,'realm',4,7.5,0.9],['ENEDWAITH',148.4,-313.7,'region',4.5,8,0.8],['MINHIRIATH',66.3,-198.7,'region',4.5,8,0.8],['DUNLAND',289,-290.6,'region',5,8.5,0.7],
+  ['LINDON',-447.2,107.7,'realm',4,7.5,0.9],['ENEDWAITH',148.4,-313.7,'region',4.5,8,0.8],['MINHIRIATH',66.3,-198.7,'region',4.5,8,0.8],['DUNLAND',289,-290.6,'region',5,8.5,0.7],['FORLINDON',-360,70,'region',5,8.5,0.6],['HARLINDON',-235,-120,'region',5,8.5,0.6],['DRUWAITH IAUR',92,-590,'region',5,9,0.6],
   ['EREGION',335.2,-135,'region',5.5,9,0.7],['RHUDAUR',310.3,100.7,'region',5,8.5,0.7],['ARTHEDAIN',69.9,63.5,'region',5,8.5,0.7],['CARDOLAN',142.3,-97.3,'region',5,8.5,0.7],
   ['ANGMAR',255.1,263.4,'region',5,8.5,0.7],['WILDERLAND',491.9,148.3,'region',4.5,8,0.75],['THE SHIRE',-3.7,-14.5,'realm',5.5,9.5,0.9],['BREE-LAND',132.8,-4.6,'region',7.5,10.5,0.6],
   ['ITHILIEN',760.4,-578.2,'region',5.8,9,0.7],['ANÓRIEN',623,-548.8,'region',6,9,0.7],['LEBENNIN',601.6,-682.7,'region',6,9,0.7],['BELFALAS',393.6,-612.9,'region',6,9,0.7],
@@ -570,7 +574,7 @@ const ROADS = [
   { name:'Stock road', cls:3, pts:[[24,-0.3],[41.2,-6.6],[54.9,-8.1],[65.4,-7.7],[74.4,-12.8]] },
   { name:'Buckland road', cls:3, pts:[[82.3,-14.2],[83.4,-8.4],[80.9,4.7],[73.3,5]] },
   { name:'Dale–Esgaroth road', cls:3, pts:[[766.5,97.5],[768,108.1],[769,128.4]] },
-  { name:'Road of Umbar', cls:2, pts:[[406,-1092.9],[460.3,-1164.3],[523,-1198.8]] },
+  { name:'Road of Umbar', cls:2, pts:[[472,-1112],[460.3,-1164.3],[523,-1198.8]] },
   { name:'Road to Rhûn', cls:2, pts:[[912.9,-31.5],[1015.7,-53.6],[1126.8,-94.1],[1365.5,-162.1]] },
 ];
 
@@ -634,6 +638,13 @@ const JOURNEYS = {
     { name:'Uglúk and the Uruk-hai', color:'#5a5a62', hide:true, with:[['Merry & Pippin','3019 2 26.5','3019 2 29.25']], pts:[[334,-379.1,'3019 2 13'],[372,-392,'3019 2 14.5'],[455,-430,'3019 2 18'],[530,-445,'3019 2 21'],[592,-458,'3019 2 24.5'],[611.8,-462.2,'3019 2 26.4'],[611.8,-462.2,'3019 2 26.5'],[440,-376.3,'3019 2 29.25']] },
     { name:'Grishnákh and the Orcs of Mordor', color:'#4e5236', hide:true, with:[['Uglúk and the Uruk-hai','3019 2 26.5','3019 2 29']], pts:[[761.9,-477.6,'3019 2 18'],[720,-468,'3019 2 20'],[668,-462,'3019 2 23'],[630,-462,'3019 2 25'],[611.8,-462.2,'3019 2 26.4'],[611.8,-462.2,'3019 2 26.5'],[445,-378,'3019 2 29']] },
     { name:'The Northern Orcs from Moria', color:'#7a8a5a', hide:true, with:[['Uglúk and the Uruk-hai','3019 2 26.5','3019 2 28']], pts:[[424.3,-189.6,'3019 2 10'],[480,-250,'3019 2 14'],[540,-330,'3019 2 18'],[585,-410,'3019 2 22.5'],[611.8,-462.2,'3019 2 26.4'],[611.8,-462.2,'3019 2 26.5'],[500,-410,'3019 2 28']] },
+    // the Southrons (LR IV.4; V.6; V.9; dates of the marches estimated): a company with a mûmak marching north up the
+    // Harad Road through Ithilien to join the Dark Lord, ambushed by Faramir's men; the great host of Harad with its
+    // mûmakil, up the same road and over at Osgiliath to the Pelennor; and the fleet of Umbar, out of its firth and up
+    // the coast and the Anduin to Pelargir, where the Grey Company and the Dead take its ships
+    { name:'The Southrons of the Harad Road', color:'#c9a03c', hide:true, pts:[[560.1,-1006.6,'3019 2 18'],[632,-783.2,'3019 2 28'],[702.9,-705.5,'3019 3 3'],[750.4,-645.2,'3019 3 5'],[764.9,-601.2,'3019 3 6.3'],[753,-571,'3019 3 7.4']] },
+    { name:'The Haradrim and their mûmakil', color:'#a02828', hide:true, pts:[[734.5,-1585,'3019 1 14'],[632.5,-1404,'3019 1 26'],[523,-1198.8,'3019 2 8'],[560.1,-1006.6,'3019 2 18'],[632,-783.2,'3019 3 1'],[702.9,-705.5,'3019 3 6'],[750.4,-645.2,'3019 3 9'],[764.9,-601.2,'3019 3 10.5'],[738.9,-604.6,'3019 3 12.5'],[731.5,-601.5,'3019 3 14'],[730.5,-600.8,'3019 3 15.55']] },
+    { name:'The fleet of Umbar', color:'#9a2a4a', hide:true, pts:[[472,-1112,'3019 3 2'],[440,-1099,'3019 3 2.3'],[392,-1102,'3019 3 2.7'],[370,-1100,'3019 3 2.9'],[350,-1060,'3019 3 3.4'],[355,-980,'3019 3 4.3'],[385,-900,'3019 3 5.3'],[430,-850,'3019 3 6.2'],[455,-830,'3019 3 6.7'],[500,-830,'3019 3 7.5'],[540,-815,'3019 3 8.3'],[565,-795,'3019 3 9.2'],[584.2,-776.2,'3019 3 10'],[621.1,-738.2,'3019 3 11'],[659.8,-727,'3019 3 12'],[659.8,-727,'3019 3 13.3']] },
     { name:'Treebeard', color:'#8a9a6a', with:[['Merry & Pippin','3019 2 29.4','3019 3 3']], pts:[[423,-359.7,'3019 2 29.4'],[334,-379.1,'3019 3 3'],[334,-379.1,'3019 3 30']] },
     { name:'Gollum', color:'#b4bc9c', hide:true, with:[['Frodo & Sam','3019 2 29','3019 3 12.8'],['Frodo & Sam','3019 3 24','3019 3 25']], pts:[[655.8,-451.5,'3019 2 29'],[781,-584.1,'3019 3 12.8'],[834.8,-546.9,'3019 3 24'],[840.3,-552.6,'3019 3 25']] },
     { name:'Faramir', color:'#7fa86a', with:[['Frodo & Sam','3019 3 7','3019 3 8.3']], pts:[[739.3,-548.8,'3019 3 7'],[744.3,-565.9,'3019 3 8.3'],[711.3,-563.2,'3019 3 9.4'],[725.1,-599.1,'3019 3 10.75'],[725.1,-599.1,'3019 3 11.3'],[738.9,-604.6,'3019 3 11.9'],[738.9,-604.6,'3019 3 12.8'],[731.5,-602.3,'3019 3 13.4'],[725.1,-599.1,'3019 3 13.75'],[725.1,-599.1,'3019 3 30']] },
@@ -702,7 +713,9 @@ const JOURNEYS = {
 // barrel and blackship on rivers and lakes, sea on open water, and keeps fly and under straight.
 const MODES = [
   ['Frodo & Sam|Aragorn|Legolas|Gimli|Merry & Pippin|Boromir', '3019 2 16', '3019 2 26', 'boat'],     // the grey boats of Lórien to Parth Galen
-  ['Aragorn|Legolas|Gimli', '3019 3 13', '3019 3 15', 'blackship'],                                  // the black ships, Pelargir to the Harlond
+  ['Aragorn|Legolas|Gimli', '3019 3 13', '3019 3 15', 'blackship'],
+  ['The fleet of Umbar', '3019 3 2', '3019 3 10', 'corsair'],                                       // the Corsairs' black-sailed ships at sea
+  ['The fleet of Umbar', '3019 3 10', '3019 3 13.3', 'blackship'],                                   // and up the Anduin to Pelargir                                  // the black ships, Pelargir to the Harlond
   ['Bilbo & Thorin', '2941 9 21', '2941 9 23', 'barrel'],                                            // barrels down the Forest River
   ['Bilbo & Thorin', '2941 7 7', '2941 7 8', 'fly'],                                                 // the Eagles to the Carrock
   ['Gandalf the Grey|Gandalf: to Orthanc', '3018 9 17.9', '3018 9 20', 'fly'],                        // Gwaihir from Orthanc

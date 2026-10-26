@@ -1,6 +1,6 @@
 # Source audit
 
-Places: 120. Grades: map 36, warp 49, text 20, atlas 8, invented 7. References checked against the text: 0 of 120.
+Places: 124. Grades: map 36, warp 49, text 24, atlas 8, invented 7. References checked against the text: 0 of 124.
 
 ## Statements measured on the map
 

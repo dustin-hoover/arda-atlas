@@ -313,6 +313,16 @@ gw = seg_dist([(-440, -26), (-370, -14), (-318, -22), (-268, -14), (-226, -19), 
 gx = np.clip((Qx[None, :] + 163) / -277, 0, 1)                   # 0 at the head, 1 at the mouth
 gr = ndimage.gaussian_filter(np.random.RandomState(21).randn(H, W), 3 / RES); gr /= gr.std()
 f = np.minimum(f, gw - (4 + 21 * gx ** 1.2) * (1 + 0.3 * gr))
+# the firth of Umbar (LR AppA: the great cape and land-locked firth): a long gulf behind a narrow mouth, broad in its
+# middle, closing at its head where the City of the Corsairs stands; the cape is the land between it and the sea to
+# the north-west. Our own outline; its place and length after CT's map.
+uw = seg_dist([(372, -1108), (392, -1104), (412, -1099), (434, -1097), (454, -1103), (469, -1111)])
+ut = np.clip((Qx[None, :] - 380) / 90, 0, 1)
+uhw = 2.2 + 6.5 * np.sin(np.pi * np.clip((ut - 0.08) / 0.9, 0, 1)) ** 0.7
+f = np.minimum(f, uw - uhw * (1 + 0.22 * gr))
+# land-locked: a spit from the southern shore all but closes the mouth, leaving a narrow strait under the cape
+f = np.maximum(f, 7 * (1 + 0.15 * gr) - seg_dist([(352, -1128), (370, -1116), (386, -1108)]))
+f = np.minimum(f, seg_dist([(352, -1097), (372, -1100), (394, -1103)]) - 1.8)
 # the Mouths of Anduin: the river spreads into a marshy delta below Pelargir and empties into the Bay of Belfalas
 # through many channels; the delta's front is the coast (the fan and channels are in src/geo.js, which end on it)
 AX, AY = 621.1, -738.2

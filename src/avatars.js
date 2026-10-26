@@ -57,6 +57,9 @@ const C = {
   grishnakh: { name: 'Grishnákh', skin: '#4e5236', hair: ['#141010', '#0a0808'], style: 'sparse', ears: 'gollum', eye: '#f05030', fangs: 1, brows: 1, beardC: ['#141010', '#0a0808'] },
   mordororc: { name: 'Orcs of Mordor', skin: '#5a5e3e', hair: ['#141010', '#0a0808'], style: 'none', hat: 'helm', eye: '#f05030', fangs: 1 },
   ugluk:   { name: 'Uglúk',     skin: '#5a4a3c', hair: ['#141010', '#0a0808'], style: 'none', hat: 'orchelm', eye: '#f0c040', fangs: 1, brows: 1, beardC: ['#141010', '#0a0808'] },
+  southron: { name: 'Southrons', skin: '#6e4228', hair: ['#141010', '#0a0808'], style: 'long', hat: 'helm', eye: '#2a1a10' },
+  corsair: { name: 'Corsairs of Umbar', skin: '#c08a60', hair: ['#1a1410', '#0e0a08'], style: 'sides', eye: '#2a1a10' },
+  mumak:   { name: 'Mûmak', special: 'mumak' },
   uruk:    { name: 'Uruk-hai',  skin: '#4e4234', hair: ['#141010', '#0a0808'], style: 'none', hat: 'orchelm', eye: '#e8a838', fangs: 1 },
   smeagol: { name: 'Sméagol',   skin: '#e0b48e', hair: ['#5a4228', '#3a2a18'], style: 'shaggy', ears: 'hobbit' },
   deagol:  { name: 'Déagol',    skin: '#e6bc96', hair: ['#8a6038', '#5e4024'], style: 'curly', ears: 'hobbit', blush: 1 },
@@ -80,6 +83,7 @@ const JOURNEY = {
     'Legolas': ['legolas'], 'Gimli': ['gimli'], 'Gandalf: to Orthanc': ['gandalf'], 'Gandalf the White': ['gandalfW'],
     'Elrond': ['elrond'], 'The Stone-trolls': ['stonetrolls'], 'Shelob': ['shelob'], 'Tom Bombadil': ['tom'], 'Goldberry': ['goldberry'], 'Galadriel': ['galadriel'], 'Sauron': ['sauron'], 'Saruman': ['saruman'], 'Gríma Wormtongue': ['grima'],
     'Uglúk and the Uruk-hai': ['ugluk', 'uruk'], 'Grishnákh and the Orcs of Mordor': ['grishnakh', 'mordororc'], 'The Northern Orcs from Moria': ['goblin'], 'Treebeard': ['treebeard'], 'Gollum': ['gollum'], 'Faramir': ['faramir'],
+    'The Southrons of the Harad Road': ['southron', 'mumak'], 'The Haradrim and their mûmakil': ['southron', 'mumak'], 'The fleet of Umbar': ['corsair'],
   },
   return: {
     'Frodo & Sam homeward': ['frodo', 'sam'], 'Merry & Pippin homeward': ['merry', 'pippin'], 'Aragorn & Arwen': ['aragorn', ['arwen', '3019 6 31']],
@@ -134,6 +138,8 @@ const GROUPS = [
   { name: 'Captives of the Uruk-hai', frame: '#1e1a18', edge: '#e8e4dc', emblem: 'hand', test: S => has(S, 'merry', 'pippin', 'ugluk'), order: ['uruk', 'merry', 'ugluk', 'pippin'] },
   { name: 'The Uruk-hai of Isengard', frame: '#1e1a18', edge: '#e8e4dc', emblem: 'hand', test: S => S.size === 2 && has(S, 'ugluk', 'uruk'), show: ['uruk', 'ugluk', 'uruk'] },
   { name: 'The orc-bands meet at Parth Galen', frame: '#1a1612', edge: '#e05030', emblem: 'eye', test: S => has(S, 'ugluk', 'grishnakh') && !S.has('merry'), show: ['uruk', 'ugluk', 'uruk', 'mordororc', 'grishnakh', 'goblin', 'goblin'] },
+  { name: 'The Southrons and their mûmakil', frame: '#2a120c', edge: '#c9a03c', emblem: 'eye', test: S => S.size === 2 && has(S, 'southron', 'mumak'), show: ['southron', 'mumak', 'southron'] },
+  { name: 'The Corsairs of Umbar', frame: '#14182a', edge: '#a02828', emblem: 'eye', test: S => S.size === 1 && S.has('corsair'), show: ['corsair', 'corsair', 'corsair'] },
   { name: 'Grishnákh and the Orcs of Mordor', frame: '#1a1210', edge: '#e05030', emblem: 'eye', test: S => S.size === 2 && has(S, 'grishnakh', 'mordororc'), show: ['mordororc', 'grishnakh', 'mordororc'] },
   { name: 'Treebeard and the Hobbits', frame: '#24361c', edge: '#8a9a6a', emblem: 'leaf', test: S => has(S, 'merry', 'pippin', 'treebeard') },
   { name: 'Frodo, Sam and Sméagol', frame: '#1b2433', edge: '#b4bc9c', emblem: 'ring', test: S => S.size === 3 && has(S, 'frodo', 'sam', 'gollum') },
@@ -251,6 +257,8 @@ const B = {
   mordororc: { tunic: '#3a2e28', legs: '#2a2420', boots: '#141010', gear: 'sword', mail: 1 },
   ugluk:    { tunic: '#2a2626', legs: '#2a2020', boots: '#141010', gear: 'handshield', mail: 1 },
   uruk:     { tunic: '#2e2a28', legs: '#2a2020', boots: '#141010', gear: 'handshield', mail: 1 },
+  southron: { tunic: '#a02828', legs: '#6a1a1a', boots: '#2a1a12', belt: '#c9a03c', gear: 'shield', mail: 1 },   // scarlet and gold, as the books dress them
+  corsair:  { tunic: '#1e2a44', legs: '#2a2a30', boots: '#141010', belt: '#a02828', gear: 'sword' },
   smeagol:  { tunic: '#6a5a3a', legs: '#4a4030', feet: 'hobbit' },
   deagol:   { tunic: '#5a7a4a', legs: '#5a4a30', feet: 'hobbit' },
   thror:    { tunic: '#7a2a3a', legs: '#3a3028', cloak: '#c9a03c', boots: '#2a1f18', belt: '#e8c860', mail: 1 },
@@ -472,6 +480,7 @@ function figGrid(id, f) {
   if (C[id].special === 'trolls') return trollsGrid(f, false);
   if (C[id].special === 'stonetrolls') return trollsGrid(0, true);
   if (C[id].special === 'warg') return wargGrid(f);
+  if (C[id].special === 'mumak') return beast('mumak', f);
   if (C[id].special === 'gem') return gemGrid(f);
   if (C[id].special === 'dragon') return hoardGrid(f);
   if (C[id].special === 'spider') return spiderGrid(f);

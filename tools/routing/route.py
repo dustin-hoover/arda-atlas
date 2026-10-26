@@ -23,7 +23,7 @@ def parse(s):
 
 # Legs not walked come from GEO.MODES in src/geo.js (exported into geo.json): (journey name regex, from date,
 # to date, mode). A leg takes the mode when it starts at or after `from` and ends at or before `to`.
-ROUTE_AS = {'ride': 'walk', 'barrel': 'boat', 'blackship': 'boat', 'fire': 'fly'}
+ROUTE_AS = {'ride': 'walk', 'barrel': 'boat', 'blackship': 'boat', 'fire': 'fly', 'corsair': 'fly'}   # the Corsairs' course is laid offshore by hand (geo.js): sailed straight between its points
 MODES = [(m[0], m[1], m[2], ROUTE_AS.get(m[3], m[3])) for m in geo['MODES']]
 
 h, s, mtn, hill, forest, dark, marsh, lake = (A[..., i] for i in range(8))
@@ -142,7 +142,8 @@ for story, js in geo['JOURNEYS'].items():
             stats['legs'] += 1
             md = mode_of(j['name'], ta, tb)
             seg = None
-            if md not in ('fly', 'under') and math.hypot(xb - xa, yb - ya) > 2.5 * S:
+            inside = all(X0 + 4 < x < X1 - 4 and Y0 + 4 < y < Y1 - 4 for x, y in ((xa, ya), (xb, yb)))   # beyond the sampled terrain (the far south): straight between the authored points
+            if md not in ('fly', 'under') and inside and math.hypot(xb - xa, yb - ya) > 2.5 * S:
                 path = astar(COST[md], (xa, ya), (xb, yb))
                 if path is None: stats['failed'] += 1; print('  no route:', story, j['name'], md, (xa, ya), '->', (xb, yb))
                 else:
