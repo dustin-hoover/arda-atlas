@@ -597,7 +597,7 @@ const BEACONS = ['Amon Dîn','Eilenach','Nardol','Erelas','Min-Rimmon','Calenhad
 const JOURNEYS = {
   'war': [
     { name:'Frodo & Sam', color:'#f2d06b', pts:[
-      [0.3,0.5,'3018 9 23'],[27.8,-6.5,'3018 9 24'],[48.8,-10.1,'3018 9 24.8'],[66.3,-11.4,'3018 9 25.4'],[74.4,-12.8,'3018 9 25.7'],[84.7,-8.3,'3018 9 25.9'],[94.6,-15.1,'3018 9 26.3'],[105.8,-25.5,'3018 9 26.8'],[105.8,-25.5,'3018 9 28'],[106.8,-19.6,'3018 9 28.2'],[113.5,-7.2,'3018 9 28.5'],[124.4,4,'3018 9 29.4'],[127.9,7.4,'3018 9 29.7'],
+      [0.3,0.5,'3018 9 23'],[27.8,-6.5,'3018 9 24'],[48.8,-10.1,'3018 9 24.8'],[66.3,-11.4,'3018 9 25.4'],[74.4,-12.8,'3018 9 25.7'],[84.7,-8.3,'3018 9 25.9'],[94.6,-15.1,'3018 9 26.3'],[105.8,-25.5,'3018 9 26.8'],[105.8,-25.5,'3018 9 28.1'],[106.8,-19.6,'3018 9 28.2'],[113.5,-7.2,'3018 9 28.5'],[124.4,4,'3018 9 29.4'],[127.9,7.4,'3018 9 29.7'],
       [141.4,12.2,'3018 9 30.5'],[156.7,14.3,'3018 10 1.5'],[167.9,11.8,'3018 10 3'],[186.2,15.5,'3018 10 5'],[208,11,'3018 10 6.5'],[237,4.6,'3018 10 9'],[277,10.1,'3018 10 12'],[317.5,12,'3018 10 13'],[362,13.1,'3018 10 16'],[379.6,3.1,'3018 10 18.5'],[400.3,3.7,'3018 10 20.4'],[420.5,17.5,'3018 10 20.9'],
       [420.5,17.5,'3018 12 25'],[422.6,-30.5,'3018 12 30'],[380.1,-91.1,'3019 1 5'],[372,-113,'3019 1 8'],[377.4,-143.7,'3019 1 10'],[410.3,-154.9,'3019 1 11.5'],[381.3,-144.9,'3019 1 12.5'],[380,-159.2,'3019 1 13.8'],[401.9,-171.8,'3019 1 14.5'],[420.7,-184.8,'3019 1 15.3'],[424.3,-189.6,'3019 1 15.5'],[442.6,-211,'3019 1 16'],[448.2,-229.5,'3019 1 16.5'],[457.1,-254.8,'3019 1 17'],
       [457.1,-254.8,'3019 2 16'],[492.8,-298.2,'3019 2 16.5'],[511.2,-333.1,'3019 2 18'],[546,-364.7,'3019 2 19'],[573.5,-386.4,'3019 2 21'],[598.2,-407.3,'3019 2 23'],[611.9,-433.1,'3019 2 25'],[611.8,-462.2,'3019 2 25.8'],[620.4,-461.6,'3019 2 26.8'],[643,-449.4,'3019 2 28'],[655.8,-451.5,'3019 2 29'],[680.5,-460.6,'3019 3 1'],[724.1,-466,'3019 3 3'],[761.9,-477.6,'3019 3 5'],
@@ -642,9 +642,17 @@ const JOURNEYS = {
     // Harad Road through Ithilien to join the Dark Lord, ambushed by Faramir's men; the great host of Harad with its
     // mûmakil, up the same road and over at Osgiliath to the Pelennor; and the fleet of Umbar, out of its firth and up
     // the coast and the Anduin to Pelargir, where the Grey Company and the Dead take its ships
+    // the hosts of the War (LR III.7, V.2-V.10, AppB; the days of their marches estimated where the books do not give
+    // them): companies that ride with Aragorn share his path (`with`)
+    { name:'The Grey Company', color:'#6a7a6a', hide:true, with:[['Aragorn','3019 3 6','3019 3 15']], pts:[[377.3,-451.8,'3019 3 6'],[443.2,-489,'3019 3 7'],[451.6,-512.4,'3019 3 8'],[436.8,-534.2,'3019 3 9'],[503.5,-591.6,'3019 3 11'],[505.2,-726.4,'3019 3 12'],[659.8,-727,'3019 3 13'],[734.4,-606.5,'3019 3 15']] },
+    { name:'The Dead Men of Dunharrow', color:'#a8c8b8', hide:true, with:[['Aragorn','3019 3 8','3019 3 13']], pts:[[451.6,-512.4,'3019 3 8'],[436.8,-534.2,'3019 3 9'],[503.5,-591.6,'3019 3 11'],[505.2,-726.4,'3019 3 12'],[659.8,-727,'3019 3 13'],[659.8,-727,'3019 3 13.8']] },
+    { name:'The host of Isengard', color:'#5a5a62', hide:true, pts:[[334,-379.1,'3019 3 2'],[319.5,-410,'3019 3 2.7'],[352,-436,'3019 3 3.4'],[372,-448,'3019 3 3.85'],[377.3,-451.8,'3019 3 4.25']] },
+    { name:'The host of Minas Morgul', color:'#3a4a2e', hide:true, pts:[[773.6,-597.9,'3019 3 10.2'],[764.9,-601.2,'3019 3 10.5'],[740.5,-604.2,'3019 3 11.6'],[735,-603.6,'3019 3 12.6'],[728.5,-600.6,'3019 3 13.4'],[728.5,-600.6,'3019 3 15.6']] },
+    { name:'The Host of the West', color:'#d6dae2', hide:true, with:[['Aragorn','3019 3 18','3019 3 25']], pts:[[738.9,-604.6,'3019 3 18'],[763.1,-481,'3019 3 25'],[763.1,-481,'3019 3 25.5']] },
+    { name:'The Easterlings of Rhûn', color:'#7a2020', hide:true, pts:[[1010,40,'3019 3 6'],[930,75,'3019 3 10'],[860,105,'3019 3 14'],[790,125,'3019 3 16.5'],[769,128.4,'3019 3 17'],[768.4,134,'3019 3 27']] },
     { name:'The Southrons of the Harad Road', color:'#c9a03c', hide:true, pts:[[560.1,-1006.6,'3019 2 18'],[632,-783.2,'3019 2 28'],[702.9,-705.5,'3019 3 3'],[750.4,-645.2,'3019 3 5'],[764.9,-601.2,'3019 3 6.3'],[753,-571,'3019 3 7.4']] },
     { name:'The Haradrim and their mûmakil', color:'#a02828', hide:true, pts:[[734.5,-1585,'3019 1 14'],[632.5,-1404,'3019 1 26'],[523,-1198.8,'3019 2 8'],[560.1,-1006.6,'3019 2 18'],[632,-783.2,'3019 3 1'],[702.9,-705.5,'3019 3 6'],[750.4,-645.2,'3019 3 9'],[764.9,-601.2,'3019 3 10.5'],[738.9,-604.6,'3019 3 12.5'],[731.5,-601.5,'3019 3 14'],[730.5,-600.8,'3019 3 15.55']] },
-    { name:'The fleet of Umbar', color:'#9a2a4a', hide:true, pts:[[472,-1112,'3019 3 2'],[440,-1099,'3019 3 2.3'],[392,-1102,'3019 3 2.7'],[370,-1100,'3019 3 2.9'],[350,-1060,'3019 3 3.4'],[355,-980,'3019 3 4.3'],[385,-900,'3019 3 5.3'],[430,-850,'3019 3 6.2'],[455,-830,'3019 3 6.7'],[500,-830,'3019 3 7.5'],[540,-815,'3019 3 8.3'],[565,-795,'3019 3 9.2'],[584.2,-776.2,'3019 3 10'],[621.1,-738.2,'3019 3 11'],[659.8,-727,'3019 3 12'],[659.8,-727,'3019 3 13.3']] },
+    { name:'The fleet of Umbar', color:'#9a2a4a', hide:true, pts:[[472,-1112,'3019 3 2.1'],[440,-1099,'3019 3 2.3'],[392,-1102,'3019 3 2.7'],[370,-1100,'3019 3 2.9'],[350,-1060,'3019 3 3.4'],[355,-980,'3019 3 4.3'],[385,-900,'3019 3 5.3'],[430,-850,'3019 3 6.2'],[455,-830,'3019 3 6.7'],[500,-830,'3019 3 7.5'],[540,-815,'3019 3 8.3'],[565,-795,'3019 3 9.2'],[584.2,-776.2,'3019 3 10'],[621.1,-738.2,'3019 3 11'],[659.8,-727,'3019 3 12'],[659.8,-727,'3019 3 13.3']] },
     { name:'Treebeard', color:'#8a9a6a', with:[['Merry & Pippin','3019 2 29.4','3019 3 3']], pts:[[423,-359.7,'3019 2 29.4'],[334,-379.1,'3019 3 3'],[334,-379.1,'3019 3 30']] },
     { name:'Gollum', color:'#b4bc9c', hide:true, with:[['Frodo & Sam','3019 2 29','3019 3 12.8'],['Frodo & Sam','3019 3 24','3019 3 25']], pts:[[655.8,-451.5,'3019 2 29'],[781,-584.1,'3019 3 12.8'],[834.8,-546.9,'3019 3 24'],[840.3,-552.6,'3019 3 25']] },
     { name:'Faramir', color:'#7fa86a', with:[['Frodo & Sam','3019 3 7','3019 3 8.3']], pts:[[739.3,-548.8,'3019 3 7'],[744.3,-565.9,'3019 3 8.3'],[711.3,-563.2,'3019 3 9.4'],[725.1,-599.1,'3019 3 10.75'],[725.1,-599.1,'3019 3 11.3'],[738.9,-604.6,'3019 3 11.9'],[738.9,-604.6,'3019 3 12.8'],[731.5,-602.3,'3019 3 13.4'],[725.1,-599.1,'3019 3 13.75'],[725.1,-599.1,'3019 3 30']] },
@@ -713,7 +721,7 @@ const JOURNEYS = {
 // barrel and blackship on rivers and lakes, sea on open water, and keeps fly and under straight.
 const MODES = [
   ['Frodo & Sam|Aragorn|Legolas|Gimli|Merry & Pippin|Boromir', '3019 2 16', '3019 2 26', 'boat'],     // the grey boats of Lórien to Parth Galen
-  ['Aragorn|Legolas|Gimli', '3019 3 13', '3019 3 15', 'blackship'],
+  ['Aragorn|Legolas|Gimli|The Grey Company', '3019 3 13', '3019 3 15', 'blackship'],
   ['The fleet of Umbar', '3019 3 2', '3019 3 10', 'corsair'],                                       // the Corsairs' black-sailed ships at sea
   ['The fleet of Umbar', '3019 3 10', '3019 3 13.3', 'blackship'],                                   // and up the Anduin to Pelargir                                  // the black ships, Pelargir to the Harlond
   ['Bilbo & Thorin', '2941 9 21', '2941 9 23', 'barrel'],                                            // barrels down the Forest River
@@ -725,13 +733,13 @@ const MODES = [
   ['Frodo & Sam', '3019 3 25', '3019 3 26', 'fly'],
   ['Bilbo, Elrond|Frodo\'s last', '3021 9 29.75', '3021 10 3', 'sea'],                               // the ship from Mithlond
   ['Frodo & Sam|Aragorn|Legolas|Gimli|Merry & Pippin|Boromir|Gandalf the Grey', '3019 1 13.7', '3019 1 15.6', 'under'],  // through Moria
-  ['Aragorn|Legolas|Gimli', '3019 3 7', '3019 3 8', 'under'],                                        // the Paths of the Dead
+  ['Aragorn|Legolas|Gimli|The Grey Company|The Dead Men', '3019 3 7', '3019 3 8', 'under'],                                        // the Paths of the Dead
   ['Bilbo & Thorin', '2941 7 5', '2941 7 7', 'under'],                                               // Goblin-town
   // on horseback
   ['Gandalf the Grey', '3018 9 20', '3018 10 18.9', 'ride'],                                         // Shadowfax, from Rohan to Rivendell
   ['Gandalf the White', '3019 3 2', '3019 3 25', 'ride'],                                            // Shadowfax again
   ['^Pippin$', '3019 3 5.6', '3019 3 9', 'ride'],                                                    // riding before Gandalf
-  ['Aragorn|Legolas|Gimli', '3019 2 30', '3019 3 13', 'ride'],                                       // Hasufel and Arod, from Éomer
+  ['Aragorn|Legolas|Gimli|The Grey Company|The Dead Men', '3019 2 30', '3019 3 13', 'ride'],                                       // Hasufel and Arod, from Éomer
   ['Aragorn|Legolas|Gimli', '3019 3 17', '3019 3 25', 'ride'],                                       // to the Black Gate
   ['Merry with Théoden', '3019 3 5.5', '3019 3 15.5', 'ride'],
   ['The Black Riders', '3018 6 22', '3018 10 20.5', 'ride'],
@@ -787,6 +795,9 @@ const BATTLES = [
             { name:'Isengard', note:'the garrison Saruman kept back', banner:'isengard', units:[['orc',5],['uruk',3]] } ], outcome:'The Ents break the Ring of Isengard and flood it with the Isen; Saruman is shut in Orthanc.' },
   { name:'The Muster of Rohan', story:'war', at:[443.2,-489], from:'3019 3 8', to:'3019 3 10.25', src:'LR V.3', muster:true,
     sides:[ { name:'Rohan', note:'the Riders of the Mark gather in Harrowdale and camp on the Firienfeld below Dunharrow; at dawn on the Dawnless Day nigh on six thousand ride east to Gondor', banner:'rohan', units:[['rider',10],['rohan',4]] } ], outcome:'Théoden leads the host out of Dunharrow on 10 March; Merry rides hidden before Dernhelm.' },
+  { name:'The Fords of Linhir', story:'war', at:[505.2,-726.4], from:'3019 3 12.4', to:'3019 3 12.75', src:'LR V.9',
+    sides:[ { name:'The Dead', note:'the Grey Company and the Shadow Host behind them', banner:'dead', units:[['dead',6],['dunedain',2]] },
+            { name:'Umbar and Harad', note:'Corsairs and Haradrim fighting the men of Lamedon for the fords of Gilrain', banner:'umbar', units:[['corsair',4],['harad',3]] } ], outcome:'Attackers and defenders alike flee before the Dead; the road to Pelargir lies open.' },
   { name:'The Battle of Pelargir', story:'war', at:[659.8,-727], from:'3019 3 13.3', to:'3019 3 13.7', src:'LR V.9',
     sides:[ { name:'The Dead', note:'the Oathbreakers, led by Aragorn', banner:'dead', units:[['dead',8]] },
             { name:'Umbar', note:'the Corsairs and their fleet', banner:'umbar', units:[['corsair',7]] } ], outcome:'The Corsairs flee in terror; Aragorn takes their ships and releases the Dead.' },

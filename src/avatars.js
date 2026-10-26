@@ -57,6 +57,13 @@ const C = {
   grishnakh: { name: 'Grishnákh', skin: '#4e5236', hair: ['#141010', '#0a0808'], style: 'sparse', ears: 'gollum', eye: '#f05030', fangs: 1, brows: 1, beardC: ['#141010', '#0a0808'] },
   mordororc: { name: 'Orcs of Mordor', skin: '#5a5e3e', hair: ['#141010', '#0a0808'], style: 'none', hat: 'helm', eye: '#f05030', fangs: 1 },
   ugluk:   { name: 'Uglúk',     skin: '#5a4a3c', hair: ['#141010', '#0a0808'], style: 'none', hat: 'orchelm', eye: '#f0c040', fangs: 1, brows: 1, beardC: ['#141010', '#0a0808'] },
+  deadman: { name: 'The Dead Men of Dunharrow', skin: '#d8f0e4', hair: ['#c8dcd2', '#a8c0b4'], style: 'long', eye: '#f4fff8' },
+  dunadan: { name: 'The Grey Company', skin: '#e0b088', hair: ['#2a2018', '#1a140e'], style: 'short', hat: 'helm', eye: '#3a4a5a' },
+  gondorsoldier: { name: 'Men of Gondor', skin: '#e8b892', hair: ['#1e1a16', '#141010'], style: 'short', hat: 'helm', eye: '#3a3a40' },
+  rohanrider: { name: 'Riders of Rohan', skin: '#e8b892', hair: ['#d8b860', '#b89040'], style: 'long', hat: 'helm', eye: '#3a5a7a' },
+  easterling: { name: 'Easterlings', skin: '#d8a878', hair: ['#141010', '#0a0808'], style: 'long', hat: 'helm', eye: '#2a1a10' },
+  dunlending: { name: 'Dunlendings', skin: '#d8b090', hair: ['#3a2a1a', '#2a1e12'], style: 'shaggy', eye: '#2a1a10' },
+  olog:    { name: 'Trolls of Mordor', special: 'olog' },
   southron: { name: 'Southrons', skin: '#6e4228', hair: ['#141010', '#0a0808'], style: 'long', hat: 'helm', eye: '#2a1a10' },
   corsair: { name: 'Corsairs of Umbar', skin: '#c08a60', hair: ['#1a1410', '#0e0a08'], style: 'sides', eye: '#2a1a10' },
   mumak:   { name: 'Mûmak', special: 'mumak' },
@@ -79,11 +86,13 @@ const C = {
 const JOURNEY = {
   war: {
     'Frodo & Sam': ['frodo', 'sam'], 'Bilbo': [['bilbo', null, '3001 10 21'], ['bilboOld', '3001 10 21', null]], 'Frodo at Bag End': ['frodo'], 'Gandalf at the Party': ['gandalf'], 'Durin\'s Bane': ['balrog'], 'Gandalf and Durin\'s Bane': ['gandalf'], 'Aragorn': ['aragorn'], 'Merry & Pippin': ['merry', 'pippin'], 'Pippin': ['pippin'],
-    'Merry with Théoden': ['merry', 'theoden', ['eowyn', '3019 3 10', '3019 3 15.6']], 'Gandalf the Grey': ['gandalf'], 'The Black Riders': ['nazgul'], 'Boromir': ['boromir'],
+    'Merry with Théoden': ['merry', 'theoden', ['eowyn', '3019 3 10', '3019 3 15.6'], ['rohanrider', '3019 3 10.25', '3019 3 15.6']], 'Gandalf the Grey': ['gandalf'], 'The Black Riders': ['nazgul'], 'Boromir': ['boromir'],
     'Legolas': ['legolas'], 'Gimli': ['gimli'], 'Gandalf: to Orthanc': ['gandalf'], 'Gandalf the White': ['gandalfW'],
     'Elrond': ['elrond'], 'The Stone-trolls': ['stonetrolls'], 'Shelob': ['shelob'], 'Tom Bombadil': ['tom'], 'Goldberry': ['goldberry'], 'Galadriel': ['galadriel'], 'Sauron': ['sauron'], 'Saruman': ['saruman'], 'Gríma Wormtongue': ['grima'],
     'Uglúk and the Uruk-hai': ['ugluk', 'uruk'], 'Grishnákh and the Orcs of Mordor': ['grishnakh', 'mordororc'], 'The Northern Orcs from Moria': ['goblin'], 'Treebeard': ['treebeard'], 'Gollum': ['gollum'], 'Faramir': ['faramir'],
     'The Southrons of the Harad Road': ['southron', 'mumak'], 'The Haradrim and their mûmakil': ['southron', 'mumak'], 'The fleet of Umbar': ['corsair'],
+    'The Grey Company': ['dunadan'], 'The Dead Men of Dunharrow': ['deadman'], 'The host of Isengard': ['uruk', 'dunlending'], 'The host of Minas Morgul': ['mordororc', 'olog'],
+    'The Host of the West': ['gondorsoldier', 'rohanrider'], 'The Easterlings of Rhûn': ['easterling'],
   },
   return: {
     'Frodo & Sam homeward': ['frodo', 'sam'], 'Merry & Pippin homeward': ['merry', 'pippin'], 'Aragorn & Arwen': ['aragorn', ['arwen', '3019 6 31']],
@@ -138,6 +147,13 @@ const GROUPS = [
   { name: 'Captives of the Uruk-hai', frame: '#1e1a18', edge: '#e8e4dc', emblem: 'hand', test: S => has(S, 'merry', 'pippin', 'ugluk'), order: ['uruk', 'merry', 'ugluk', 'pippin'] },
   { name: 'The Uruk-hai of Isengard', frame: '#1e1a18', edge: '#e8e4dc', emblem: 'hand', test: S => S.size === 2 && has(S, 'ugluk', 'uruk'), show: ['uruk', 'ugluk', 'uruk'] },
   { name: 'The orc-bands meet at Parth Galen', frame: '#1a1612', edge: '#e05030', emblem: 'eye', test: S => has(S, 'ugluk', 'grishnakh') && !S.has('merry'), show: ['uruk', 'ugluk', 'uruk', 'mordororc', 'grishnakh', 'goblin', 'goblin'] },
+  { name: 'Aragorn and the Shadow Host', lead: ['aragorn'], frame: '#1e2622', edge: '#c8e8d8', emblem: 'star', test: S => has(S, 'aragorn', 'deadman'), order: ['deadman', 'dunadan', 'legolas', 'aragorn', 'gimli', 'deadman'] },
+  { name: 'The Grey Company', lead: ['aragorn'], frame: '#1e2622', edge: '#c8ccd4', emblem: 'star', test: S => has(S, 'aragorn', 'dunadan') && !S.has('gondorsoldier'), order: ['dunadan', 'legolas', 'aragorn', 'gimli', 'dunadan'] },
+  { name: 'The Host of the West', lead: ['aragorn', 'gandalfW'], frame: '#141418', edge: '#f0f0ea', emblem: 'star', test: S => S.has('gondorsoldier') },
+  { name: 'The host of Isengard', frame: '#141418', edge: '#f0f0ea', emblem: 'hand', test: S => S.size === 2 && has(S, 'uruk', 'dunlending'), show: ['uruk', 'dunlending', 'uruk'] },
+  { name: 'The host of Minas Morgul', frame: '#141418', edge: '#7ad06a', emblem: 'eye', test: S => S.size === 2 && has(S, 'mordororc', 'olog'), show: ['mordororc', 'olog', 'mordororc'] },
+  { name: 'The Easterlings', frame: '#1a1210', edge: '#c9a03c', emblem: 'eye', test: S => S.size === 1 && S.has('easterling'), show: ['easterling', 'easterling', 'easterling'] },
+  { name: 'Théoden and the Riders of Rohan', lead: ['theoden'], frame: '#1f3a24', edge: '#e6c04e', emblem: 'horse', test: S => has(S, 'theoden', 'rohanrider') },
   { name: 'The Southrons and their mûmakil', frame: '#2a120c', edge: '#c9a03c', emblem: 'eye', test: S => S.size === 2 && has(S, 'southron', 'mumak'), show: ['southron', 'mumak', 'southron'] },
   { name: 'The Corsairs of Umbar', frame: '#14182a', edge: '#a02828', emblem: 'eye', test: S => S.size === 1 && S.has('corsair'), show: ['corsair', 'corsair', 'corsair'] },
   { name: 'Grishnákh and the Orcs of Mordor', frame: '#1a1210', edge: '#e05030', emblem: 'eye', test: S => S.size === 2 && has(S, 'grishnakh', 'mordororc'), show: ['mordororc', 'grishnakh', 'mordororc'] },
@@ -257,6 +273,12 @@ const B = {
   mordororc: { tunic: '#3a2e28', legs: '#2a2420', boots: '#141010', gear: 'sword', mail: 1 },
   ugluk:    { tunic: '#2a2626', legs: '#2a2020', boots: '#141010', gear: 'handshield', mail: 1 },
   uruk:     { tunic: '#2e2a28', legs: '#2a2020', boots: '#141010', gear: 'handshield', mail: 1 },
+  deadman:  { robe: '#a8c0b4', rags: 1, gear: 'sword' },
+  dunadan:  { tunic: '#3a4a3a', legs: '#2a2a24', cloak: '#5a6a5a', boots: '#2a1f18', belt: '#c8ccd4', gear: 'sword' },
+  gondorsoldier: { tunic: '#1e1e24', legs: '#2a2a30', cloak: '#d6dae2', boots: '#141010', belt: '#c8ccd4', gear: 'shield', mail: 1 },
+  rohanrider: { tunic: '#3f6a3a', legs: '#5a4a30', cloak: '#2a4a2a', boots: '#3a2a1a', belt: '#c9a03c', gear: 'sword', mail: 1 },
+  easterling: { tunic: '#7a2020', legs: '#2a1a1a', boots: '#141010', belt: '#c9a03c', gear: 'axe', mail: 1 },
+  dunlending: { tunic: '#5a4a32', legs: '#3a3022', boots: '#2a1f18', gear: 'axe' },
   southron: { tunic: '#a02828', legs: '#6a1a1a', boots: '#2a1a12', belt: '#c9a03c', gear: 'shield', mail: 1 },   // scarlet and gold, as the books dress them
   corsair:  { tunic: '#1e2a44', legs: '#2a2a30', boots: '#141010', belt: '#a02828', gear: 'sword' },
   smeagol:  { tunic: '#6a5a3a', legs: '#4a4030', feet: 'hobbit' },
@@ -481,6 +503,7 @@ function figGrid(id, f) {
   if (C[id].special === 'stonetrolls') return trollsGrid(0, true);
   if (C[id].special === 'warg') return wargGrid(f);
   if (C[id].special === 'mumak') return beast('mumak', f);
+  if (C[id].special === 'olog') return beast('troll', f);
   if (C[id].special === 'gem') return gemGrid(f);
   if (C[id].special === 'dragon') return hoardGrid(f);
   if (C[id].special === 'spider') return spiderGrid(f);
