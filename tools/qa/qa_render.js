@@ -58,5 +58,22 @@
   for (const [name, b] of Object.entries(REG)) { let n = 0, bad = 0, s2l = 0, l2s = 0;
     for (let y = b[1]; y <= b[3]; y += 1) for (let x = b[0]; x <= b[2]; x += 1) { const v = vecLand([x, y]), r = E(x, y, 0.5).s > 0; n++; if (v !== r) { bad++; v ? l2s++ : s2l++; } }
     rep.coast.push({ name, pct: +(100 * bad / n).toFixed(2), seaDrawnAsLand: s2l, landDrawnAsSea: l2s }); }
+  // passes and walls: each named pass is a notch, at most 75% of the crest around it (12-24 mi off); the walls of
+  // Mordor stand at least 1,200 m along their whole spine, save at their passes
+  const PASSES = [['High Pass', 485.2, 2.1, 7], ['Redhorn Gate', 418, -164, 6], ['Cirith Gorgor', 761.9, -477.6, 8], ['Isenmouthe', 808.8, -490.5, 6], ['Cirith Ungol', 783.5, -584.8, 5], ['Morgul pass', 781, -597, 5]];
+  rep.passes = PASSES.map(([name, x, y]) => {
+    let lo = E(x, y, 0.25).h;
+    let crest = 0; for (let a = 0; a < 48; a++) for (const r of [12, 16, 20, 24]) crest = Math.max(crest, E(x + r * Math.cos(a / 48 * 6.283), y + r * Math.sin(a / 48 * 6.283), 0.25).h);
+    return { name, pass: Math.round(lo), crest: Math.round(crest), ok: lo <= 0.75 * crest };
+  });
+  rep.walls = GEO.RANGES.filter(r => /^Ephel Dúath$|^Ered Lithui$/.test(r.name)).map(r => {
+    let low = Infinity, at = null, n = 0;
+    // the fence about Gorgoroth, Udûn and Nurn: the last 120 miles of each range fade into the unmapped east and south
+    const sp = resample(r.pts, 5), keep = sp.slice(0, Math.max(1, sp.length - 24));
+    for (const p of keep) { if (PASSES.some(q => Math.hypot(p[0] - q[1], p[1] - q[2]) < q[3] + 3)) continue; n++;
+      let m = 0; for (let dx = -6; dx <= 6; dx += 1.5) for (let dy = -6; dy <= 6; dy += 1.5) m = Math.max(m, E(p[0] + dx, p[1] + dy, 0.25).h);   // the crest wanders off the line
+      if (m < low) { low = m; at = p; } }
+    return { name: r.name, lowest: Math.round(low), at, samples: n, ok: low >= 1200 };
+  });
   return rep;
 })()

@@ -33,9 +33,9 @@ async function ensure() {
   // sky dome
   G.skyMat = new THREE.ShaderMaterial({
     side: THREE.BackSide, depthWrite: false, fog: false,
-    uniforms: { sunDir: { value: new THREE.Vector3(0, 1, 0) }, zen: { value: new THREE.Color() }, hor: { value: new THREE.Color() }, cloud: { value: 0.3 }, cloudCol: { value: new THREE.Color(1, 1, 1) }, time: { value: 0 }, night: { value: 0 }, sunCol: { value: new THREE.Color(1, 0.9, 0.7) } },
+    uniforms: { moonDir: { value: new THREE.Vector3(0, -1, 0) }, moonB: { value: 0 }, sunDir: { value: new THREE.Vector3(0, 1, 0) }, zen: { value: new THREE.Color() }, hor: { value: new THREE.Color() }, cloud: { value: 0.3 }, cloudCol: { value: new THREE.Color(1, 1, 1) }, time: { value: 0 }, night: { value: 0 }, sunCol: { value: new THREE.Color(1, 0.9, 0.7) } },
     vertexShader: `varying vec3 vDir; void main(){ vDir = position; vec4 p = projectionMatrix * modelViewMatrix * vec4(position,1.0); gl_Position = p.xyww; }`,
-    fragmentShader: `uniform vec3 sunDir, zen, hor, cloudCol, sunCol; uniform float cloud, time, night; varying vec3 vDir;
+    fragmentShader: `uniform vec3 sunDir, moonDir, zen, hor, cloudCol, sunCol; uniform float cloud, time, night, moonB; varying vec3 vDir;
       float h(vec2 p){ return fract(sin(dot(p, vec2(127.1,311.7)))*43758.5453); }
       float n(vec2 p){ vec2 i=floor(p), f=fract(p); f=f*f*(3.0-2.0*f); return mix(mix(h(i),h(i+vec2(1,0)),f.x), mix(h(i+vec2(0,1)),h(i+vec2(1,1)),f.x), f.y); }
       float fbm(vec2 p){ float s=0.0,a=0.5; for(int i=0;i<6;i++){ s+=a*n(p); p=p*2.03+vec2(1.7,9.2); a*=0.5; } return s; }
@@ -45,7 +45,16 @@ async function ensure() {
         vec3 col = mix(hor, zen, pow(clamp(y,0.0,1.0), 0.45));
         float s = max(dot(d, normalize(sunDir)), 0.0);
         col += sunCol * (pow(s, 900.0) * 30.0 + pow(s, 12.0) * 0.35) * (1.0 - night);
-        if (night > 0.0 && y > 0.0) { vec2 sp = d.xz / (y + 0.2) * 220.0; float st = step(0.997, h(floor(sp))); col += vec3(st) * night * 0.9 * (1.0 - cloud); }
+        if (night > 0.0 && y > 0.0) {
+          // stars of every magnitude, a faint band of the Milky Way, and the Moon in its phase
+          vec3 c3 = floor(d * 420.0); vec2 cell = c3.xy + c3.z * vec2(17.13, 41.71); float r = h(cell), b = h(cell + 7.3);
+          float st = step(0.994, r) * (0.35 + 1.8 * pow(b, 6.0)) * (0.85 + 0.15 * sin(time * 3.0 + r * 60.0));
+          float mw = exp(-pow(dot(d, normalize(vec3(0.45, 0.35, 0.82))) / 0.2, 2.0)) * (0.5 + 0.8 * fbm(d.xz / (y + 0.3) * 6.0));
+          float clear = 1.0 - min(1.0, cloud * 1.2);
+          col += (vec3(st) * 2.4 + vec3(0.07, 0.08, 0.11) * mw) * night * clear;
+          float m = dot(d, normalize(moonDir));
+          col += vec3(1.0, 0.97, 0.88) * (smoothstep(0.99975, 0.99988, m) * 3.0 + pow(max(m, 0.0), 300.0) * 0.25) * moonB * night * (0.35 + 0.65 * clear);
+        }
         if (y > 0.0) {
           vec2 uv = d.xz / (y + 0.12) * 0.9 + vec2(time * 0.004, time * 0.002);
           float c = fbm(uv * 2.2);
@@ -355,16 +364,26 @@ function placeGrass() {
   if (!G.grass || !G.nearCanvas) return;
   const ctx = G.nearCtx || (G.nearCtx = G.nearCanvas.getContext('2d', { willReadFrequently: true }));
   const R = 38, half = G.nearHalf, W = G.nearCanvas.width;
-  let gl = 0, flow = 0;
+  let gl = 0, flow = 0, keep = 1, dead = 0;
   try {
-    window.GEN.evaluate(G.X0 + G.px / MI, G.Y0 - G.pz / MI, 0.01);
-    const F = window.GEN.F; gl = F[13]; flow = 0.05 * (1 - F[9]) * (1 - F[8]) * (1 - F[4]);
+    const X = G.X0 + G.px / MI, Y = G.Y0 - G.pz / MI;
+    window.GEN.evaluate(X, Y, 0.01);
+    const F = window.GEN.F, ash = F[10], arid = F[8], ice = F[14];
+    // land cover decides what grows: nothing on ash, lava or ice; thin dry tussock in the deserts; no turf on paving
+    const town = (G.o.places || []).some(p => p.r && Math.hypot(p.X - X, p.Y - Y) < p.r * (p.culture === 'minastirith' ? 1.2 : 0.8));
+    keep = (1 - window.GEN.sstep(0.2, 0.45, ash)) * (1 - window.GEN.sstep(0.3, 0.6, ice)) * (1 - 0.7 * window.GEN.sstep(0.45, 0.8, arid)) * (town ? 0.08 : 1);
+    dead = window.GEN.sstep(0.3, 0.7, arid);
+    // flowers only in their season (April to early September) and not in dry, dark or ashen country
+    const doy = ((G.t % 365) + 365) % 365, season = window.GEN.sstep(85, 120, doy) * window.GEN.sstep(265, 225, doy);
+    gl = F[13]; flow = 0.05 * season * (1 - F[9]) * (1 - arid) * (1 - F[4]) * (1 - window.GEN.sstep(0.05, 0.2, ash));
+    G.reek = window.GEN.sstep(0.15, 0.5, ash);                                   // the reek of Mordor (LR VI.2-3)
   } catch (e) { /* the page GEN is always initialised; keep plain grass if not */ }
   const tall = 1 + 1.7 * gl, FLW = [[0.75, 0.12, 0.1], [0.92, 0.82, 0.25], [0.55, 0.35, 0.8], [0.95, 0.95, 0.92], [0.35, 0.45, 0.85]];
   const img = ctx.getImageData(0, 0, W, W).data;
   const m4 = new THREE.Matrix4(), q = new THREE.Quaternion(), s = new THREE.Vector3(), p = new THREE.Vector3(), up = new THREE.Vector3(0, 1, 0), c = new THREE.Color();
   let k = 0;
   for (let i = 0; i < G.grassN; i++) {
+    if (Math.random() > keep) continue;
     const a = Math.random() * Math.PI * 2, r = Math.sqrt(Math.random()) * R;
     const x = G.px + Math.cos(a) * r, z = G.pz + Math.sin(a) * r;
     const u = Math.floor((x - G.nearOff.x + half) / (2 * half) * W), v = Math.floor((z - G.nearOff.z + half) / (2 * half) * W);
@@ -377,6 +396,7 @@ function placeGrass() {
     const fl = Math.random() < flow, sc = 0.7 + Math.random() * 0.8; s.set(sc, sc * (0.8 + Math.random() * 0.6) * (fl ? 0.8 : tall * (0.75 + Math.random() * 0.5)), sc);
     m4.compose(p, q, s); G.grass.setMatrixAt(k, m4);
     if (fl) { const f = FLW[Math.floor(Math.random() * FLW.length)]; c.setRGB(f[0], f[1], f[2], THREE.SRGBColorSpace); }
+    else if (dead > 0.5) c.setRGB(0.62 + 0.1 * Math.random(), 0.55 + 0.08 * Math.random(), 0.38, THREE.SRGBColorSpace);   // dry desert tussock
     else c.setRGB((rr / 255 * 1.05) * (1 - gl * 0.35) + 0.8 * gl * 0.35, (gg / 255 * 1.1) * (1 - gl * 0.35) + 0.7 * gl * 0.35, (bb / 255 * 0.9) * (1 - gl * 0.35) + 0.3 * gl * 0.35, THREE.SRGBColorSpace);
     G.grass.setColorAt(k, c);
     k++;
@@ -396,7 +416,8 @@ function updateAtmos(recompute) {
   const dir = new THREE.Vector3(Math.sin(az) * Math.cos(el), Math.sin(el), -Math.cos(az) * Math.cos(el));
   const day = Math.max(0, Math.min(1, (sv.el + 3) / 12));
   const dusk = Math.max(0, 1 - Math.abs(sv.el - 2) / 9);
-  const cl = G.wx.C, dark = G.wx.dark || 0;
+  if (G.reekAt !== G.X0 + ',' + G.Y0) { try { window.GEN.evaluate(G.X0, G.Y0, 0.05); G.reek = window.GEN.sstep(0.15, 0.5, window.GEN.F[10]); } catch (e) { G.reek = 0; } G.reekAt = G.X0 + ',' + G.Y0; }
+  const cl = G.wx.C, reek = G.reek || 0, dark = Math.max(G.wx.dark || 0, 0.4 * reek);
   const mixC = (a, b, t) => a.clone().lerp(b, t);
   const zen = mixC(new THREE.Color(0x05070f), new THREE.Color(0x2f62a8), day).lerp(new THREE.Color(0x8a939c), cl * 0.75 * day);
   let hor = mixC(new THREE.Color(0x0d1220), new THREE.Color(0xc4d7e6), day).lerp(new THREE.Color(0xf0a36a), dusk * 0.7 * (1 - cl)).lerp(new THREE.Color(0xaab2b8), cl * 0.6 * day);
@@ -405,17 +426,23 @@ function updateAtmos(recompute) {
   u.sunDir.value.copy(dir.y > -0.05 ? dir : dir.clone().negate()); u.zen.value.copy(zen); u.hor.value.copy(hor);
   u.cloud.value = Math.min(1, cl * 1.05 + dark * 0.6);
   u.night.value = 1 - day;
+  // the Moon: its age in a 29.5-day month sets its phase and how far it trails the Sun round the sky
+  const age = ((G.t / 29.53) % 1 + 1) % 1, phase = 0.5 - 0.5 * Math.cos(age * Math.PI * 2), ma = az + age * Math.PI * 2;
+  const md = new THREE.Vector3(Math.sin(ma) * Math.cos(-el), Math.sin(-el) * Math.cos(age * Math.PI * 2) + 0.25 * Math.sin(age * Math.PI * 2), -Math.cos(ma) * Math.cos(-el)).normalize();
+  u.moonDir.value.copy(md); u.moonB.value = md.y > 0 ? phase : 0;
+  G.moonLight = md.y > 0 ? phase * Math.min(1, md.y * 3) : 0;
   u.cloudCol.value.copy(mixC(new THREE.Color(0x1a1e28), new THREE.Color(0xf4f6f8), day).lerp(new THREE.Color(0x9ca3aa), G.wx.R > 0.3 ? 0.7 : cl * 0.4).lerp(new THREE.Color(0x2c2018), dark));
   u.sunCol.value.copy(mixC(new THREE.Color(0xffffff), new THREE.Color(0xffa860), dusk));
   const sunI = day * (1 - cl * 0.75) * (1 - dark * 0.9);
   G.sun.intensity = 0.25 + 3.0 * sunI;
   G.sun.color.copy(mixC(new THREE.Color(0x8fa6d8), mixC(new THREE.Color(0xfff4e6), new THREE.Color(0xffb070), dusk), day));
   G.sunDir = dir.y > 0 ? dir : new THREE.Vector3(0.3, 0.6, 0.2);
-  G.hemi.intensity = 0.25 + 0.95 * day * (1 - dark * 0.7);
+  G.hemi.intensity = 0.25 + 0.95 * day * (1 - dark * 0.7) + 0.22 * (G.moonLight || 0) * (1 - day) * (1 - cl * 0.7);   // moonlight
   if (G.grassMat) G.grassMat.color.setScalar(0.25 + 0.75 * day * (1 - cl * 0.3) * (1 - dark * 0.7));
   G.hemi.color.copy(mixC(new THREE.Color(0x303a58), zen.clone().lerp(new THREE.Color(0xffffff), 0.4), day));
   G.scene.fog.color.copy(hor);
-  const vis = (G.wx.R > 0.3 ? 12000 : 90000) * (1 - cl * 0.35) * (1 - dark * 0.7);
+  if (reek > 0.05) { zen.lerp(new THREE.Color(0x4a3a30), reek * 0.6 * day); hor.lerp(new THREE.Color(0x6a5446), reek * 0.7 * day); G.scene.fog.color.copy(hor); }   // reek and haze over Mordor
+  const vis = (G.wx.R > 0.3 ? 12000 : 90000) * (1 - cl * 0.35) * (1 - dark * 0.7) * (1 - 0.55 * reek);
   G.scene.fog.near = Math.min(3000, vis * 0.08); G.scene.fog.far = vis;
   G.renderer.toneMappingExposure = 0.55 + 0.6 * day;
   G.rain.visible = G.wx.R > 0.15;
@@ -456,10 +483,18 @@ function updateLabels() {
     const el = els[i];
     if (p.z > 1 || p.x < -1.1 || p.x > 1.1 || p.y < -1.1 || p.y > 1.1) { el.hidden = true; return; }
     el.hidden = false;
-    el.style.left = ((p.x + 1) / 2 * w) + 'px'; el.style.top = ((1 - p.y) / 2 * h) + 'px';
+    L.sx = (p.x + 1) / 2 * w; L.sy = (1 - p.y) / 2 * h;
     el.innerHTML = `${L.name}<small>${L.d > 1000 ? (L.d / 1000).toFixed(L.d > 10000 ? 0 : 1) + ' km' : Math.round(L.d) + ' m'}</small>`;
     el.style.opacity = Math.max(0.45, 1 - L.d / 90000);
   });
+  // no two labels overlap: in order of importance each takes its place, or steps up out of the way, or yields
+  const placed = [];
+  for (const it of TRAV.items.values()) if (!it.el.hidden) placed.push({ x: parseFloat(it.el.style.left), y: parseFloat(it.el.style.top), w: Math.max(60, (it.name || '').length * 7.5) });   // travellers' names first
+  G.labels.forEach((L, i) => { const el = els[i]; if (el.hidden) return;
+    const bw = Math.max(60, L.name.length * 7.5), bh = 30; let y = L.sy, ok = false;
+    for (let k = 0; k < 4 && !ok; k++) { ok = !placed.some(q => Math.abs(q.x - L.sx) < (q.w + bw) / 2 && Math.abs(q.y - y) < bh); if (!ok) y -= bh; }
+    if (!ok) { el.hidden = true; return; }
+    placed.push({ x: L.sx, y, w: bw }); el.style.left = L.sx + 'px'; el.style.top = y + 'px'; });
   const deg = ((G.yaw * 180 / Math.PI) % 360 + 360) % 360;
   const cw = $('#gcomp').clientWidth;
   $('#gstrip').style.left = (cw / 2 - (72 * 20 + deg * 4) - 10) + 'px';

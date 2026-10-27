@@ -15,7 +15,7 @@ const merc = lat => Math.log(Math.tan(Math.PI / 4 + lat * Math.PI / 360));
 
 async function imgTile(m) {
   const n = 256;
-  const r = GEN.imageryTile(m.z, m.x, m.y, n, m.mode);
+  const r = GEN.imageryTile(m.z, m.x, m.y, n, m.mode, m.gold);
   const img = new ImageData(r.rgba, n, n);
   if (!HAS_OC) return createImageBitmap(img);
   const cv = new OffscreenCanvas(n, n);
@@ -118,7 +118,10 @@ function patchTrees(m) {
     const key = o.ia + ',' + o.ib;
     if (seen.has(key)) continue;
     seen.add(key);
-    trees.push((o.tx - m.X) * GEN.MI, (o.ty - m.Y) * GEN.MI, 4, 0.8 + 0.35 * GEN.hash2(o.ia, o.ib, 13));
+    // old orchards are never perfect: a gap here and there, trees of every age, none quite on its mark
+    if (GEN.hash2(o.ia, o.ib, 17) < 0.12) continue;
+    const jx = (GEN.hash2(o.ia, o.ib, 18) - 0.5) * 1.4, jz = (GEN.hash2(o.ia, o.ib, 19) - 0.5) * 1.4;
+    trees.push((o.tx - m.X) * GEN.MI + jx, (o.ty - m.Y) * GEN.MI + jz, 4, 0.55 + 0.8 * GEN.hash2(o.ia, o.ib, 13));
   }
   return new Float32Array(trees);
 }

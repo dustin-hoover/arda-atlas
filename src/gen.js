@@ -617,7 +617,7 @@ function fields(X, Y, cell, pix, hobbit) {
   const hedge = edge < hedgeW + pix * 0.5 ? sat(1 - (edge - hedgeW) / (pix + 1e-6)) * sstep(hedgeW * 1.4, hedgeW * 0.6, pix) : 0;
   const tram = 0.05 * Math.sin((X * ct + Y * st) / 0.004) * sstep(0.0035, 0.0015, pix);   // furrows, only where several pixels apart
   const trees = hedge > 0.5 && hash2(Math.floor(X / 0.007), Math.floor(Y / 0.007), 21) < 0.3 ? 1 : 0;
-  const orch = pid >= 0.3 && pid < 0.42 && edge > 0.008 ? 1 : 0;      // orchard parcel
+  const orch = pid >= 0.3 && pid < 0.36 && edge > 0.008 ? 1 : 0;      // orchard parcel (one field in sixteen or so)
   return [col[0] * (1 + tram), col[1] * (1 + tram), col[2] * (1 + tram), hedge, trees, orch, th];
 }
 /* Orchard rows: trees on a 7 m lattice aligned with the parcel grid. Uses F from the last evaluate().
@@ -724,9 +724,12 @@ function colorAt(X, Y, h, slope, pix, mode, dsea) {
   if (T < 3) blend(122, 118, 92, sat((3 - T) / 5));   // tundra
   const g = F[13];
   if (g > 0.02) {
-    const gp = fbmA(X, Y, 1.5, Math.max(pix * 1.3, 0.004), 0.75, 51);
-    blend(158 + 18 * gp, 144 + 10 * gp, 84, g * 0.5);
-    blend(96, 112, 60, g * sat(-gp * 1.8) * 0.5);
+    // the grasslands: green and long in Rohan and the dales (LR III.2: 'green fields', 'the grass was long'), turning
+    // to straw only where the land is dry (the Brown Lands, the Wold, the steppe)
+    const gp = fbmA(X, Y, 1.5, Math.max(pix * 1.3, 0.004), 0.75, 51), dryG = sat(arid * 2.5);
+    blend(98 + 16 * gp, 124 + 10 * gp, 60, g * 0.55 * (1 - dryG));
+    blend(158 + 18 * gp, 144 + 10 * gp, 84, g * 0.5 * dryG);
+    blend(86, 108, 54, g * sat(-gp * 1.8) * 0.45);
   }
   // landcover variety: scrub, heath, bare ground, riparian green
   const lc1 = fbm(X * 0.05 + 21, Y * 0.05 - 4, 4), lc2 = fbmA(X, Y, 1.2, Math.max(pix * 1.5, 0.004), 0.6, 30);
@@ -737,11 +740,14 @@ function colorAt(X, Y, h, slope, pix, mode, dsea) {
   if (R.stream > 0) blend(56, 78, 40, R.stream * 0.55 * veg + 0.1 * R.stream);
   // real ground: tussock grassland by default, steppe where dry (Rhûn), green pasture where wet, brown schist downs on
   // the hills, savanna in the hot south, tundra in the cold north
-  plAdd('tussock', 1);
+  plAdd('tussock', 1 - 0.88 * sat(g * 1.2) * (1 - sat(arid * 2.5)));        // Rohan's grass is green and long, not tussock
+  if (g > 0.05) plRGB(92 + 14 * lc1, 116 + 10 * lc1, 54, sat(g * 1.1) * (1 - sat(arid * 2.5)) * 0.58);   // ... and green over the whole Mark
   plAdd('steppe', sat((0.5 - veg) * 3) * (X > 1000 || wm < 1 ? 1 : 0.4));
-  plAdd('pasture', Math.max(sstep(0.18, 0.55, veg + 0.15 * lc1) * (1 - 0.85 * sat(g * 1.5)),
-    // the temperate west and the vales (Eriador, the Lone-lands, the vale of Anduin) are green, not steppe-brown
-    sstep(0.17, 0.36, Mst) * sstep(2, 6, T) * (1 - 0.55 * sat(g * 1.6)) * (1 - arid) * 0.85) * (1 - sat((T - 15) / 6)));
+  plAdd('pasture', Math.max(sstep(0.18, 0.55, veg + 0.15 * lc1) * (1 - 0.85 * sat(g * 1.5) * sat(arid * 2.5)),
+    // the temperate west and the vales (Eriador, the Lone-lands, the vale of Anduin, Rohan) are green, not steppe-brown
+    sstep(0.17, 0.36, Mst) * sstep(2, 6, T) * (1 - 0.55 * sat(g * 1.6) * sat(arid * 2.5)) * (1 - arid) * 0.85,
+    // Rohan's long grass: green pasture texture across the grassland wherever it is not dry
+    sat(g * 1.2) * (1 - sat(arid * 2.5)) * 0.8) * (1 - sat((T - 15) / 6)));
   plAdd('schist', sat(F[3] * 1.5) * (1 - 0.6 * veg) * sat(lc2 + 0.6));
   if (T > 18) plAdd('savanna', sat((T - 18) / 6) * (1 - veg) * 0.9);
   if (T < 3) plAdd('tundra', sat((3 - T) / 5));
@@ -825,12 +831,16 @@ function colorAt(X, Y, h, slope, pix, mode, dsea) {
     let fr = mix(50, 30, conifer), fg = mix(70, 50, conifer), fb = mix(36, 34, conifer);
     if (dk > 0) { fr = mix(fr, 22, dk); fg = mix(fg, 36, dk); fb = mix(fb, 24, dk); }
     const gold = F[5];
-    if (gold > 0) { const gm = gold * (0.35 + 0.35 * sat(0.5 + fbm(X * 0.6, Y * 0.6, 3))); fr = mix(fr, 168, gm); fg = mix(fg, 140, gm); fb = mix(fb, 52, gm); }
+    if (gold > 0) { const gm = gold * (0.35 + 0.35 * sat(0.5 + fbm(X * 0.6, Y * 0.6, 3)));
+      if (GOLDS) { fr = mix(fr, 168, gm); fg = mix(fg, 140, gm); fb = mix(fb, 52, gm); }
+      else { fr = mix(fr, 72, gm * 0.6); fg = mix(fg, 112, gm * 0.6); fb = mix(fb, 44, gm * 0.6);              // summer: fresh green crowns
+        if (pix < 0.01 && hash2(Math.floor(X / 0.0025), Math.floor(Y / 0.0025), 77) < 0.08 * gold) { fr = 226; fg = 204; fb = 70; } }   // and yellow flowers in the glades
+    }
     if (T > 22) { fr *= 0.8; fg *= 1.05; }
     if (RP.w > 0) { fr *= tw('f', 0); fg *= tw('f', 1); fb *= tw('f', 2); }
     // north-facing slopes and valley floors lie in shadow longer: their woods read darker
     { const sh = 1 - 0.14 * ASPN - 0.07 * R.vly + 0.05 * ASPS; fr *= sh; fg *= sh; fb *= sh; }
-    if (gold > 0.3) { const lg = 1 + 0.12 * gold; fr *= lg; fg *= lg; }          // Lórien's crowns catch the light
+    if (gold > 0.3 && GOLDS) { const lg = 1 + 0.12 * gold; fr *= lg; fg *= lg; }          // Lórien's crowns catch the light
     const mott = fbmA(X, Y, 0.6, Math.max(pix, 0.002), 0.7, 9);
     fr *= 1 + 0.12 * mott; fg *= 1 + 0.14 * mott; fb *= 1 + 0.1 * mott;
     // the edge is a ragged zone, never a line: the canopy breaks into clumps and lone trees, then scrub, then grass
@@ -859,6 +869,9 @@ function colorAt(X, Y, h, slope, pix, mode, dsea) {
     blend(fr, fg, fb, dens);
     FDN = dens;
     plAdd(T < 2 || Math.abs(lat) > 64 ? 'taiga' : (R.mt > 0.3 || gold > 0.3 || conifer > 0.6) ? 'beech' : 'forest', dens * (dk > 0.5 ? 1 : 0.95));
+    // the mallorns' gold lies over the texture of their crowns, from autumn until spring; in summer they are green
+    if (gold > 0.05 && GOLDS) { const gv = sat(0.5 + fbm(X * 0.6, Y * 0.6, 3)); plRGB(176 + 30 * gv, 146 + 22 * gv, 58, gold * dens * (0.38 + 0.2 * gv)); }
+    if (gold > 0.05 && !GOLDS && pix < 0.01 && hash2(Math.floor(X / 0.0025), Math.floor(Y / 0.0025), 77) < 0.08 * gold) plRGB(226, 204, 70, 0.8);   // yellow flowers in the glades
   }
   // marsh
   const marsh = F[7];
@@ -1122,7 +1135,9 @@ function nightAt(lon, lat) {
   const la = lat * D2R, c = Math.sin(la) * Math.sin(DAY_LAT) + Math.cos(la) * Math.cos(DAY_LAT) * Math.cos(lon * D2R - DAY_LON);
   return c >= DUSK0 ? 0 : c <= DUSK1 ? 1 : sstep(DUSK0, DUSK1, c);
 }
-function imageryTile(z, x, y, n, mode) {
+let GOLDS = 1;                             // Lórien in its gold (1, autumn to spring) or green (0, summer)
+function imageryTile(z, x, y, n, mode, gold) {
+  GOLDS = gold == null ? 1 : gold;
   // a tile wholly on the night side is black: no need to build its ground
   if (z >= 3) {
     let all = true;

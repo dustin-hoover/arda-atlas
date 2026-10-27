@@ -90,6 +90,15 @@ function branches(RANGES, seed0 = 0) {
   });
   return out;
 }
+/* The passes the books name, cut into the crest: [x, y, radius mi, depth]. Everywhere else the crests stay high. */
+const PASSES = [
+  [485.2, 2.1, 7, 0.4],         // the High Pass over the Misty Mountains (Cirith Forn en Andrath)
+  [418, -164, 6, 0.3],          // the Redhorn Gate, under Caradhras: high, and snowbound in winter (LR II.3)
+  [761.9, -477.6, 8, 0.85],     // Cirith Gorgor, closed by the Morannon
+  [808.8, -490.5, 6, 0.7],      // the Isenmouthe, between Udûn and Gorgoroth
+  [783.5, -584.8, 5, 0.42],     // Cirith Ungol, high and narrow
+  [781, -597, 5, 0.5],          // the Morgul Vale's road over the Ephel Dúath
+];
 function rangeField(RANGES0, rmask) {
   const out = new Float32Array(W * H);
   const B1 = branches(RANGES0), B2 = branches(B1, 100);              // branches, and their own side branches
@@ -102,6 +111,7 @@ function rangeField(RANGES0, rmask) {
   const nearOther = (p, self) => RANGES.some((o, j) => j !== self && o.pts.some(q => Math.hypot(q[0] - p[0], q[1] - p[1]) < (o.name === RANGES[self].name ? 70 : 30)));
   RANGES.forEach((r, ri) => {
     const g = r.geo || GEOLOGY[r.name] || { verge: 1, asym: 0.3, folds: 0.3, spurs: 0.6, worn: 0.2 };
+    const wall = /Ephel Dúath|Ered Lithui/.test(r.name);                // the mountain-fence of Mordor
     const P = r.pts, S = [0];
     for (let i = 1; i < P.length; i++) S.push(S[i - 1] + Math.hypot(P[i][0] - P[i - 1][0], P[i][1] - P[i - 1][1]));
     const Lt = S[S.length - 1], seed = (ri * 7.31 + r.name.length * 1.7) % 50;
@@ -136,18 +146,20 @@ function rangeField(RANGES0, rmask) {
       const sp = g.spurs * Math.pow(0.5 + 0.5 * Math.cos(2 * Math.PI * bs / (w * 1.1) + 2.5 * n1(bs / (w * 2) + seed, 5.5)), 2);
       u /= 1 + 0.45 * sp * sst(0.4, 1, u);
       // a broad uplifted block (the peaks come later, from the terrain noise), falling away at the flanks
-      const p0 = sst(1, 0.55, u);
+      const p0 = wall ? sst(1, 0.72, u) : sst(1, 0.55, u);            // the walls of Mordor rise sheer
       let p = Math.pow(p0, 1.1 - 0.4 * g.worn);
       // folded parallel ridges on the foreland
       if (fore && g.folds > 0) p *= 1 + g.folds * 0.5 * Math.cos(2 * Math.PI * Math.abs(dd) / (w * 0.3)) * sst(0.15, 0.55, u);
-      // massifs and passes along the crest
-      let hgt = r.h * (0.6 + 0.4 * Math.max(0, Math.min(1, 0.5 + 0.7 * n1(bs / (w * 1.4) + seed * 5, 2.2))));
-      hgt *= 1 - 0.38 * sst(0.45, 0.8, n1(bs / (w * 2.6) + seed * 7, 9.3));
+      // massifs along the crest, and only shallow saddles: the passes the books name are cut below (PASSES); the
+      // mountain-fence of Mordor stands as an unbroken wall (LR IV.3)
+      let hgt = r.h * (wall ? 0.88 + 0.12 * Math.max(0, Math.min(1, 0.5 + 0.7 * n1(bs / (w * 1.4) + seed * 5, 2.2))) : 0.6 + 0.4 * Math.max(0, Math.min(1, 0.5 + 0.7 * n1(bs / (w * 1.4) + seed * 5, 2.2))));
+      hgt *= 1 - (wall ? 0 : 0.12) * sst(0.45, 0.8, n1(bs / (w * 2.6) + seed * 7, 9.3));
       hgt *= (1 - 0.35 * g.worn) * (0.45 + 0.55 * tp);
       let v = hgt / 5200 * p;
       // an inner, lower parallel ridge (the Morgai within the Ephel Dúath)
       if (g.inner && !fore) { const di = Math.abs(Math.abs(dd) - hw0 * 1.9); v = Math.max(v, r.h / 5200 * 0.42 * sst(hw0 * 0.35, 0, di) * sst(0.08, 0.25, t) * sst(0.95, 0.75, t)); }
       const q = j * W + i;
+      for (const ps of PASSES) { const pd = Math.hypot(x - ps[0], y - ps[1]); if (pd < ps[2]) v *= 1 - ps[3] * sst(ps[2], ps[2] * 0.3, pd); }
       if (r.root && rmask) v *= 1 - Math.min(1, rmask[q] / 160);
       if (v > out[q]) out[q] = v;
     }

@@ -212,8 +212,8 @@ function buildingFeats() {
 /* ---------------- map ---------------- */
 lstep('Setting the stars in the sky…', 58);
 maplibregl.addProtocol('arda', async (params, abort) => {
-  const [kind, z, x, y, mode] = params.url.slice(7).split('/');
-  const r = await run({ type: kind === 'dem' ? 'dem' : 'img', z: +z, x: +x, y: +y, mode: +mode || 0 }, abort.signal);
+  const [kind, z, x, y, mode, season] = params.url.slice(7).split('/');
+  const r = await run({ type: kind === 'dem' ? 'dem' : 'img', z: +z, x: +x, y: +y, mode: +mode || 0, gold: season === 's' ? 0 : 1 }, abort.signal);
   return { data: r.bmp };
 });
 const TXT_REG = ['IM Fell English SC'], TXT_IT = ['IM Fell English Italic', 'IM Fell English'], TXT_FELL = ['IM Fell English'];
@@ -224,7 +224,7 @@ const style = {
   version: 8,
   projection: { type: 'globe' },
   sources: Object.fromEntries([
-    ['imagery', { type: 'raster', tiles: ['arda://img/{z}/{x}/{y}/0'], tileSize: 256, maxzoom: 16 }],
+    ['imagery', { type: 'raster', tiles: ['arda://img/{z}/{x}/{y}/0/g'], tileSize: 256, maxzoom: 16 }],
     ['dem', { type: 'raster-dem', tiles: ['arda://dem/{z}/{x}/{y}'], tileSize: 256, maxzoom: 11, encoding: 'terrarium' }],
     src('places', FC(placeFeats)), src('peaks', FC(peakFeats)), src('ranges', FC(rangeFeats)), src('rivers', FC(riverFeats)), src('lakes', FC(lakeFeats)),
     src('forests', FC(forestLabelFeats)), src('marshes', FC(marshLabelFeats)), src('regions', FC(regionFeats)), src('seas', FC(seaFeats)),
@@ -746,6 +746,7 @@ function setTime(t, fromSlider) {
   const st = GEO.STORIES[S.story];
   const a = WX.parse(st.start), b = WX.parse(st.end);
   S.t = Math.max(a, Math.min(b, t));
+  { const se = goldSeason(S.t); if (se !== (S.season || 'g')) { S.season = se; refreshImagery(); } }
   const P = WX.parts(S.t);
   $('#tdate').innerHTML = `${esc(P.name)} <em>S.R. ${P.sr} · T.A. ${P.ta} · ${WX.fmtTime(P.hour)}</em>`;
   if (!fromSlider) $('#slider').value = (warpTo(S.story, S.t) * 1000).toFixed(1);
@@ -859,9 +860,20 @@ function setEra(era) {
   map.getSource('realm-labels').setData(FC(realmLabels(era)));
 }
 const BASES = ['Satellite', 'Red Book', 'Relief'];
+// Lórien's mallorns are gold from autumn until spring, green with yellow flowers beneath them in summer (LR II.6):
+// the imagery carries the season, so crossing the first of May or the first of October redraws it once
+const goldSeason = t => { const d = ((t % 365) + 365) % 365; return d < 130 || d >= 282 ? 'g' : 's'; };
+function imageryURL() { return 'arda://img/{z}/{x}/{y}/' + (S.base || 0) + '/' + (S.season || 'g'); }
+// new tile addresses, then (once the source has taken them) every imagery tile drawn afresh: tiles asked for in the
+// same moment under the old address must not linger
+function refreshImagery() {
+  const src = map.getSource('imagery'); if (!src) return;
+  src.setTiles([imageryURL()]);
+  setTimeout(() => { const tm = map.style && map.style.tileManagers && map.style.tileManagers.imagery; if (tm && tm.clearTiles) { tm.clearTiles(); tm.update && tm.update(map.transform); } map.triggerRepaint(); }, 250);
+}
 function setBase(i) {
   S.base = i;
-  map.getSource('imagery').setTiles(['arda://img/{z}/{x}/{y}/' + i]);
+  refreshImagery();
   map.setPaintProperty('rivers-line', 'line-color', i === 1 ? '#5f8795' : '#7fb8cf');
   for (const id of ['wx-clouds', 'wx-gclouds']) map.setPaintProperty(id, 'raster-opacity', i === 1 ? 0 : id === 'wx-clouds' ? 1 : 0.95);
 }
@@ -1260,6 +1272,9 @@ async function openGround(X, Y, name, opt = {}) {
     X = p.X + Math.cos(a) * off; Y = p.Y + Math.sin(a) * off;
     heading = (Math.atan2(p.X - X, p.Y - Y) * 180 / Math.PI + 360) % 360;
   }
+  // the White City is one great solid of walls and tiers: never set down inside it, but on the Pelennor before the
+  // Great Gate, looking up at the City and Mindolluin behind it
+  { const mt = PLN['Minas Tirith']; if (mt && Math.hypot(X - mt.X, Y - mt.Y) < 0.9) { X = mt.X + 0.72; Y = mt.Y - 0.04; heading = 272; } }
   if (opt.heading != null) heading = opt.heading;
   window.GROUND.open({ X, Y, heading, t: S.t, title: opt.title || name || (np.d < 3 ? 'Near ' + np.p.name : biomeAt(X, Y).name), sub: fmtXY(X, Y) + ' of Hobbiton', run, weatherAt, staticAt, places: PL, peaks: GEO.PEAKS, travellers: window.AVATARS ? travellersAt : null, battles: battlesAt, heat: doomHeat, doomGone, fireworks: GEO.FIREWORKS.filter(f => f.story === S.story), onExit: t => { if (t) setTime(t); } });
 }

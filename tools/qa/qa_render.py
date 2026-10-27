@@ -4,7 +4,8 @@
   no rise of more than 5 m within a mile downstream; never more than 5 m above the lower bank at 1, 1.5 and 2 mi
   (allowed on at most 2% of the sampled miles, or one mile on a short river);
 - every place stands on rendered land;
-- the rendered coast differs from the vector coast on no more than 1% of each checked region.
+- the rendered coast differs from the vector coast on no more than 1% of each checked region;
+- each named pass is a notch in its range, and the walls of Mordor never fall below 1,200 m outside their passes.
 
 Run: python3 tools/qa/qa_render.py [--verbose]   (starts scripts/serve.js if nothing listens on 8765; exit 1 on
 failure; writes tools/qa/render_report.json). Part of `npm run audit`.
@@ -60,6 +61,12 @@ def main():
     for c in rep['coast']:
         line = f"{c['name']}: rendered coast differs on {c['pct']}% (sea drawn as land {c['seaDrawnAsLand']} sq mi, land drawn as sea {c['landDrawnAsSea']} sq mi)"
         (fails.append(line) if c['pct'] > COAST_PCT else print('ok   ' + line))
+    for q in rep.get('passes', []):
+        line = f"pass {q['name']}: {q['pass']} m against a crest of {q['crest']} m"
+        (print('ok   ' + line) if q['ok'] else fails.append(line + ' (not a notch)'))
+    for w in rep.get('walls', []):
+        line = f"{w['name']}: lowest crest {w['lowest']} m outside its passes"
+        (print('ok   ' + line) if w['ok'] else fails.append(line + f" near {w['at']} (below 1,200 m: not a wall)"))
     for f in fails: print('FAIL ' + f)
     n = len(rep['rivers'])
     print(f"\n{len(fails)} render check(s) failed" if fails else f"\nrender ok ({n} rivers, {len(rep['coast'])} coast regions)")
