@@ -22,8 +22,10 @@ plan), got/PLAN.md. Starter code lives in `worlds/` (`npm run worlds` validates 
   published maps only as generalities, real Earth geography for detail). Positions were once read from
   Christopher Tolkien's general map (a thin-plate-spline warp fitted to ~45 places); that is allowed.
   Shapes are ours: `COAST` is only a coarse skeleton (tools/generalize/generalize.py), the drawn coast
-  is built on it from real Earth coastlines (tools/continents/reshape.py -> src/shores.js), forest and
-  marsh outlines were generalised far beyond any source line, and the atlas hill-country layer was
+  is built on it from real Earth coastlines (tools/continents/reshape.py -> src/shores.js); `COAST` is an
+  internal positions layer and is never drawn. Forest, marsh and island outlines that were once sampled from an
+  atlas were redrawn from position and text (tools/generalize/redraw_text.py), and tools/qa/trace_check.py (run by
+  `npm run audit`) fails if more than 20% of any of them lies within 2 mi of the old trace; the atlas hill-country layer was
   dropped (`RELIEF` is empty; foothills come from the ranges' geology).
 - Coastal places and river mouths are pinned to the shore by `tools/continents/anchors.json` (reshape.py
   straightens the coast there; the renderer's coast wobble fades out at the pins). `npm run audit` first runs

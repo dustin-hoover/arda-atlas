@@ -31,7 +31,7 @@ const BIB = {
   HoMe12:   { t: 'The Peoples of Middle-earth (HoMe 12)', a: 'ed. Christopher Tolkien', y: 1996, kind: 'primary drafts', note: 'Drafts of the Tale of Years and the Appendices.' },
   NoME:     { t: 'The Nature of Middle-earth', a: 'J.R.R. Tolkien, ed. Carl F. Hostetter', y: 2021, kind: 'primary' },
   Baynes:   { t: 'Tolkien\'s annotated copy of the Baynes map (found 2015)', a: 'J.R.R. Tolkien, Pauline Baynes', y: 1969, kind: 'primary annotations', note: 'Known from published reports and the Bodleian exhibition; latitudes and notes in Tolkien\'s hand.' },
-  Fonstad:  { t: 'The Atlas of Middle-earth (revised edition)', a: 'Karen Wynn Fonstad', y: 1991, kind: 'secondary', note: 'Read for rough positions of 66 places only; none of its shapes are kept (LAWS I.2a).' },
+  Fonstad:  { t: 'The Atlas of Middle-earth (revised edition)', a: 'Karen Wynn Fonstad', y: 1991, kind: 'secondary', note: 'Read for rough positions of 66 places. Forest, marsh and island outlines once sampled from it (2026-10-01) were redrawn in round 4 from position and text alone (tools/generalize/redraw_text.py); tools/qa/trace_check.py gates that no more than 20% of any outline lies within 2 mi of the old trace (LAWS I.2a).' },
   Strachey: { t: 'Journeys of Frodo', a: 'Barbara Strachey', y: 1981, kind: 'secondary', note: 'Day-by-day maps of the journeys.' },
   RC:       { t: 'The Lord of the Rings: A Reader\'s Companion', a: 'Wayne G. Hammond & Christina Scull', y: 2005, kind: 'secondary' },
   TG:       { t: 'Tolkien Gateway', a: 'community wiki', y: 2026, kind: 'tertiary', note: 'For cross-checking only.' },
