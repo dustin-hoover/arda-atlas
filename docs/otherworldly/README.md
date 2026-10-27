@@ -7,7 +7,7 @@ the same conventions and the same laws.
 
 | World | Status | Package |
 |---|---|---|
-| Arda (Tolkien: The Hobbit, The Lord of the Rings) | live: https://dustin-hoover.github.io/arda-atlas/ | this repo (`src/`) |
+| Arda (Tolkien: The Hobbit, The Lord of the Rings) | live (this repo's GitHub Pages site) | this repo (`src/`) |
 | The Known World (A Song of Ice and Fire) | next: planned, starter code in `worlds/got/` | [got/PLAN.md](got/PLAN.md) |
 | Dungeon Crawler Carl | announced | — |
 | Harry Potter | announced | — |

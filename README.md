@@ -25,7 +25,7 @@ npm run dev          # builds, then serves http://localhost:8765/dist/preview.ht
 
 | File | Use |
 | --- | --- |
-| `dist/index.html` | Body-only page for publishing as a claude.ai artifact |
+| `dist/index.html` | Body-only page, for hosts that supply their own `<html>`/`<head>` |
 | `dist/preview.html` | Full document for local testing |
 | `site/index.html`, `site/blueprint.html` | Full documents for any static host |
 
@@ -66,5 +66,4 @@ offline. Software WebGL is slow: allow a minute or more per screenshot.
 
 ## Rights
 
-A non-commercial fan work. Middle-earth and its names belong to the Tolkien Estate. Descriptions are
-original; positions follow the published maps and Tolkien's statements of scale.
+Unofficial, free, non-commercial fan cartography. Not affiliated with, endorsed by, or sponsored by the Tolkien Estate or the Tolkien Trust, Middle-earth Enterprises, HarperCollins, Warner Bros. Discovery or New Line Cinema, or Amazon. The Lord of the Rings, The Hobbit, Middle-earth and related names are trademarks of their respective owners and are used here only to identify the setting. Locations are drawn from the published books. All artwork, shapes and code are original; no official maps, film designs or book text are reproduced. Rights holders: contact geodysseyhelp@mail.grokbot.com and we will remove anything on request.

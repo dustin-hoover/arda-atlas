@@ -1,5 +1,5 @@
-// Assembles src/ into one self-contained page: dist/index.html (no <html>/<head>, for the claude.ai
-// artifact host) and dist/preview.html (a full document for local testing).
+// Assembles src/ into one self-contained page: dist/index.html (no <html>/<head>, for hosts that
+// supply their own) and dist/preview.html (a full document for local testing).
 const fs = require('fs');
 const path = require('path');
 const rd = f => fs.readFileSync(path.join(__dirname, f), 'utf8');

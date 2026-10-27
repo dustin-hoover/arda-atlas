@@ -1,4 +1,4 @@
-# Arda Atlas — notes for Claude Code
+# Arda Atlas — contributor notes
 
 Procedural, Earth-like globe of Middle-earth. Plain JavaScript, no framework, no bundler: `build.js`
 concatenates `src/` into a single HTML page. Read README.md for the file map.
@@ -69,8 +69,8 @@ plan), got/PLAN.md. Starter code lives in `worlds/` (`npm run worlds` validates 
 - Zoom expressions are allowed in layer `filter`s (used for region labels).
 - None of the `src/*.js` files may contain a closing script tag string; `build.js` refuses to build.
 
-## Hosting constraints (claude.ai artifact)
-`dist/index.html` must stay body-only with a `<title>` near the top. The artifact CSP allows scripts
+## Hosting constraints (body-only host)
+`dist/index.html` must stay body-only with a `<title>` near the top. That host's CSP allows scripts
 only from cdnjs, jsDelivr, unpkg; stylesheets only from Google Fonts; no fetch/XHR to other hosts,
 no iframes, no downloads. Blob workers, WebGL, Web Audio (after a click) and dynamic `import()` from
 jsDelivr all work. On a normal static host (`site/`) none of these limits apply.

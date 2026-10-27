@@ -19,3 +19,6 @@ tools/borders/*.png
 # tools/analogues: downloaded imagery cache
 tools/analogues/cache/
 tools/continents/cache/
+
+# local assistant notes (kept out of the public tree)
+CLAUDE.md
