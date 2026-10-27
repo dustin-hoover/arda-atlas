@@ -831,7 +831,7 @@ function colorAt(X, Y, h, slope, pix, mode, dsea) {
     const af = sstep(0.25, 0.55, ash + 0.3 * fbmA(X, Y, 6, Math.max(pix, 0.003), 0.8, 44));
     blend(62 + 12 * an, 57 + 10 * an, 54 + 8 * an, af * 0.94);
     const dO = Math.hypot(X - 840, Y + 554);
-    // Mordor: Rangipo-like tephra, with black Icelandic lava fields spread over Gorgoroth and Hawaiian cinder and young
+    // Mordor: Icelandic black ash plain, with black Icelandic lava fields spread over Gorgoroth and Hawaiian cinder and young
     // flows about the Mountain
     plAdd('ashplain', af * 0.94);
     // lava fields end in sharp margins, crinkled at every scale

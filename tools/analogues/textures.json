@@ -1,19 +1,17 @@
 {
  "classes": {
   "pasture": {
-   "source": "linz",
+   "source": "S2A_29UNT_20220813_0_L2A",
    "at": [
-    -37.86,
-    175.78,
-    -37.88,
-    175.8
+    51.95,
+    -8.3
    ],
-   "place": "Matamata, Waikato: dairy pasture in small hedged paddocks",
+   "place": "East Cork, Ireland: dairy pasture in small hedged fields",
    "use": "the Shire, Bree-land, Buckland, Eriador and Gondor grassland",
    "mean": [
+    69,
     72,
-    107,
-    57
+    39
    ],
    "fine_m_per_px": 10.0,
    "coarse_m_per_px": 80.0
@@ -169,51 +167,49 @@
    "coarse_m_per_px": 80.0
   },
   "bog": {
-   "source": "linz",
+   "source": "S2A_30VVK_20230904_0_L2A",
    "at": [
-    -37.43,
-    175.55
+    58.42,
+    -3.85
    ],
-   "place": "Kopuatai peat dome, Hauraki Plains: restiad raised bog",
+   "place": "The Flow Country, Caithness, Scotland: blanket bog and its pools",
    "use": "the Dead Marshes, the Nindalf, the Midgewater, the Gladden Fields",
    "mean": [
-    65,
-    86,
-    45
+    51,
+    49,
+    27
    ],
    "fine_m_per_px": 10.0,
    "coarse_m_per_px": 80.0
   },
   "ashplain": {
-   "source": "linz",
+   "source": "S2B_27VWL_20230718_0_L2A",
    "at": [
-    -39.3,
-    175.66
+    63.83,
+    -19.05
    ],
-   "place": "Rangipo Desert: tephra and gullied ash",
+   "place": "Mælifellssandur, Iceland: black ash plain cut by meltwater gullies",
    "use": "Gorgoroth, Udûn, Lithlad, the Dagorlad",
    "mean": [
-    115,
-    100,
-    79
+    68,
+    62,
+    55
    ],
    "fine_m_per_px": 10.0,
    "coarse_m_per_px": 80.0
   },
   "lava": {
-   "source": "linz",
+   "source": "S2A_5QKB_20230820_0_L2A",
    "at": [
-    -39.163,
-    175.618,
-    -39.155,
-    175.635
+    19.388,
+    -155.105
    ],
-   "place": "Ngāuruhoe cone: young lava and scoria",
+   "place": "Puʻu ʻŌʻō, Kīlauea, Island of Hawaiʻi: young lava and spatter",
    "use": "Orodruin and its slopes",
    "mean": [
-    104,
-    94,
-    69
+    53,
+    60,
+    44
    ],
    "fine_m_per_px": 10.0,
    "coarse_m_per_px": 80.0

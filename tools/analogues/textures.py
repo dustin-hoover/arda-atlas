@@ -28,7 +28,7 @@ HERE = os.path.dirname(os.path.abspath(__file__))
 N = 128
 # class: (source, lat, lon, analogue place, use in Arda); 'fine'/'coarse' override the default patch centre.
 CLASSES = [
-    ('pasture',  'linz',  (-37.860, 175.780, -37.880, 175.800), 'Matamata, Waikato: dairy pasture in small hedged paddocks', 'the Shire, Bree-land, Buckland, Eriador and Gondor grassland'),
+    ('pasture',  's2',    (51.950, -8.300), 'East Cork, Ireland: dairy pasture in small hedged fields', 'the Shire, Bree-land, Buckland, Eriador and Gondor grassland'),
     ('arable', 'linz', (-43.700, 171.750), 'Canterbury Plains near Methven: mixed cropping', 'Lebennin, Lossarnach, the Pelennor, Anórien, Nurn, Dorwinion'),
     ('tussock',  'linz',  (-44.050, 170.300, -43.930, 170.300), 'Mackenzie Basin near Twizel: short tussock grassland', 'Rohan, the Wold, Enedwaith, Minhiriath'),
     ('forest', 'linz', (-46.200, 167.200), 'Waitutu, Fiordland: lowland podocarp and beech forest', 'Mirkwood, Fangorn, the Old Forest, Eryn Vorn, Chetwood'),
@@ -38,9 +38,9 @@ CLASSES = [
     ('rock', 'linz', (-45.050, 168.810), 'The Remarkables: bare schist rock and talus', 'crags and summit rock'),
     ('neve',     'linz',  ('flat', -43.520, 170.320), 'Upper Tasman Glacier névé', 'glaciers and the snowfields of the high ranges'),
     ('gravel',   'linz',  (-43.880, 170.150, 'flat'), 'Tasman River: braided gravel bed above Lake Pukaki', 'braided river beds below the mountains, the Ethir Anduin'),
-    ('bog', 'linz', (-37.430, 175.550), 'Kopuatai peat dome, Hauraki Plains: restiad raised bog', 'the Dead Marshes, the Nindalf, the Midgewater, the Gladden Fields'),
-    ('ashplain', 'linz', (-39.300, 175.660), 'Rangipo Desert: tephra and gullied ash', 'Gorgoroth, Udûn, Lithlad, the Dagorlad'),
-    ('lava',     'linz',  (-39.163, 175.618, -39.155, 175.635), 'Ngāuruhoe cone: young lava and scoria', 'Orodruin and its slopes'),
+    ('bog', 's2', (58.420, -3.850), 'The Flow Country, Caithness, Scotland: blanket bog and its pools', 'the Dead Marshes, the Nindalf, the Midgewater, the Gladden Fields'),
+    ('ashplain', 's2', (63.830, -19.050), 'Mælifellssandur, Iceland: black ash plain cut by meltwater gullies', 'Gorgoroth, Udûn, Lithlad, the Dagorlad'),
+    ('lava',     's2',    (19.388, -155.105), 'Puʻu ʻŌʻō, Kīlauea, Island of Hawaiʻi: young lava and spatter', 'Orodruin and its slopes'),
     ('schist',   'linz',  (-45.360, 169.650, -45.450, 169.550), 'Poolburn, Central Otago: brown tussock on schist with tors', 'the Brown Lands, Dunland, the downs and hill country'),
     ('sand', 'weld', (25.500, -2.500), 'Erg Chech, Algeria/Mali: linear dunes', 'the sand seas of Far Harad'),
     ('hamada', 'weld', (25.600, 8.600), 'Tassili n\'Ajjer foreland, Algeria: stony desert', 'Near Harad, Khand, the deserts\' rocky ground'),

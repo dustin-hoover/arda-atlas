@@ -63,7 +63,8 @@ function orthanc() {
   m.castShadow = m.receiveShadow = true; g.add(m);
   return g;
 }
-// Barad-dûr: battered tiers of black stone, a ring of buttress towers, the iron crown and the Eye.
+// Barad-dûr: battered tiers of black stone, a ring of buttress towers, the pinnacled iron crown, and red flame
+// from a high window (LR VI.3). No floating eye.
 function baraddur() {
   const d = 0x161315, d2 = 0x1f1b1c, iron = 0x2c2522, P = [];
   const tier = (rb, rt, h, y) => new THREE.CylinderGeometry(rt, rb, h, 4).rotateY(Math.PI / 4).translate(0, y + h / 2, 0);
@@ -77,16 +78,15 @@ function baraddur() {
     P.push([cy(18, 24, 120, 6).translate(Math.cos(a) * r, 0, Math.sin(a) * r), d], [cn(22, 42, 6).translate(Math.cos(a) * r, 120, Math.sin(a) * r), iron]);
   }
   for (let i = 0; i < 12; i++) { const a = i / 12 * Math.PI * 2; P.push([cn(3.5, 22, 5).translate(Math.cos(a) * 44, 420, Math.sin(a) * 44), iron]); }
-  for (const s of [-1, 1]) P.push([new THREE.ConeGeometry(9, 74, 5).translate(0, 37, 0).rotateZ(-s * 0.2).translate(s * 17, 524, 0), iron]);
+  P.push([cn(9, 70, 4).translate(0, 530, 0), iron]);                            // the central pinnacle of the crown
+  P.push([bx(10, 16, 4).translate(0, 492, 25), 0x050304]);                     // the high window, facing south-west
   P.push([bx(30, 40, 6).translate(0, 0, 242), 0x050405]);                       // the great gate
   const g = new THREE.Group();
   const m = new THREE.Mesh(merge(P), vcMat({ roughness: 0.75, metalness: 0.2 }));
   m.castShadow = m.receiveShadow = true; g.add(m);
-  const eye = new THREE.Mesh(sph(6, 16, 10).scale(0.6, 1, 0.6), new THREE.MeshBasicMaterial({ color: 0xffb040 }));
-  eye.position.set(0, 562, 0); g.add(eye);
-  const halo = glow('rgba(255,170,60,1)', 'rgba(255,40,0,0)', 120); halo.position.copy(eye.position); g.add(halo);
-  const light = new THREE.PointLight(0xff6a20, 4e5, 4000, 2); light.position.copy(eye.position); g.add(light);
-  g.userData.update = (dt, t) => { const f = 0.85 + 0.15 * Math.sin(t * 7.3) * Math.sin(t * 2.1); halo.scale.setScalar(110 * f + 20); light.intensity = 4e5 * f; };
+  const fire = glow('rgba(255,150,50,1)', 'rgba(220,30,0,0)', 90); fire.position.set(0, 500, 34); g.add(fire);   // flame at the window
+  const light = new THREE.PointLight(0xff4a10, 3e5, 3000, 2); light.position.set(0, 500, 40); g.add(light);
+  g.userData.update = (dt, t) => { const f = 0.8 + 0.2 * Math.sin(t * 7.3) * Math.sin(t * 2.1); fire.scale.set(60 * f + 14, 90 * f + 20, 1); light.intensity = 3e5 * f; };
   return g;
 }
 // Minas Morgul: the pale tower whose top turns slowly, glowing with a corpse-light.

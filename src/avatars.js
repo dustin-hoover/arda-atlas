@@ -333,31 +333,28 @@ function entGrid(f) {
   for (let y = 14; y <= 27; y++) { const w = Math.max(1, 5 - Math.floor((y - 14) / 3)); for (let x = 11 - w; x <= 10 + w; x++) set(x, y, (x + y) % 4 ? moss : mossD); }
   return g;
 }
-// the Lidless Eye: wide, wreathed in flame, floating between the two great horns that crown Barad-dûr
+// Sauron in the Dark Tower, as the book shows it (LR VI.3): no floating eye, but an iron-crowned, pinnacled
+// tower, and red flame leaping from a high window in its crown
 function eyeGrid(f) {
-  const Wd = 32, Ht = 60, g = Array.from({ length: Ht }, () => Array(Wd).fill(null));   // twice the original height, same width
+  const Wd = 32, Ht = 60, g = Array.from({ length: Ht }, () => Array(Wd).fill(null));
   const set = (x, y, v) => { x = Math.round(x); y = Math.round(y); if (x >= 0 && x < Wd && y >= 0 && y < Ht && v) g[y][x] = v; };
   const rect = (x0, y0, x1, y1, v) => { for (let y = y0; y <= y1; y++) for (let x = x0; x <= x1; x++) set(x, y, v); };
-  const k = '#16141a', k2 = '#2a2830';
-  // the crown of the tower: broad battlements with red-lit windows
-  rect(1, 21, 30, 59, k); for (let x = 1; x <= 30; x += 3) rect(x, 19, x + 1, 20, k); for (let y = 22; y <= 59; y += 3) rect(2, y, 29, y, k2);
-  for (const y of [34, 46]) { rect(0, y, 31, y + 1, k2); for (let x = 0; x <= 31; x += 3) set(x, y - 1, k); }      // tiers and battlements down the tower
-  for (const [x, y] of [[6, 24], [12, 26], [19, 24], [25, 27], [15, 23], [9, 31], [22, 30], [5, 39], [16, 41], [26, 38], [11, 51], [20, 53], [27, 49], [4, 56]]) set(x, y, f % 2 && x % 2 ? '#ff6a18' : '#c02010');
-  // two horns rising from the corners, leaning out and then curving in, tapering to points
-  const horn = [[4, 20, 3], [3, 17, 3], [3, 14, 3], [3, 11, 2], [4, 8, 2], [5, 6, 2], [7, 4, 2], [9, 3, 1], [11, 2, 1]];
-  for (let i = 0; i < horn.length - 1; i++) {
-    const [x0, y0, w0] = horn[i], [x1, y1] = horn[i + 1];
-    for (let t = 0; t <= 1; t += 0.2) { const x = x0 + (x1 - x0) * t, y = y0 + (y1 - y0) * t; for (let d = 0; d < w0; d++) { set(x + d, y, k); set(31 - x - d, y, k); } }
-  }
-  // flame around the eye, licking outward
-  const lick = [[0, 2, 1, 3], [2, 0, 3, 1], [1, 3, 0, 2], [3, 1, 2, 0]][f];
-  for (let y = 5; y <= 15; y++) { const w = Math.round(10 * Math.sqrt(Math.max(0, 1 - Math.pow((y - 10) / 6, 2)))) + lick[y % 4] % 2; for (let x = 16 - w; x <= 15 + w; x++) set(x, y, (x + y + f) % 3 ? '#c8300c' : '#f05a14'); }
-  for (let i = 0; i < 5; i++) { const x = 9 + i * 3.5, y = 4 - (lick[i % 4] % 2); set(x, y, '#ff8a20'); set(x, y + 1, '#e04a14'); }
-  // the eye: a wide lens, gold at the heart, with its black slit
-  const lens = [[8, 11, 20], [9, 9, 22], [10, 8, 23], [11, 9, 22], [12, 11, 20]];
-  for (const [y, x0, x1] of lens) rect(x0, y, x1, y, '#ff9a24');
-  for (const [y, x0, x1] of lens.slice(1, 4)) rect(x0 + 3, y, x1 - 3, y, '#ffd050');
-  rect(15, 8, 16, 12, '#0a0606'); set(15, 7, '#0a0606'); set(16, 13, '#0a0606');
+  const k = '#16141a', k2 = '#2a2830', iron = '#3a302c';
+  // the body of the tower, stepped in tiers, with dim red slits
+  rect(1, 30, 30, 59, k); for (let y = 31; y <= 59; y += 3) rect(2, y, 29, y, k2);
+  for (const y of [42, 52]) { rect(0, y, 31, y + 1, k2); for (let x = 0; x <= 31; x += 3) set(x, y - 1, k); }
+  for (const [x, y] of [[6, 35], [19, 34], [25, 38], [9, 46], [22, 47], [5, 56], [16, 55], [27, 57]]) set(x, y, f % 2 && x % 2 ? '#a82010' : '#701008');
+  // the upper tower, narrower, rising to the crown
+  rect(6, 14, 25, 29, k); for (let y = 15; y <= 29; y += 3) rect(7, y, 24, y, k2);
+  // the iron crown: a ring of pinnacles round the top, the tallest in the middle
+  rect(5, 12, 26, 13, iron);
+  for (let x = 5; x <= 26; x += 3) { const h = x === 14 || x === 17 ? 9 : 4 + (x % 2); for (let d = 0; d < h; d++) set(x + (d > h - 3 ? 0.5 : 0), 11 - d, d > h - 3 ? iron : k); }
+  for (let d = 0; d < 11; d++) { set(15, 11 - d, k); set(16, 11 - d, d < 9 ? k : null); }
+  // the high window, with red flame streaming out of it and up the face of the crown
+  rect(13, 18, 18, 23, '#0a0606');
+  const lick = [0, 1, 2, 1][f];
+  for (let y = 15; y <= 23; y++) { const w = y >= 18 ? 2 : Math.max(0, 2 - (18 - y) * 0.5 + (lick % 2)); for (let x = 15.5 - w; x <= 15.5 + w; x++) set(x, y, y >= 20 ? '#ffb030' : (x + y + f) % 3 ? '#e04a14' : '#c02010'); }
+  for (let i = 0; i < 3; i++) set(14 + i * 2 + (lick % 2), 13 - lick - i % 2, '#ff6a18');
   return g;
 }
 // Smaug asleep on the hoard: coiled, breathing, smoke from a nostril, and now and then a thin slit of eye
@@ -793,7 +790,7 @@ function icon(ids, color, t, f = 0, mode = 'walk', flip = false) {
   }
   if (show.length === 1 && C[show[0]].special === 'eye') {
     const gh = hOf('sauron'); cv.width = wOf('sauron') + 30; cv.height = gh + 20;
-    const rg = g.createRadialGradient(cv.width / 2, 30, 4, cv.width / 2, 30, cv.width * 0.5); rg.addColorStop(0, 'rgba(255,120,30,0.75)'); rg.addColorStop(1, 'rgba(255,60,10,0)');
+    const wy = 8 + 20 * s, rg = g.createRadialGradient(cv.width / 2, wy, 3, cv.width / 2, wy, cv.width * 0.3); rg.addColorStop(0, 'rgba(255,90,20,0.45)');   // the red glow of the high window rg.addColorStop(1, 'rgba(255,60,10,0)');
     g.fillStyle = rg; g.fillRect(0, 0, cv.width, cv.height); drawFigure(g, 'sauron', 15, 8, s, f);
     return ICACHE[key + f] = { canvas: cv, name: 'The Eye of Sauron', key };
   }
@@ -1212,7 +1209,7 @@ function doomWholeGrid(f, heat) {
   return g;
 }
 
-// The fall of Barad-dûr as the Ring is unmade (LR VI.3-4, our staging): st 1 the Eye blazes in the tower's crown;
+// The fall of Barad-dûr as the Ring is unmade (LR VI.3-4, our staging): st 1 fire blazes from the tower's crown;
 // 2 the towers crumble in fire and dust; 3 a vast shadow rises from the ruin, crowned, reaching out a threatening hand;
 // 4 a great wind takes it and it is blown away eastward; 5 a smoking ruin; 6 the cold ruin
 function baradGrid(f, st) {
@@ -1223,18 +1220,18 @@ function baradGrid(f, st) {
     tiers.forEach(([hw, y0, y1], i) => { const drop = fall ? Math.max(0, (i - 1)) * fall : 0, sh = fall ? Math.round((i % 2 ? 1 : -1) * fall * i * 0.6) : 0;
       if (fall && i >= 3 && fall > 5) return;
       for (let y = y0 + drop; y <= Math.min(Ht - 1, y1 + drop); y++) for (let x = cx - hw + sh; x <= cx + hw + sh; x++) setp(g, x, y, (x + y) % 7 ? (x > cx + sh ? k : k2) : iron); });
-    if (!fall) for (const s of [-1, 1]) for (let y = 12; y <= 26; y++) setp(g, cx + s * (4 + (26 - y) * 0.3), y, iron);    // the horns of the crown
+    if (!fall) { for (let x = cx - 8; x <= cx + 8; x += 4) for (let y = 20 - (x === cx ? 8 : 3); y < 26; y++) setp(g, x, y, iron); }   // the pinnacles of the iron crown
   };
   const dust = (n, top) => { for (let i = 0; i < n; i++) { const x = cx + Math.sin(i * 2.3 + f) * 26, y = top + ((i * 13 + f * 3) % (Ht - top)), r = 2 + (i % 4); for (let yy = -r; yy <= r; yy++) for (let xx = -r; xx <= r; xx++) if (xx * xx + yy * yy <= r * r) setp(g, x + xx, y + yy, i % 3 ? '#5a524a' : '#7a6e60'); } };
   const rubble = (hot) => { for (let y = 70; y < Ht; y++) { const hw = (y - 70) * 1.5; for (let x = Math.round(cx - hw); x <= Math.round(cx + hw); x++) setp(g, x, y, hot && (x * 3 + y + f) % 9 === 0 ? (f % 2 ? '#ff8a24' : '#c03a10') : (x + y) % 3 ? k2 : '#3a3238'); } };
   if (st === 0) {
-    // standing: the Dark Tower with the Eye wreathed in flame between the horns of its crown
+    // standing: the Dark Tower, red flame leaping from a high window below its iron crown (LR VI.3)
     tower(0);
-    for (let y = 2; y < 24; y++) for (let x = 0; x < Wd; x++) { const d = Math.hypot((x - cx) * 0.8, (y - 13) * 1.4); if (d < 7 + (f % 2) * 0.6) setp(g, x, y, d < 2.2 ? '#ffd050' : d < 4.5 ? '#ff9a24' : (x + y + f) % 3 ? '#e05a14' : '#c02010'); }
-    rectp(g, cx, 9, cx, 17, '#0a0606'); setp(g, cx - 1, 13, '#0a0606'); setp(g, cx + 1, 13, '#0a0606');
+    rectp(g, cx - 2, 30, cx + 2, 34, '#0a0606');
+    for (let y = 22; y <= 34; y++) for (let x = cx - 4; x <= cx + 4; x++) { const w = y >= 30 ? 2 : 1 + ((y + f) % 3 === 0 ? 1 : 0); if (Math.abs(x - cx) <= w) setp(g, x, y, y >= 31 ? '#ffb030' : (x + y + f) % 3 ? '#e04a14' : '#c02010'); }
   } else if (st === 1) {
     tower(0);
-    const r = 10 + (f % 2) * 2;      // the Eye blazing white-hot, a ring of fire, lightning
+    const r = 10 + (f % 2) * 2;      // fire bursting white-hot from the crown, lightning
     for (let y = 0; y < 30; y++) for (let x = 0; x < Wd; x++) { const d = Math.hypot(x - cx, (y - 14) * 1.3); if (d < r) setp(g, x, y, d < 3 ? '#ffffff' : d < 6 ? '#fff0a0' : d < 8 ? '#ffb040' : '#ff5a14'); }
     for (let i = 0; i < 4; i++) { let x = cx + (i % 2 ? 12 : -12), y = 6; for (let s = 0; s < 10; s++) { x += ((s + i + f) % 3) - 1; y += 2; setp(g, x, y, '#fff6c8'); } }
   } else if (st === 2) {
@@ -1346,7 +1343,7 @@ function morgulGrid(f) {
 }
 function landmark(kind, f, heat = 1) {
   const key = kind + f + ':' + heat; if (LCACHE[key]) return LCACHE[key];
-  // before its fall Barad-dûr is drawn as Sauron himself: the Eye on its tower (eyeGrid), narrowed and heightened
+  // before its fall Barad-dûr is drawn as Sauron himself: the crowned tower with fire at its window (eyeGrid)
   const sauron = kind === 'barad' && heat === 0;
   const gr = kind === 'doom' ? doomGrid(f, heat) : kind === 'fireworks' ? fireworksGrid(f, heat) : kind === 'orthanc' ? orthancGrid(f, heat) : kind === 'morgul' ? morgulGrid(f) : sauron ? eyeGrid(f) : kind === 'barad' ? baradGrid(f, heat) : cityGrid(f), cv = document.createElement('canvas');
   // Orodruin a little larger than the other landmarks; the three towers drawn to their own proportions (map symbols,
