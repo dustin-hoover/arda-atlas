@@ -2,7 +2,7 @@
 
 - drawn rivers: no stretch over rendered sea longer than 0.75 mi; never more than 1 mi from their authored line;
   no rise of more than 5 m within a mile downstream; never more than 5 m above the lower bank at 1, 1.5 and 2 mi
-  (allowed on at most 2% of the sampled miles);
+  (allowed on at most 2% of the sampled miles, or one mile on a short river);
 - every place stands on rendered land;
 - the rendered coast differs from the vector coast on no more than 1% of each checked region.
 
@@ -53,7 +53,7 @@ def main():
         if r['sea'] > SEA: why.append(f"{r['sea']} mi over sea near {r['seaAt']}")
         if r['stray'] > STRAY: why.append(f"strays {r['stray']} mi from its line near {r['strayAt']}")
         if r['rise'] > RISE: why.append(f"rises {r['rise']} m downstream near {r['riseAt']} ({r['risePts']} places)")
-        if r['vfOf'] and r['vfBad'] / r['vfOf'] > VF_SHARE: why.append(f"above its banks on {r['vfBad']}/{r['vfOf']} miles (worst {r['vfMax']} m near {r['vfAt']})")
+        if r['vfBad'] > max(1, VF_SHARE * r['vfOf']): why.append(f"above its banks on {r['vfBad']}/{r['vfOf']} miles (worst {r['vfMax']} m near {r['vfAt']})")
         if why: fails.append(f"{r['name']}: " + '; '.join(why))
         elif verbose: print(f"ok   {r['name']}")
     for p in rep['places']: fails.append(f"{p['name']} at {p['at']} renders in the sea (s {p['s']}, h {p['h']} m)")

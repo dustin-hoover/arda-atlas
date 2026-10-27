@@ -18,9 +18,14 @@
   const inLake = (X, Y) => { GEN.evaluate(X, Y, 0.25); return GEN.F[15] > 0.3; };
   const authored = {}; GEO.RIVERS.forEach(r => authored[r.name] = authored[r.name] ? authored[r.name].concat([r.pts]) : [r.pts]);
   const rep = { rivers: [], places: [], coast: [] };
+  // drawn river points on a half-mile grid: a bank sample in another river's valley is not this river's bank
+  const DR = GEN.drawnRivers(), RG = new Map();
+  DR.forEach((r, ri) => resample(r.pts, 0.2).forEach(p => { const k = Math.round(p[0] * 2) + ',' + Math.round(p[1] * 2); if (!RG.has(k)) RG.set(k, new Set()); RG.get(k).add(ri); }));
+  // (within 2 mi of another river: that is the other river's valley side, not this river's bank)
+  const inOtherRiver = (p, ri) => { for (let dx = -4; dx <= 4; dx++) for (let dy = -4; dy <= 4; dy++) { const s = RG.get((Math.round(p[0] * 2) + dx) + ',' + (Math.round(p[1] * 2) + dy)); if (s) for (const o of s) if (o !== ri && DR[o].name !== DR[ri].name) return true; } return false; };
 
   // rivers as drawn: over sea, astray from their authored line, climbing, or running above their banks
-  for (const r of GEN.drawnRivers()) {
+  DR.forEach((r, ri) => {
     const P = resample(r.pts, 0.25), A = authored[r.name] || [];
     let run = 0, sea = 0, seaAt = null, stray = 0, strayAt = null;
     const hs = P.map(p => { const e = E(p[0], p[1], 0.25); return e; });
@@ -31,19 +36,21 @@
     });
     // rise: from each point, nothing within the next mile downstream may stand more than 5 m higher
     let rise = 0, riseAt = null, nr = 0;
-    for (let k = 0; k < P.length; k++) { if (hs[k].s < 0) continue;
-      for (let j = k + 1; j <= Math.min(P.length - 1, k + 4); j++) { if (hs[j].s < 0) break; const d = hs[j].h - hs[k].h; if (d > rise) { rise = d; riseAt = P[k]; } if (d > 5) { nr++; break; } } }
+    const lake = P.map((p, k) => k % 1 === 0 && inLake(p[0], p[1]));                 // a lake's bed is not its river
+    for (let k = 0; k < P.length; k++) { if (hs[k].s < 0 || lake[k]) continue;
+      for (let j = k + 1; j <= Math.min(P.length - 1, k + 4); j++) { if (hs[j].s < 0 || lake[j]) break; const d = hs[j].h - hs[k].h; if (d > rise) { rise = d; riseAt = P[k]; } if (d > 5) { nr++; break; } } }
     // valley floor: every mile, the river may stand no more than 5 m above the lower bank at 1, 1.5 and 2 mi
     let vf = 0, vfAt = null, nv = 0, nt = 0;
     for (let k = 2; k < P.length - 2; k += 4) { if (hs[k].s < 0 || inLake(P[k][0], P[k][1])) continue;
       const a = P[k - 2], b = P[k + 2], dx = b[0] - a[0], dy = b[1] - a[1], L = Math.hypot(dx, dy) || 1, nx = -dy / L, ny = dx / L; nt++;
       let worst = -Infinity;
       for (const d of [1, 1.5, 2]) { const l = E(P[k][0] + nx * d, P[k][1] + ny * d, 0.25), q = E(P[k][0] - nx * d, P[k][1] - ny * d, 0.25);
-        const low = Math.min(l.s > 0 ? l.h : Infinity, q.s > 0 ? q.h : Infinity); if (low < Infinity) worst = Math.max(worst, hs[k].h - low); }
+        const pl = [P[k][0] + nx * d, P[k][1] + ny * d], pq = [P[k][0] - nx * d, P[k][1] - ny * d];
+        const low = Math.min(l.s > 0 && !inOtherRiver(pl, ri) ? l.h : Infinity, q.s > 0 && !inOtherRiver(pq, ri) ? q.h : Infinity); if (low < Infinity) worst = Math.max(worst, hs[k].h - low); }
       if (worst > 5) { nv++; if (worst > vf) { vf = worst; vfAt = P[k]; } } }
     rep.rivers.push({ name: r.name, len: +(P.length * 0.25).toFixed(1), sea: +sea.toFixed(2), seaAt, stray: +stray.toFixed(2), strayAt,
       rise: +rise.toFixed(0), riseAt, risePts: nr, vfMax: +vf.toFixed(0), vfAt, vfBad: nv, vfOf: nt });
-  }
+  });
   // every place stands on rendered land (havens and ports included: their pins hold the shore)
   for (const p of GEO.PLACES) { const e = E(p[2], p[3], 0.1); if (e.s <= 0 || e.h <= 0) rep.places.push({ name: p[0], at: [p[2], p[3]], s: +e.s.toFixed(3), h: +e.h.toFixed(0) }); }
   // the rendered coast against the vector coast, region by region, on a one-mile grid

@@ -181,3 +181,14 @@ Phase 1 is porting `gen.js` to run server-side and caching tiles as PMTiles.
   2890, and the Quest from 2941. The Tale of Years gives only years for 2463 and 2770; the days are marked as not
   recorded. `warpOf` caps each quiet spell at 2.5 day-weights however long, and counts a day as busy only when a
   party covers half a mile or more.
+
+## Rivers and coast as rendered (round 4)
+- The drawn coast is the vector coast: within 8 mi of src/shores.js (coast, sea islands, inland seas) the land/sea
+  sign comes from the signed distance to those rings (`GEN.coastSD`), with only a few hundred yards of fine detail.
+  Islands standing in rivers or lakes on the land (Cair Andros, Tol Brandir) are not treated as sea shores.
+- A river is drawn on `riverLine` (its authored course cut into ≤1.5 mi spans before meanders are added, calm over
+  its last 4 mi), and its valley is carved along that same line (`riverCarve`). Floors are measured once at startup
+  in the page (`measureRiverFloors`): the lowest ground across each half-mile section, a running minimum from the
+  source, capped where rivers meet or branch, and graded back from the mouth at a few metres a mile; the workers get
+  the floors in DATA. Deep cuts through ranges become V-shaped gorges.
+- `npm run audit` runs tools/qa/qa_render.py, which measures all of this in the browser.

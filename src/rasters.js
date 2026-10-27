@@ -350,8 +350,17 @@ function build(GEO) {
     tex: TEX,
     // river mouths: where each river reaching the sea ends, for sediment plumes in the imagery
     mouths: GEO.RIVERS.filter(r => r.w1 >= 40).map(r => { const p = r.pts[r.pts.length - 1]; return { x: p[0], y: p[1], w: r.w1 }; }),
+    // the vector shore the renderer draws to (GEN.coastSD): the coast and islands are land inside, inland seas water
+    // (islands standing in rivers and lakes on the land, such as Cair Andros and Tol Brandir, are not sea shores)
+    coast: SH ? (() => {
+      const wind = (p, r) => { let w = 0; for (let i = 0; i < r.length; i++) { const a = r[i], b = r[(i + 1) % r.length];
+        if (a[1] <= p[1]) { if (b[1] > p[1] && (b[0] - a[0]) * (p[1] - a[1]) - (p[0] - a[0]) * (b[1] - a[1]) > 0) w++; }
+        else if (b[1] <= p[1] && (b[0] - a[0]) * (p[1] - a[1]) - (p[0] - a[0]) * (b[1] - a[1]) < 0) w--; } return w; };
+      const isl = GEO.ISLANDS.map(i => i.pts).concat(SH.islands).filter(r => wind(r[0], SH.coast) === 0);
+      return { rings: [SH.coast].concat(isl, SH.seas), land: [true].concat(isl.map(() => true), SH.seas.map(() => false)) };
+    })() : null,
     vectors: {
-      rivers: GEO.RIVERS.map(r => ({ name: r.name, pts: r.pts, w0: r.w0, w1: r.w1 })),
+      rivers: GEO.RIVERS.map(r => ({ name: r.name, pts: r.pts, w0: r.w0, w1: r.w1, rank: r.rank })),
       roads: GEO.ROADS.map(r => ({ name: r.name, pts: r.pts, cls: r.cls })),
       lakes: GEO.LAKES.map(l => ({ pts: l.pts })),
       walls: GEO.WALLS.map(w => ({ name: w.name, pts: w.pts, circle: w.circle })),

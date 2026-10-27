@@ -98,8 +98,51 @@ const CH = { land:0, cont:1, mtn:2, hill:3, forest:4, gold:5, dark:6, marsh:7, a
 
 function init(data) {
   M = data.main; G = data.glob; PEAKS = data.peaks || []; RANGEPAL = data.ranges || []; NUM = data.numenor; FLATS = data.flats || [];
+  initCoast(data.coast);
   if (data.vectors) initVectors(data.vectors);
   initTex(data.tex); MOUTHS = data.mouths || []; PINS = data.pins || []; initValleys(data.valleys);
+  // river floors need the finished terrain, so they are measured last: once, in the page, then handed to the workers
+  if (data.vectors) { if (!data.riverFloors) data.riverFloors = measureRiverFloors(); initRiverCarve(data.riverFloors); }
+}
+
+/* ---------------- the coast, drawn where the vector coast is ----------------
+   Within COAST_BAND miles of the vector coast (src/shores.js: the books' coast, its islands and inland seas) the
+   land/sea sign comes from the signed distance to those rings, not from the blurred and warped land raster, so the
+   drawn shore is the vector shore with only a fraction of a mile of fine detail added. Further out the raster rules. */
+const COAST_BAND = 8, CC = 4;
+let CSEG = null, CGRID = null;
+function initCoast(c) {
+  CSEG = null; CGRID = null; if (!c || !c.rings) return;
+  const segs = [];
+  c.rings.forEach((r, ri) => {
+    let A2 = 0; for (let i = 0; i < r.length; i++) { const a = r[i], b = r[(i + 1) % r.length]; A2 += a[0] * b[1] - b[0] * a[1]; }
+    const k = (A2 > 0 ? 1 : -1) * (c.land[ri] ? 1 : -1), n = r.length, base = segs.length;
+    for (let i = 0; i < n; i++) { const a = r[i], b = r[(i + 1) % n], dx = b[0] - a[0], dy = b[1] - a[1], L = Math.hypot(dx, dy) || 1e-9;
+      segs.push({ a, b, nx: -dy / L * k, ny: dx / L * k, prev: base + (i + n - 1) % n, next: base + (i + 1) % n }); }
+  });
+  CSEG = segs; CGRID = new Map();
+  segs.forEach((g, i) => {
+    const x0 = Math.floor((Math.min(g.a[0], g.b[0]) - COAST_BAND) / CC), x1 = Math.floor((Math.max(g.a[0], g.b[0]) + COAST_BAND) / CC);
+    const y0 = Math.floor((Math.min(g.a[1], g.b[1]) - COAST_BAND) / CC), y1 = Math.floor((Math.max(g.a[1], g.b[1]) + COAST_BAND) / CC);
+    for (let x = x0; x <= x1; x++) for (let y = y0; y <= y1; y++) { const key = x * 65536 + y; let l = CGRID.get(key); if (!l) CGRID.set(key, l = []); l.push(i); }
+  });
+}
+// signed distance (miles, + on land) to the nearest vector shore, or null beyond the band
+function coastSD(X, Y) {
+  if (!CGRID) return null;
+  const l = CGRID.get(Math.floor(X / CC) * 65536 + Math.floor(Y / CC)); if (!l) return null;
+  let best = Infinity, bi = -1, bt = 0;
+  for (let j = 0; j < l.length; j++) { const g = CSEG[l[j]], dx = g.b[0] - g.a[0], dy = g.b[1] - g.a[1], L = dx * dx + dy * dy;
+    const t = L ? Math.max(0, Math.min(1, ((X - g.a[0]) * dx + (Y - g.a[1]) * dy) / L)) : 0, ex = g.a[0] + t * dx - X, ey = g.a[1] + t * dy - Y, d = ex * ex + ey * ey;
+    if (d < best) { best = d; bi = l[j]; bt = t; } }
+  if (bi < 0) return null;
+  const d = Math.sqrt(best); if (d > COAST_BAND) return null;
+  const g = CSEG[bi]; let nx = g.nx, ny = g.ny, px, py;
+  // at a vertex, the side is judged against the mean of the two segments' normals (no false flips at sharp corners)
+  if (bt <= 0) { const o = CSEG[g.prev]; nx += o.nx; ny += o.ny; px = g.a[0]; py = g.a[1]; }
+  else if (bt >= 1) { const o = CSEG[g.next]; nx += o.nx; ny += o.ny; px = g.b[0]; py = g.b[1]; }
+  else { px = g.a[0] + bt * (g.b[0] - g.a[0]); py = g.a[1] + bt * (g.b[1] - g.a[1]); }
+  return (X - px) * nx + (Y - py) * ny >= 0 ? d : -d;
 }
 
 /* ---------------- photographic land cover ----------------
@@ -404,7 +447,9 @@ function evaluate(X, Y, pix) {
   }
 
   const cd = fbmA(X, Y, 28, Math.max(pix * 1.2, 0.0015), 0.92, 1);
-  const s = land - 0.5 + cd * 0.2 * (0.25 + 0.75 * pk);
+  const sd = coastSD(X, Y);
+  // near the coast: the vector shore, roughened by a few hundred yards at most; further out, the land raster
+  const s = sd === null ? land - 0.5 + cd * 0.2 * (0.25 + 0.75 * pk) : sd * 0.06 + cd * 0.012;
   R.s = s; R.stream = 0;
   let h;
   if (s > 0) {
@@ -484,8 +529,6 @@ function evaluate(X, Y, pix) {
     }
     R.stream = str;
     h *= sstep(0, 0.07, s);
-    const v = F[11];
-    if (v > 0.01) { const floor = Math.min(h, base * 0.75 + 6); h += (floor - h) * sstep(0, 0.8, v); }
     const lk = F[15];
     if (lk > 0.05) h = mix(h, base * 0.7 - 4, sstep(0.15, 0.55, lk));
     for (let k = 0; k < FLATS.length; k++) {
@@ -497,6 +540,7 @@ function evaluate(X, Y, pix) {
       else if (d < 1) { const t = sstep(1, 0.2, d) * 0.85; h = mix(h, Math.min(h, base + f.lift + (h - base) * 0.25), t); str *= 1 - t; R.stream = str; }
     }
     if (PEAKS.length) h += peakAt(X, Y, pix);
+    if (RCGRID && !NOCARVE) h = riverCarve(X, Y, h);
     R.base = base;
     if (h < 0.6) h = 0.6;
   } else {
@@ -1093,7 +1137,7 @@ function imageryTile(z, x, y, n, mode) {
 /* ---------------- vectors (rivers, lakes, roads, settlements) ---------------- */
 let RIV = [], ROADS = [], LAKES = [], SETTLE = [], WALLS = [], BUCKET = new Map();
 const BK = 40;
-function densify(pts, rough, seed, minLen) {
+function densify(pts, rough, seed, minLen, calm) {
   let out = pts.map(p => [p[0], p[1]]);
   for (let pass = 0; pass < 12; pass++) {
     const nxt = [out[0]];
@@ -1104,7 +1148,7 @@ function densify(pts, rough, seed, minLen) {
       const L = Math.hypot(dx, dy);
       if (L > minLen) {
         const r = (hash2(Math.round(a[0] * 97 + b[0] * 13), Math.round(a[1] * 89 + b[1] * 7), seed) - 0.5) * 2;
-        const off = r * L * rough;
+        const off = r * L * rough * (calm ? sstep(1, 4, Math.hypot(a[0] - calm[0], a[1] - calm[1])) : 1);
         nxt.push([(a[0] + b[0]) / 2 - dy / L * off, (a[1] + b[1]) / 2 + dx / L * off]);
         changed = true;
       }
@@ -1135,10 +1179,19 @@ function addBucket(kind, idx, pts) {
       BUCKET.get(key).push([kind, idx]);
     }
 }
+// The line a river is drawn along (and its valley carved along): the authored course cut into spans of at most
+// 1.5 mi before its meanders are added, so it never strays more than about half a mile from that course, and drawn
+// straighter over its last 4 miles so it meets the sea, a lake or its river where it was put.
+function riverLine(pts, seed) {
+  const sub = [pts[0]];
+  for (let i = 1; i < pts.length; i++) { const a = pts[i - 1], b = pts[i], n = Math.max(1, Math.ceil(Math.hypot(b[0] - a[0], b[1] - a[1]) / 1.5));
+    for (let k = 1; k <= n; k++) sub.push([a[0] + (b[0] - a[0]) * k / n, a[1] + (b[1] - a[1]) * k / n]); }
+  return densify(sub, 0.2, seed, 0.12, sub[sub.length - 1]);
+}
 function initVectors(v) {
   BUCKET = new Map();
   RIV = v.rivers.map((r, i) => {
-    const pts = densify(r.pts, 0.2, i + 1, 0.12);
+    const pts = riverLine(r.pts, i + 1);
     // split into chunks for bucketing, carry width along
     const L = [0]; for (let k = 1; k < pts.length; k++) L.push(L[k - 1] + Math.hypot(pts[k][0] - pts[k - 1][0], pts[k][1] - pts[k - 1][1]));
     const tot = L[L.length - 1] || 1;
@@ -1147,7 +1200,7 @@ function initVectors(v) {
       const e = Math.min(pts.length, s + 61);
       chunks.push({ pts: pts.slice(s, e), w0: mix(r.w0, r.w1, Math.pow(L[s] / tot, 0.8)), w1: mix(r.w0, r.w1, Math.pow(L[e - 1] / tot, 0.8)) });
     }
-    return { name: r.name, chunks };
+    return { name: r.name, rank: r.rank, chunks, pts };
   });
   RIV.forEach((r, i) => r.chunks.forEach((c, j) => addBucket('r', [i, j], c.pts)));
   ROADS = v.roads.map((r, i) => {
@@ -1162,6 +1215,116 @@ function initVectors(v) {
   WALLS.forEach((w, i) => { const pts = w.pts || circlePts(w.circle, 72); w.pts2 = pts; addBucket('w', i, pts); });
   SETTLE = v.settlements || [];
   SETTLE.forEach((s, i) => addBucket('s', i, [[s.x - s.r * 1.3, s.y - s.r * 1.3], [s.x + s.r * 1.3, s.y + s.r * 1.3]]));
+}
+/* ---------------- river valleys ----------------
+   Each river is carved along the very line it is drawn on. Its floor is measured at stations every half mile from
+   source to mouth: the lowest ground across a 3.6-mile section of the valley, never higher than the floor upstream
+   (water does not climb). Within a channel of a quarter mile or so the ground is cut down to that floor; beyond it the
+   valley sides rise back to the land over the valley's half-width. */
+const RSTEP = 0.5, RC = 2, VHALF = [0, 3.5, 2.6, 2.0, 1.6, 1.3];
+let RST = null, RCGRID = null, NOCARVE = false;
+function riverStations(pts) {
+  const out = [pts[0].slice()]; let carry = 0;
+  for (let i = 1; i < pts.length; i++) { const a = pts[i - 1], b = pts[i], L = Math.hypot(b[0] - a[0], b[1] - a[1]); let t = RSTEP - carry;
+    while (t <= L) { out.push([a[0] + (b[0] - a[0]) * t / L, a[1] + (b[1] - a[1]) * t / L]); t += RSTEP; } carry = L - (t - RSTEP); }
+  const e = pts[pts.length - 1], l = out[out.length - 1]; if (Math.hypot(e[0] - l[0], e[1] - l[1]) > 0.05) out.push(e.slice());
+  return out;
+}
+function measureRiverFloors() {
+  NOCARVE = true;
+  const ST = RIV.map(r => riverStations(r.pts));
+  // the lowest ground across each station's section of the valley
+  const LO = ST.map(S => {
+    const lo = new Float32Array(S.length);
+    for (let k = 0; k < S.length; k++) {
+      const a = S[Math.max(0, k - 1)], b = S[Math.min(S.length - 1, k + 1)], dx = b[0] - a[0], dy = b[1] - a[1], L = Math.hypot(dx, dy) || 1, nx = -dy / L, ny = dx / L;
+      let m = Infinity;
+      for (const o of [0, 0.5, -0.5, 1, -1, 1.5, -1.5, 2.1, -2.1]) { const h = evaluate(S[k][0] + nx * o, S[k][1] + ny * o, 0.25); m = Math.min(m, R.s > 0 ? h : 0); }
+      lo[k] = m;
+    }
+    return lo;
+  });
+  NOCARVE = false;
+  // where one river runs into another (a tributary's mouth, or a river that carries on under a new name), the
+  // receiving river may stand no higher there than the river it receives: each river's floor is the running minimum of
+  // its own sections and of the floors of the rivers that end beside it. A few rounds carry this down every chain.
+  const ends = ST.map(S => S[S.length - 1]);
+  const feeds = ST.map((S, ri) => { const m = new Map();
+    ends.forEach((e, qi) => { if (qi === ri) return; let bk = -1, bd = 1.0;
+      for (let k = 0; k < S.length; k++) { const d = Math.hypot(S[k][0] - e[0], S[k][1] - e[1]); if (d < bd) { bd = d; bk = k; } }
+      if (bk >= 0) m.set(qi, bk); });
+    return m; });
+  // and the river a river runs into (its station beside this river's mouth), for grading back from the mouth
+  const recv = ST.map((S, ri) => { const e = ends[ri]; let best = null, bd = 1.0;
+    ST.forEach((Q, qi) => { if (qi === ri) return; for (let k = 0; k < Q.length; k++) { const d = Math.hypot(Q[k][0] - e[0], Q[k][1] - e[1]); if (d < bd) { bd = d; best = [qi, k]; } } });
+    return best; });
+  // a river falls gently to its mouth: from the sea, a lake or the river it joins, its floor may rise upstream by no
+  // more than a few metres a mile (less for the great rivers), so it reaches the coast in a valley, not over a cliff
+  const slope = ri => [2, 1.2, 1.6, 2.5, 3.5, 4.5][RIV[ri].rank] || 4.5;
+  // a branch leaving another river (the mouths of the Ethir Anduin) starts no higher than that river where it leaves
+  const from = ST.map((S, ri) => { const e = S[0]; let best = null, bd = 1.0;
+    ST.forEach((Q, qi) => { if (qi === ri) return; for (let k = 0; k < Q.length - 1; k++) { const d = Math.hypot(Q[k][0] - e[0], Q[k][1] - e[1]); if (d < bd) { bd = d; best = [qi, k]; } } });
+    return best; });
+  // and wherever two rivers' channels run together (within 0.8 mi), the water there stands at the lower floor
+  const near = ST.map(() => []), SG = new Map();
+  ST.forEach((S, ri) => S.forEach((p, k) => { const key = Math.floor(p[0]) * 65536 + Math.floor(p[1]); let l = SG.get(key); if (!l) SG.set(key, l = []); l.push(ri, k); }));
+  ST.forEach((S, ri) => S.forEach((p, k) => { for (let dx = -1; dx <= 1; dx++) for (let dy = -1; dy <= 1; dy++) {
+    const l = SG.get((Math.floor(p[0]) + dx) * 65536 + Math.floor(p[1]) + dy); if (!l) continue;
+    for (let j = 0; j < l.length; j += 2) if (l[j] !== ri && Math.hypot(ST[l[j]][l[j + 1]][0] - p[0], ST[l[j]][l[j + 1]][1] - p[1]) < 0.8) near[ri].push(k, l[j], l[j + 1]); } }));
+  let F = LO.map(lo => Float32Array.from(lo));
+  for (let round = 0; round < 8; round++) {
+    F = ST.map((S, ri) => {
+      const cap = new Float32Array(S.length).fill(Infinity);
+      for (const [qi, k] of feeds[ri]) { const fq = F[qi]; cap[k] = Math.min(cap[k], fq[fq.length - 1]); }
+      if (from[ri]) cap[0] = Math.min(cap[0], F[from[ri][0]][from[ri][1]]);
+      const nr = near[ri]; for (let j = 0; j < nr.length; j += 3) cap[nr[j]] = Math.min(cap[nr[j]], F[nr[j + 1]][nr[j + 2]]);
+      const f = new Float32Array(S.length); let run = Infinity;
+      for (let k = 0; k < S.length; k++) { run = Math.min(run, LO[ri][k], cap[k]); f[k] = run; }
+      let g = recv[ri] ? Math.min(f[S.length - 1], F[recv[ri][0]][recv[ri][1]]) : f[S.length - 1];
+      for (let k = S.length - 1; k >= 0; k--) { if (k < S.length - 1) g += slope(ri) * RSTEP; f[k] = Math.min(f[k], g); g = f[k]; }
+      return f;
+    });
+  }
+  return F;
+}
+// The carve follows the drawn line itself, resampled every 0.15 mi (within a few yards of it), so the channel need be
+// no wider than the river; the floor between stations is read off by distance along the line.
+const RDENSE = 0.15;
+function initRiverCarve(floors) {
+  RST = RIV.map((r, i) => {
+    const S = riverStations(r.pts), D = [r.pts[0].slice()]; let carry = 0;
+    for (let k = 1; k < r.pts.length; k++) { const a = r.pts[k - 1], b = r.pts[k], L = Math.hypot(b[0] - a[0], b[1] - a[1]); let t = RDENSE - carry;
+      while (t <= L) { D.push([a[0] + (b[0] - a[0]) * t / L, a[1] + (b[1] - a[1]) * t / L]); t += RDENSE; } carry = L - (t - RDENSE); }
+    D.push(r.pts[r.pts.length - 1].slice());
+    const fl = floors[i], f = new Float32Array(D.length);
+    for (let j = 0; j < D.length; j++) { const u = Math.min(fl.length - 1, j * RDENSE / RSTEP), k = Math.floor(u), w = u - k; f[j] = k + 1 < fl.length ? fl[k] * (1 - w) + fl[k + 1] * w : fl[k]; }
+    f[D.length - 1] = fl[fl.length - 1];
+    return { S: D, f, V: VHALF[r.rank] || 1.3, cw: r.rank <= 1 ? 0.2 : 0.12 };
+  });
+  RCGRID = new Map();
+  RST.forEach((q, ri) => { for (let k = 1; k < q.S.length; k++) { const a = q.S[k - 1], b = q.S[k];
+    const x0 = Math.floor((Math.min(a[0], b[0]) - q.V) / RC), x1 = Math.floor((Math.max(a[0], b[0]) + q.V) / RC);
+    const y0 = Math.floor((Math.min(a[1], b[1]) - q.V) / RC), y1 = Math.floor((Math.max(a[1], b[1]) + q.V) / RC);
+    for (let x = x0; x <= x1; x++) for (let y = y0; y <= y1; y++) { const key = x * 65536 + y; let l = RCGRID.get(key); if (!l) RCGRID.set(key, l = []); l.push(ri, k); } } });
+}
+// In the channel the ground is set to the floor (a hollow below it fills, as water would); on the valley sides it is
+// only ever lowered. Where valleys meet, the lowest wins.
+function riverCarve(X, Y, h) {
+  const l = RCGRID.get(Math.floor(X / RC) * 65536 + Math.floor(Y / RC)); if (!l) return h;
+  let side = Infinity, chan = Infinity;
+  for (let j = 0; j < l.length; j += 2) {
+    const q = RST[l[j]], k = l[j + 1], a = q.S[k - 1], b = q.S[k], dx = b[0] - a[0], dy = b[1] - a[1], L = dx * dx + dy * dy;
+    const t = L ? Math.max(0, Math.min(1, ((X - a[0]) * dx + (Y - a[1]) * dy) / L)) : 0, ex = a[0] + t * dx - X, ey = a[1] + t * dy - Y;
+    const d = Math.sqrt(ex * ex + ey * ey); if (d >= q.V) continue;
+    const f = q.f[k - 1] + (q.f[k] - q.f[k - 1]) * t;
+    if (d <= q.cw) { if (f < chan) chan = f; continue; }
+    if (h <= f) continue;
+    // a broad, flat-bottomed vale in the lowland; deep through the mountains, a narrower V with broken sides
+    const deep = sstep(80, 600, h - f), u = Math.min(1, (d - q.cw) / (q.V - q.cw) * (1 + 0.3 * deep * noise(X * 1.7 + 3, Y * 1.7 - 5)));
+    const v = f + (h - f) * Math.pow(Math.max(0, u), 1.6 - 0.9 * deep);
+    if (v < side) side = v;
+  }
+  return chan < Infinity ? Math.min(chan, side) : Math.min(h, side);
 }
 function circlePts(c, n) { const out = []; for (let i = 0; i <= n; i++) { const a = i / n * Math.PI * 2; out.push([c[0] + Math.cos(a) * c[2], c[1] + Math.sin(a) * c[2]]); } return out; }
 
