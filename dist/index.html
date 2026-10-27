@@ -1697,7 +1697,8 @@ function buildingsNear(X, Y, rad) {
 }
 
 return { setDoom, nightAt, D2R, MI, EARTH_C, toLL, toXY, noise, fbm, fbmA, hash2, sat, sstep, mix, clamp, init, evaluate, F, R, CH, tempAt, moistAt,
-  demTile, imageryTile, renderGrid, tileLL, drawVectors, buildingsNear, numenorField, orchardAt, valleyAt };
+  demTile, imageryTile, renderGrid, tileLL, drawVectors, buildingsNear, numenorField, orchardAt, valleyAt,
+  drawnRivers: () => RIV.map(r => ({ name: r.name, pts: r.chunks.flatMap((c, k) => k ? c.pts.slice(1) : c.pts) })) };
 })();
 if (typeof self !== 'undefined') self.GEN = GEN;
 </script>

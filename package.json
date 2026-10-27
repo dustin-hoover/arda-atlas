@@ -8,7 +8,7 @@
     "dev": "node build.js && node scripts/serve.js",
     "serve": "node scripts/serve.js",
     "check": "for f in src/*.js; do node --check $f || exit 1; done && echo syntax ok",
-    "audit": "node tools/qa/qa_geo.js && python3 tools/qa/trace_check.py && node tools/sources/audit.js --md docs/SOURCES.md",
+    "audit": "node tools/qa/qa_geo.js && python3 tools/qa/trace_check.py && python3 tools/qa/qa_render.py && node tools/sources/audit.js --md docs/SOURCES.md",
     "worlds": "node worlds/validate.js got && node worlds/got/calendar.test.js"
   },
   "dependencies": {

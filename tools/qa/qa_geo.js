@@ -1,7 +1,8 @@
 // Geography gate: rivers, river mouths and coastal places checked against the land the renderer draws
 // (src/shores.js coast + islands - inland seas, filled with the nonzero rule as the canvas does).
 // Fails if a river runs over sea for more than 0.75 mi, a mouth or anchored coastal place is more than 1 mi
-// from the shore, the coast polygon crosses itself, or the island count changes. Samples every 0.5 mi.
+// from the shore, any ring crosses itself or another, the island count changes, a river port is off its river, or
+// a river ends nowhere. Samples every 0.5 mi. What the renderer draws is checked by tools/qa/qa_render.py.
 // Run: node tools/qa/qa_geo.js [--verbose]
 const fs = require('fs'), path = require('path');
 const ROOT = path.join(__dirname, '..', '..');
@@ -41,16 +42,27 @@ const isLand = p => (winding(p, COAST) !== 0 || ISL.some(r => winding(p, r) !== 
 
 const fails = [], say = s => console.log(s), fail = s => { fails.push(s); say('FAIL ' + s); };
 
-// 1. the coast polygon must not cross itself
+// 1. no ring (coast, islands, inland seas) may cross itself or another ring. Every pair of segments whose bounding
+//    boxes share a 5-mile cell is tested, so no crossing can be missed (each segment is entered in every cell its box
+//    touches, not only the cell of its midpoint).
 {
-  let n = 0; const C = COAST, L = C.length;
-  const cross = (a, b, c, d) => { const o = (p, q, r) => Math.sign((q[0] - p[0]) * (r[1] - p[1]) - (q[1] - p[1]) * (r[0] - p[0])); return o(a, b, c) * o(a, b, d) < 0 && o(c, d, a) * o(c, d, b) < 0; };
-  const cg = new Map(); for (let i = 0; i < L; i++) { const a = C[i], b = C[(i + 1) % L]; const k = Math.floor((a[0] + b[0]) / 2 / CELL) + ',' + Math.floor((a[1] + b[1]) / 2 / CELL); if (!cg.has(k)) cg.set(k, []); cg.get(k).push(i); }
-  for (let i = 0; i < L; i++) { const a = C[i], b = C[(i + 1) % L], cx = Math.floor((a[0] + b[0]) / 2 / CELL), cy = Math.floor((a[1] + b[1]) / 2 / CELL);
-    for (let x = cx - 1; x <= cx + 1; x++) for (let y = cy - 1; y <= cy + 1; y++) for (const j of cg.get(x + ',' + y) || []) {
-      if (j <= i + 1 || (i === 0 && j === L - 1)) continue;
-      if (cross(a, b, C[j], C[(j + 1) % L])) { n++; if (VERBOSE) say(`  coast crosses itself near ${a.map(v => v.toFixed(1))}`); } } }
-  n ? fail(`coast polygon crosses itself ${n} times`) : say('ok   coast polygon is simple');
+  const C5 = 5, cg = new Map(), all = [];
+  rings.forEach((r, ri) => { for (let i = 0; i < r.length; i++) {
+    const a = r[i], b = r[(i + 1) % r.length], s = all.length; all.push([a, b, ri, i, r.length]);
+    const x0 = Math.floor(Math.min(a[0], b[0]) / C5), x1 = Math.floor(Math.max(a[0], b[0]) / C5), y0 = Math.floor(Math.min(a[1], b[1]) / C5), y1 = Math.floor(Math.max(a[1], b[1]) / C5);
+    for (let x = x0; x <= x1; x++) for (let y = y0; y <= y1; y++) { const k = x * 100003 + y; if (!cg.has(k)) cg.set(k, []); cg.get(k).push(s); } } });
+  const o = (p, q, r) => Math.sign((q[0] - p[0]) * (r[1] - p[1]) - (q[1] - p[1]) * (r[0] - p[0]));
+  const cross = (a, b, c, d) => o(a, b, c) * o(a, b, d) < 0 && o(c, d, a) * o(c, d, b) < 0;
+  const seen = new Set(); let self = 0, other = 0;
+  for (const list of cg.values()) for (let u = 0; u < list.length; u++) for (let v = u + 1; v < list.length; v++) {
+    const S = all[list[u]], T = all[list[v]];
+    if (S[2] === T[2]) { const d = Math.abs(S[3] - T[3]); if (d <= 1 || d === S[4] - 1) continue; }
+    const key = list[u] * 1e6 + list[v]; if (seen.has(key)) continue;
+    if (cross(S[0], S[1], T[0], T[1])) { seen.add(key); S[2] === T[2] ? self++ : other++;
+      if (VERBOSE || seen.size <= 5) say(`  ${S[2] === T[2] ? 'ring ' + S[2] + ' crosses itself' : 'rings ' + S[2] + ' and ' + T[2] + ' cross'} near ${S[0].map(v => v.toFixed(1))}`); }
+  }
+  self ? fail(`${self} self-crossing(s) in the coast, island and sea rings`) : say(`ok   all ${rings.length} rings are simple (${all.length} segments, every pair tested)`);
+  other ? fail(`${other} crossing(s) between rings`) : say('ok   no two rings cross');
 }
 // 2. island count
 ISL.length === ISLANDS ? say(`ok   ${ISL.length} islands`) : fail(`island count ${ISL.length}, expected ${ISLANDS}`);
@@ -77,6 +89,19 @@ for (const p of GEO.PLACES) if (coastal.has(p[0])) {
   const d = shoreDist([p[2], p[3]]);
   d > NEAR ? fail(`${p[0]}: ${d.toFixed(1)} mi from shore (${isLand([p[2], p[3]]) ? 'inland' : 'at sea'})`) : say(`ok   ${p[0]} ${d.toFixed(2)} mi from shore`);
 }
+// 6. river ports stand on their river (within 0.75 mi of its line)
+{ const coastalP = new Set(ANCH.coastal.map(c => c[0]).concat(['Mithlond', 'Forlond', 'Harlond (Lindon)']));
+  for (const p of GEO.PLACES) if (p[1] === 'port' && !coastalP.has(p[0])) {
+    let d = Infinity; for (const r of GEO.RIVERS) for (let i = 1; i < r.pts.length; i++) d = Math.min(d, segDist([p[2], p[3]], r.pts[i - 1], r.pts[i]));
+    d > 0.75 ? fail(`${p[0]}: river port ${d.toFixed(2)} mi from its river`) : say(`ok   ${p[0]} on its river (${d.toFixed(2)} mi)`); } }
+// 7. every river ends somewhere: at the shore, in a lake, or in another river
+{ let bad = 0;
+  for (const r of GEO.RIVERS) { const e = r.pts[r.pts.length - 1];
+    let d = shoreDist(e);
+    for (const l of GEO.LAKES) for (let i = 0; i < l.pts.length; i++) d = Math.min(d, segDist(e, l.pts[i], l.pts[(i + 1) % l.pts.length]));
+    for (const o of GEO.RIVERS) if (o !== r) for (let i = 1; i < o.pts.length; i++) d = Math.min(d, segDist(e, o.pts[i - 1], o.pts[i]));
+    if (d > 1) { bad++; fail(`${r.name}: ends ${d.toFixed(1)} mi from any shore, lake or river near ${e.map(v => v.toFixed(1))}`); } }
+  if (!bad) say(`ok   all ${GEO.RIVERS.length} rivers end at a shore, a lake or a river`); }
 // 5. one label per name on a delta: distributaries share a name but only one carries the label
 { const n = GEO.RIVERS.filter(r => r.name === 'Ethir Anduin' && !r.nolabel).length; n > 1 ? fail(`"Ethir Anduin" labelled ${n} times`) : say('ok   one "Ethir Anduin" label'); }
 

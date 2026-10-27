@@ -22,3 +22,4 @@ tools/continents/cache/
 
 # local assistant notes (kept out of the public tree)
 CLAUDE.md
+tools/qa/render_report.json
