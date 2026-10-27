@@ -33,6 +33,7 @@ const RANGES = [
   { name:'Ered Nimrais', alt:'The White Mountains', h:3300, w:50, label:true, pts:[[48.8,-703],[81,-624.8],[122.4,-551.2],[113,-511.9],[178.9,-487.2],[262.3,-472.1],[344.9,-462],[397.2,-472.9],[430.2,-495.1],[467.9,-508.2],[509.6,-518.7],[556.3,-533.3],[608.2,-551.1],[653.4,-567.6]] },
   { name:'Ered Nimrais (Mindolluin spur)', alt:'', h:2300, w:14, label:false, pts:[[647.5,-565.2],[682.2,-579.3],[703.2,-588.1]] },
   { name:'Ephel Dúath', alt:'The Mountains of Shadow', h:2400, w:24, label:true, pts:[[753.1,-479],[760.8,-515.2],[769.3,-547.4],[778.1,-578.8],[782.2,-611.5],[775,-648.8],[760.6,-691.9],[767.7,-730.4],[805.5,-767.1],[867.3,-807],[949.4,-845.4],[1033.6,-861.9],[1103.3,-855.8],[1159.5,-835]] },
+  { name:'Barad-dûr spur', alt:'', h:1100, w:12, label:false, pts:[[893.5,-468],[896.5,-492],[897,-514],[895.4,-528]] },   // the spur of the Ash Mountains on which the Dark Tower stands (LR VI.3)
   { name:'Ered Lithui', alt:'The Ash Mountains', h:2400, w:24, label:true, pts:[[764.3,-475.4],[833.3,-468.7],[908.4,-467.2],[983.8,-472.9],[1065.2,-484.3],[1140.1,-498.6],[1209.1,-520.2]] },
   { name:'Mountains of Angmar', alt:'', h:2100, w:40, label:true, pts:[[203.6,274.3],[236.2,275.9],[282.4,263.9],[379.6,229.2]] },
   { name:'Iron Hills', alt:'', h:1700, w:32, label:true, pts:[[950.3,158],[1001.4,168.6],[1052.6,176.9],[1106.6,185.7]] },
@@ -90,15 +91,15 @@ const PEAKS = [
   { name:'Amon Hen', alt:'The Hill of Sight', x:609.9, y:-464.6, h:260, r:2.5, kind:'hill' },
   { name:'Amon Lhaw', alt:'The Hill of Hearing', x:626.6, y:-462.2, h:260, r:2.5, kind:'hill' },
   { name:'Amon Dîn', alt:'', x:693.5, y:-581.1, h:260, r:2, kind:'hill' },
-  { name:'Halifirien', alt:'', x:529.4, y:-519.9, h:900, r:4, kind:'mountain' },
+  { name:'Halifirien', alt:'', x:529.4, y:-514.5, h:320, r:2.5, kind:'hill' },   // the beacon hill above the Firien Wood, on the range's northern flank
   { name:'Dol Baran', alt:'', x:368.1, y:-410.7, h:180, r:2.5, kind:'hill' },
   { name:'Bree-hill', alt:'', x:128.6, y:9.4, h:110, r:1.6, kind:'hill' },
-  { name:'The Hill', alt:'Hobbiton Hill', x:0.4, y:0.4, h:45, r:0.45, kind:'hill' },
-  { name:'Carrock', alt:'', x:542.9, y:54.3, h:60, r:0.4, kind:'hill' },
+  { name:'The Hill', alt:'Hobbiton Hill', x:0.4, y:0.4, h:85, r:0.55, kind:'hill' },
+  { name:'Carrock', alt:'', x:547, y:55.1, h:60, r:0.4, kind:'hill' },
   { name:'Dol Guldur', alt:'Amon Lanc', x:609.2, y:-194.2, h:260, r:3, kind:'hill' },
   { name:'Meneltarma', alt:'Pillar of Heaven (drowned)', x:-1500, y:-600, h:3300, r:22, kind:'seamount' },
-  { name:'Edoras hill', alt:'', x:438, y:-479.4, h:50, r:0.6, kind:'hill' },
-  { name:'Cerin Amroth', alt:'', x:454.1, y:-242.6, h:40, r:0.3, kind:'hill' },
+  { name:'Edoras hill', alt:'', x:438, y:-479.4, h:75, r:0.65, kind:'hill' },   // the green hill the town is built on, Meduseld at its top
+  { name:'Cerin Amroth', alt:'', x:451.2, y:-244.4, h:40, r:0.3, kind:'hill' },
 ];
 
 /* Rivers: w0/w1 = width in metres at source / mouth. */
@@ -141,13 +142,13 @@ const RIVERS = [
   { name:'Glanduin', w0:8, w1:40, rank:3, pts:[[378,-191.5],[350.1,-193.6],[323.2,-195.6],[291.2,-194.6],[255.4,-187.1],[228.4,-176.1],[202.3,-168.3]] },
   { name:'Sirannon', alt:'The Gate-stream', w0:3, w1:12, rank:5, pts:[[380,-159.2],[366.8,-162.8],[350.3,-169.1],[331.6,-181],[332.6,-194.9]] },
   { name:'Gwathló', alt:'The Greyflood', w0:90, w1:260, rank:2, pts:[[202.3,-168.3],[192.4,-177.9],[167,-210.9],[132.1,-251],[98,-284.4],[66.5,-317.1],[41.9,-347.8],[34,-356.95]] },
-  { name:'Celduin', alt:'The River Running', w0:20, w1:160, rank:2, pts:[[770.5,131.3],[766.1,115.4],[765.8,105.1],[770.9,82.3],[782.9,60.3],[807.6,25.3],[835.6,-11.5],[864,-43.3],[891.6,-74.4],[923.1,-108],[963.5,-143.5],[1010.1,-172.3],[1054.2,-196.1],[1082.7,-214.8],[1077.8,-210.7]] },
+  { name:'Celduin', alt:'The River Running', w0:20, w1:160, rank:2, pts:[[770.5,131.3],[766.1,115.4],[765.8,105.1],[770.9,82.3],[782.9,60.3],[807.6,25.3],[835.6,-11.5],[864,-43.3],[891.6,-74.4],[923.1,-108],[963.5,-143.5],[1010.1,-172.3],[1054.2,-196.1],[1077.8,-210.7]] },
   { name:'Forest River', w0:6, w1:40, rank:3, pts:[[702.7,83.5],[717.5,82.2],[735.4,87.3],[758.8,94.6]] },
-  { name:'Enchanted River', w0:5, w1:20, rank:4, pts:[[680.9,41.4],[693.3,52.2],[706,63.3],[713.8,79.5],[714.1,82.5]] },
+  { name:'Enchanted River', w0:5, w1:20, rank:4, pts:[[663,49.8],[672,45],[680.9,41.4],[693.3,52.2],[706,63.3],[713.8,79.5],[714.1,82.5]] },
   { name:'Carnen', alt:'Redwater', w0:8, w1:60, rank:3, pts:[[1009.5,161.9],[990.1,120.3],[968.2,61.4],[946.2,-1.2],[922.6,-54.1],[904.2,-87.9]] },
-  { name:'Rivers of Nurn (west)', w0:5, w1:30, rank:5, pts:[[874.9,-787.7],[925.4,-757],[974.6,-729.9],[962.1,-734.6]] },
-  { name:'Rivers of Nurn (east)', w0:5, w1:30, rank:5, pts:[[1078.7,-848],[1073,-803.4],[1071.4,-756.4],[1072.3,-770.9]] },
-  { name:'Red River of Rhûn', w0:20, w1:140, rank:3, pts:[[1718.5,40.1],[1574.6,-20.7],[1457,-78.9],[1364.4,-127.2],[1307.7,-174.4],[1311,-168.4]] },
+  { name:'Rivers of Nurn (west)', w0:5, w1:30, rank:5, pts:[[874.9,-787.7],[925.4,-757],[962.1,-734.6]] },
+  { name:'Rivers of Nurn (east)', w0:5, w1:30, rank:5, pts:[[1078.7,-848],[1073,-803.4],[1072.3,-770.9]] },
+  { name:'Red River of Rhûn', w0:20, w1:140, rank:3, pts:[[1718.5,40.1],[1574.6,-20.7],[1457,-78.9],[1364.4,-127.2],[1311,-168.4]] },
   { name:'Great River of Harad', w0:30, w1:320, rank:2, pts:[[1343.9,-1536.4],[1180.2,-1610.6],[1013.2,-1658.3],[836.5,-1682.5],[678.3,-1672.6],[532.6,-1648.7],[383.3,-1608.7],[237,-1542.4],[219,-1543.6],[203.3,-1545]] },
   { name:'Southern River', w0:30, w1:260, rank:3, pts:[[1005.8,-2071.2],[792,-2052.4],[583.1,-2044.9],[375.8,-2050.3],[84.1,-2060.4],[-41.6,-2060.9],[-51.5,-2057.6],[-60.8,-2053]] },
   { name:'River of the East', w0:40, w1:300, rank:3, pts:[[2406.2,6.2],[2554.1,-127.3],[2698.8,-266.6],[2793.4,-335.9]] },
@@ -331,7 +332,7 @@ const PLACES = [
   ['Goblin-town','cave',493,7.2,'orcs','Misty Mountains','Orc-caverns beneath the High Pass where Bilbo was lost and found the Ring.',{rank:4}],
   ['High Pass','landmark',485.2,2.1,'other','Misty Mountains','Cirith Forn en Andrath, the high pass over the Misty Mountains east of Rivendell.',{rank:4}],
   // Wilderland
-  ['Carrock','landmark',542.9,54.3,'men','Vales of Anduin','Rock-island in the Anduin with steps carved by Beorn.',{rank:4}],
+  ['Carrock','landmark',547,55.1,'men','Vales of Anduin','Rock-island in the Anduin with steps carved by Beorn.',{rank:4}],
   ['Old Ford','ford',553,24.8,'men','Vales of Anduin','Where the Old Forest Road crosses the Anduin, kept by the Beornings.',{rank:4}],
   ['Beorn\'s house','landmark',565.5,48.1,'men','Vales of Anduin','Timber hall of the skin-changer Beorn amid fields of clover and bees.',{rank:3,culture:'beorning',r:0.25}],
   ['Rhosgobel','landmark',611.6,-20,'other','Mirkwood','Home of Radagast the Brown on the western eaves of Mirkwood.',{rank:4}],
@@ -351,7 +352,7 @@ const PLACES = [
   ['Tarnost','village',455,-700,'gondor','Gondor','Hill-town of Dor-en-Ernil between Dol Amroth and Linhir.',{pop:900,rank:5,culture:'gondor',r:0.25}],
   ['Lossarnach','village',692,-618,'gondor','Gondor','Farm-villages of the Lossarnach, whose folk came to the City under Forlong the Fat.',{pop:2000,rank:4,culture:'gondor',r:0.45}],
   ['Caras Galadhon','elven',457.1,-254.8,'elves','Lothlórien','City of the Trees, where Celeborn and Galadriel dwell in a hill-crowned grove of mallorn.',{pop:5000,rank:1,culture:'lorien',r:0.9}],
-  ['Cerin Amroth','landmark',454.1,-242.6,'elves','Lothlórien','A green mound at the heart of old Lórien where elanor and niphredil bloom.',{rank:5}],
+  ['Cerin Amroth','landmark',451.2,-244.4,'elves','Lothlórien','A green mound at the heart of old Lórien where elanor and niphredil bloom.',{rank:5}],
   ['Egladil','landmark',489.1,-297,'elves','Lothlórien','The Tongue, the Naith of Lórien: the green angle between Silverlode and Anduin.',{rank:5}],
   // Rohan
   ['Edoras','city',438,-479.4,'rohirrim','Rohan','The courts of the Mark on a green hill, crowned by the golden hall Meduseld.',{pop:5000,rank:1,culture:'rohan',r:0.55}],
@@ -691,7 +692,7 @@ const JOURNEYS = {
   ],
   'hobbit': [
     { name:'Bilbo & Thorin\'s Company', color:'#f2d06b', pts:[
-      [0.3,0.5,'2941 4 28.1'],[6.3,-2.2,'2941 4 28.4'],[72,4.9,'2941 4 30'],[127.9,7.4,'2941 5 4'],[208,11,'2941 5 12'],[317.5,12,'2941 5 20'],[361.7,17.4,'2941 5 25.75'],[361.7,17.4,'2941 5 26.4'],[420.5,17.5,'2941 6 16'],[420.5,17.5,'2941 6 30.9'],[457.4,16.5,'2941 7 2'],[485.2,2.1,'2941 7 5'],[493,7.2,'2941 7 6'],[514.3,12.2,'2941 7 6.7'],[514.3,12.2,'2941 7 7'],[542.9,54.3,'2941 7 8'],[565.5,48.1,'2941 7 9'],[565.5,48.1,'2941 7 11.5'],[587,71.1,'2941 7 14'],[624.8,62.7,'2941 7 20'],[665.9,59,'2941 7 30'],[705,69.6,'2941 8 6'],[705,69.6,'2941 8 7.5'],[713.5,81,'2941 8 12'],[735.4,87.3,'2941 9 22'],[766.5,97.5,'2941 9 23'],[766.5,97.5,'2941 10 1'],[766.1,115.4,'2941 10 3'],[763.4,136.7,'2941 10 8'],[763.4,136.7,'2941 10 16'],[770,131.4,'2941 10 18'],[770,131.4,'2941 11 23'],[769,128.4,'2941 11 23.8'],[770,131.4,'2941 11 26'],[565.5,48.1,'2941 12 30'],[565.5,48.1,'2942 3 30'],[420.5,17.5,'2942 5 1'],[208,11,'2942 5 25'],[127.9,7.4,'2942 6 5'],[0.3,0.5,'2942 6 22']
+      [0.3,0.5,'2941 4 28.1'],[6.3,-2.2,'2941 4 28.4'],[72,4.9,'2941 4 30'],[127.9,7.4,'2941 5 4'],[208,11,'2941 5 12'],[317.5,12,'2941 5 20'],[361.7,17.4,'2941 5 25.75'],[361.7,17.4,'2941 5 26.4'],[420.5,17.5,'2941 6 16'],[420.5,17.5,'2941 6 30.9'],[457.4,16.5,'2941 7 2'],[485.2,2.1,'2941 7 5'],[493,7.2,'2941 7 6'],[514.3,12.2,'2941 7 6.7'],[514.3,12.2,'2941 7 7'],[547,55.1,'2941 7 8'],[565.5,48.1,'2941 7 9'],[565.5,48.1,'2941 7 11.5'],[587,71.1,'2941 7 14'],[624.8,62.7,'2941 7 20'],[665.9,59,'2941 7 30'],[705,69.6,'2941 8 6'],[705,69.6,'2941 8 7.5'],[713.5,81,'2941 8 12'],[735.4,87.3,'2941 9 22'],[766.5,97.5,'2941 9 23'],[766.5,97.5,'2941 10 1'],[766.1,115.4,'2941 10 3'],[763.4,136.7,'2941 10 8'],[763.4,136.7,'2941 10 16'],[770,131.4,'2941 10 18'],[770,131.4,'2941 11 23'],[769,128.4,'2941 11 23.8'],[770,131.4,'2941 11 26'],[565.5,48.1,'2941 12 30'],[565.5,48.1,'2942 3 30'],[420.5,17.5,'2942 5 1'],[208,11,'2942 5 25'],[127.9,7.4,'2942 6 5'],[0.3,0.5,'2942 6 22']
     ]},
     { name:'Gandalf: the White Council at Dol Guldur', hide:true, color:'#c8c8d8', pts:[[565.5,48.1,'2941 7 14'],[587,71.1,'2941 7 18'],[553,25,'2941 7 22'],[540,-60,'2941 7 28'],[609.2,-194.2,'2941 8 5'],[609.2,-194.2,'2941 8 25'],[560,-60,'2941 9 15'],[553,25,'2941 10 1'],[646,0,'2941 10 25'],[759,-14,'2941 11 10'],[769,128.4,'2941 11 22']] },
     // The Shadow of the Past (LR I.2; AppB 2463, 2470; the days are not recorded): Sméagol and his friend Déagol go
@@ -839,6 +840,12 @@ const FIREWORKS = [
   { name:'Gandalf\'s fireworks', story:'war', x:0.6, y:0.1, from:'3001 9 22.77', to:'3001 9 22.865', dragon:'3001 9 22.85' },
 ];
 
+// Gorges the books describe, where the river runs between sheer walls: [course along the river, wall height m]
+const GORGES = [
+  // the chasm of the Argonath above Nen Hithoel: the river runs swift between cliffs, the Pillars of the Kings at its
+  // gate (LR II.9)
+  { name:'Gates of Argonath', pts:[[603,-417.5],[606.4,-423],[611.9,-433.1],[614.7,-440.4]], h:240 },
+];
 const LORE_WEATHER = [
   { name:'Blizzard on Caradhras', x:413.8, y:-159.4, r:40, from:'3019 1 11', to:'3019 1 12.8', kind:'snow' },
   { name:'Storm out of Isengard', x:373.6, y:-440.2, r:80, from:'3019 3 3', to:'3019 3 4.3', kind:'storm' },
@@ -847,6 +854,6 @@ const LORE_WEATHER = [
 ];
 
 return { MODES, BATTLES, DEATHS, COAST, ISLANDS, RANGES, HILLS, RELIEF, PEAKS, RIVERS, LAKES, FORESTS, MARSHES, ARID, FARMS, GRASS, ASH, UPLIFT, ICE, NUMENOR,
-  PLACES, REGION_LABELS, SEA_LABELS, REALMS, ADMIN, PEOPLES, ROADS, WALLS, PALANTIRI, BEACONS, JOURNEYS, STORIES, LORE_WEATHER, FIREWORKS };
+  PLACES, REGION_LABELS, SEA_LABELS, REALMS, ADMIN, PEOPLES, ROADS, WALLS, PALANTIRI, BEACONS, JOURNEYS, STORIES, LORE_WEATHER, FIREWORKS, GORGES };
 })();
 if (typeof self !== 'undefined') self.GEO = GEO;

@@ -303,13 +303,17 @@ function buildBuildings(B, X0, Y0, hAt) {
   for (const b of B.list) {
     if (b.culture === 'lorien' || b.culture === 'elf') continue;
     const x = (b.x - X0) * MI, z = -(b.y - Y0) * MI;
-    const y0 = hAt(x, z) - 0.5;
+    // a house on a slope stands on its lowest corner, its walls running down to the ground: none floats
+    const hc = hAt(x, z); let lo = hc;
+    { const ca = Math.cos(-b.a || 0), sa = Math.sin(-b.a || 0), hw = (b.w || 6) / 2, hd = (b.d || b.w || 6) / 2;
+      for (const [u, v] of [[-hw, -hd], [hw, -hd], [hw, hd], [-hw, hd]]) lo = Math.min(lo, hAt(x + u * ca - v * sa, z + u * sa + v * ca)); }
+    const y0 = lo - 0.5, sink = hc - lo;
     const roof = b.c.map(v => Math.pow(v / 255, 2.2));
     const wall = (WALLC[b.culture] || [0.6, 0.55, 0.5]).map(v => Math.pow(v, 1.5));
     if (b.culture === 'hobbit' && b.round) { const doors = [[0.1, 0.25, 0.1], [0.6, 0.45, 0.1], [0.15, 0.25, 0.45], [0.5, 0.12, 0.08]]; mound(x, z, b.w * 0.8, y0, doors[Math.floor(Math.abs(b.x * 1e5)) % 4]); continue; }
     if (b.round) { box(x, z, b.w * 0.8, b.w * 0.8, b.a, y0, b.h * 0.6, roof, roof, true); continue; }
     const gable = !['harad', 'minastirith', 'gondor', 'osgiliath', 'mordor', 'isengard', 'dwarf', 'ruin'].includes(b.culture) || (b.culture === 'gondor' && b.w < 13);
-    box(x, z, b.w, b.d, b.a, y0, b.h * (b.ruin ? 0.4 : 1), wall, roof, gable, b.ruin);
+    box(x, z, b.w, b.d, b.a, y0, b.h * (b.ruin ? 0.4 : 1) + sink, wall, roof, gable, b.ruin);
   }
   for (const s of B.special) {
     const cx = (s.x - X0) * MI, cz = -(s.y - Y0) * MI;
@@ -422,6 +426,7 @@ function updateAtmos(recompute) {
   const zen = mixC(new THREE.Color(0x05070f), new THREE.Color(0x2f62a8), day).lerp(new THREE.Color(0x8a939c), cl * 0.75 * day);
   let hor = mixC(new THREE.Color(0x0d1220), new THREE.Color(0xc4d7e6), day).lerp(new THREE.Color(0xf0a36a), dusk * 0.7 * (1 - cl)).lerp(new THREE.Color(0xaab2b8), cl * 0.6 * day);
   if (dark > 0.05) { zen.lerp(new THREE.Color(0x1c130e), dark * 0.9); hor.lerp(new THREE.Color(0x3a2a20), dark * 0.85); }
+  if (reek > 0.05) { zen.lerp(new THREE.Color(0x4a3a30), reek * 0.6 * day); hor.lerp(new THREE.Color(0x6a5446), reek * 0.7 * day); }   // reek and haze over Mordor
   const u = G.skyMat.uniforms;
   u.sunDir.value.copy(dir.y > -0.05 ? dir : dir.clone().negate()); u.zen.value.copy(zen); u.hor.value.copy(hor);
   u.cloud.value = Math.min(1, cl * 1.05 + dark * 0.6);
@@ -441,7 +446,6 @@ function updateAtmos(recompute) {
   if (G.grassMat) G.grassMat.color.setScalar(0.25 + 0.75 * day * (1 - cl * 0.3) * (1 - dark * 0.7));
   G.hemi.color.copy(mixC(new THREE.Color(0x303a58), zen.clone().lerp(new THREE.Color(0xffffff), 0.4), day));
   G.scene.fog.color.copy(hor);
-  if (reek > 0.05) { zen.lerp(new THREE.Color(0x4a3a30), reek * 0.6 * day); hor.lerp(new THREE.Color(0x6a5446), reek * 0.7 * day); G.scene.fog.color.copy(hor); }   // reek and haze over Mordor
   const vis = (G.wx.R > 0.3 ? 12000 : 90000) * (1 - cl * 0.35) * (1 - dark * 0.7) * (1 - 0.55 * reek);
   G.scene.fog.near = Math.min(3000, vis * 0.08); G.scene.fog.far = vis;
   G.renderer.toneMappingExposure = 0.55 + 0.6 * day;
@@ -466,8 +470,11 @@ function buildLabels() {
     if (d < 200 || d > 110000) continue;
     list.push({ name: p.name, x: dx, z: dz, d, rank: 2, peak: p.h, top: window.GEN ? GEN.evaluate(p.x, p.y, 0.05) : 0 });
   }
-  list.sort((a, b) => a.rank - b.rank || a.d - b.d);
-  G.labels = list.slice(0, 18);
+  // a mountain that is also a place (Orodruin) is named once, at its summit
+  const peakNames = new Set(list.filter(l => l.peak).map(l => l.name));
+  const one = list.filter(l => l.peak || !peakNames.has(l.name));
+  one.sort((a, b) => a.rank - b.rank || a.d - b.d);
+  G.labels = one.slice(0, 18);
   $('#glabels').innerHTML = G.labels.map(() => '<div hidden></div>').join('');
   const dirs = ['N', 'NE', 'E', 'SE', 'S', 'SW', 'W', 'NW'];
   let s = '';
@@ -683,7 +690,7 @@ async function loadNear(Xc, Yc, offX, offZ) {
   placeGrass();
 }
 async function loadFar(X, Y) {
-  const run = G.o.run, half = 60000, n = 241;
+  const run = G.o.run, half = 60000, n = 321;                     // 375 m between far samples: the White Mountains keep their peaks
   const [hr, tx] = await Promise.all([run({ type: 'ph', X, Y, half, n, doom: G.doom }), textureFor(run, X, Y, half, 1024, 4)]);
   G.farHeights = hr.h;
   G.farH = heightFn(hr.h, n, half);

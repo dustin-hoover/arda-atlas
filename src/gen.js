@@ -98,8 +98,15 @@ const CH = { land:0, cont:1, mtn:2, hill:3, forest:4, gold:5, dark:6, marsh:7, a
 
 function init(data) {
   M = data.main; G = data.glob; PEAKS = data.peaks || []; RANGEPAL = data.ranges || []; NUM = data.numenor; FLATS = data.flats || [];
-  initCoast(data.coast);
+  initCoast(data.coast); GORGES = data.gorges || [];
   if (data.vectors) initVectors(data.vectors);
+  // a gorge follows the river as it is drawn, not its authored course, so the water runs in the chasm, not on its wall
+  GORGES = GORGES.map(g => { let best = null, bd = 1e9;
+    for (const r of RIV) for (const p of r.pts) { const d = Math.hypot(p[0] - g.pts[1][0], p[1] - g.pts[1][1]); if (d < bd) { bd = d; best = r; } }
+    if (!best) return g;
+    const near = p => { let m = 1e9; for (let k = 1; k < g.pts.length; k++) { const a = g.pts[k - 1], b = g.pts[k], dx = b[0] - a[0], dy = b[1] - a[1], L = dx * dx + dy * dy, t = Math.max(0, Math.min(1, ((p[0] - a[0]) * dx + (p[1] - a[1]) * dy) / L)); m = Math.min(m, Math.hypot(a[0] + t * dx - p[0], a[1] + t * dy - p[1])); } return m; };
+    const pts = best.pts.filter((p, i) => i % 3 === 0 && near(p) < 1.2);
+    return pts.length > 3 ? { ...g, pts } : g; });
   initTex(data.tex); MOUTHS = data.mouths || []; PINS = data.pins || []; initValleys(data.valleys);
   // river floors need the finished terrain, so they are measured last: once, in the page, then handed to the workers
   if (data.vectors) { if (!data.riverFloors) data.riverFloors = measureRiverFloors(); initRiverCarve(data.riverFloors); }
@@ -508,6 +515,7 @@ function evaluate(X, Y, pix) {
       R.mt = sstep(0, 0.35, mtn);
       R.vly = Math.max(c1, c2 * 0.7);
       h -= mm * 5200 * (0.5 * c1 * (2 - c1) + 0.2 * c2 + 0.05 * c3) + mm * 900 * fbmA(X, Y, 1.2, Math.max(pix * 1.1, 0.002), 0.85, 6) * (1 - c1);
+      h = Math.max(h, base * 0.85);                            // a mountain valley floors out at the lowland, never below it
     }
     // regional roughness: rolling country, low hills, broken ground
     const rough = sat(0.35 + 0.9 * fbm(X * 0.004 + 71, Y * 0.004 - 12, 3));
@@ -525,7 +533,9 @@ function evaluate(X, Y, pix) {
       const s1 = sstep(1 - w1 * 3, 1 - w1 * 0.3, v1), s2 = sstep(1 - w2 * 2, 1 - w2 * 0.2, v2) * 0.6;
       str = Math.max(s1, s2) * (1 - sstep(0.3, 0.7, F[8])) * (1 - F[10]) * sstep(0.35, 0.08, pix) * sstep(-0.25, 0.25, noise(X * 0.04 + 7, Y * 0.04 - 3));
       const cv1 = sstep(0.45, 1, v1), cv2 = sstep(0.6, 1, v2);
+      const hb = h;
       h -= (5 + 30 * rough + 70 * hill + 160 * mtn) * Math.max(cv1 * cv1, 0.5 * cv2 * cv2);
+      h = Math.max(h, Math.min(hb, base * 0.7 + 8));          // a stream cuts a gully, never a hole down to the sea
     }
     R.stream = str;
     h *= sstep(0, 0.07, s);
@@ -541,6 +551,7 @@ function evaluate(X, Y, pix) {
     }
     if (PEAKS.length) h += peakAt(X, Y, pix);
     if (RCGRID && !NOCARVE) h = riverCarve(X, Y, h);
+    if (GORGES.length && !NOCARVE) h += gorgeAt(X, Y);
     R.base = base;
     if (h < 0.6) h = 0.6;
   } else {
@@ -869,6 +880,10 @@ function colorAt(X, Y, h, slope, pix, mode, dsea) {
     blend(fr, fg, fb, dens);
     FDN = dens;
     plAdd(T < 2 || Math.abs(lat) > 64 ? 'taiga' : (R.mt > 0.3 || gold > 0.3 || conifer > 0.6) ? 'beech' : 'forest', dens * (dk > 0.5 ? 1 : 0.95));
+    // between the zooms that show single crowns and those that show whole woods, the canopy still reads as canopy:
+    // clumps of lighter and darker crowns, stands of different age, sunlit edges of glades (no flat dark blobs)
+    if (pix >= 0.005) { const mot = fbmA(X, Y, 0.16, Math.max(pix, 0.005), 0.8, 47) + 0.6 * fbm(X * 0.12 + 9, Y * 0.12, 3), lm = 1.06 + 0.24 * mot;
+      plRGB(fr * lm, fg * lm * 1.03, fb * lm, dens * 0.32 * sat((pix - 0.005) / 0.004)); }
     // the mallorns' gold lies over the texture of their crowns, from autumn until spring; in summer they are green
     if (gold > 0.05 && GOLDS) { const gv = sat(0.5 + fbm(X * 0.6, Y * 0.6, 3)); plRGB(176 + 30 * gv, 146 + 22 * gv, 58, gold * dens * (0.38 + 0.2 * gv)); }
     if (gold > 0.05 && !GOLDS && pix < 0.01 && hash2(Math.floor(X / 0.0025), Math.floor(Y / 0.0025), 77) < 0.08 * gold) plRGB(226, 204, 70, 0.8);   // yellow flowers in the glades
@@ -885,7 +900,8 @@ function colorAt(X, Y, h, slope, pix, mode, dsea) {
   const ash = F[10];
   if (ash > 0.02) {
     const an = fbm(X * 0.08, Y * 0.08, 4);
-    const af = sstep(0.25, 0.55, ash + 0.3 * fbmA(X, Y, 6, Math.max(pix, 0.003), 0.8, 44));
+    // (broad noise breaks the raster's blocky outline of the plain into a natural one)
+    const af = sstep(0.25, 0.55, ash + 0.3 * fbmA(X, Y, 6, Math.max(pix, 0.003), 0.8, 44) + 0.16 * fbm(X * 0.025 + 3, Y * 0.025 - 8, 3));
     blend(62 + 12 * an, 57 + 10 * an, 54 + 8 * an, af * 0.94);
     const dO = Math.hypot(X - 840, Y + 554);
     // Mordor: Icelandic black ash plain, with black Icelandic lava fields spread over Gorgoroth and Hawaiian cinder and young
@@ -894,12 +910,13 @@ function colorAt(X, Y, h, slope, pix, mode, dsea) {
     // lava fields end in sharp margins, crinkled at every scale
     const lf = ash * 0.8 + 0.5 * fbm(X * 0.07 + 13, Y * 0.07 - 2, 4) + 0.12 * fbmA(X, Y, 2.5, Math.max(pix, 0.003), 0.8, 61);
     plAdd('blacklava', af * sstep(0.63, 0.63 + Math.max(0.01, pix * 0.25), lf) * 0.92);
-    if (dO < 70) plAdd('cinder', sat(1 - dO / 70) * af * 0.85);
-    if (dO < 25) plAdd('lava', sat(1 - dO / 25) * af);
-    if (dO < 30) {
-      const flows = Math.abs(noise(Math.atan2(Y + 554, X - 840) * 6, dO * 0.25));
-      if (flows < 0.07) { blend(98, 34, 16, (1 - flows / 0.07) * sat(1 - dO / 30) * 0.9); plRGB(98, 34, 16, (1 - flows / 0.07) * sat(1 - dO / 30) * 0.9); }
-      blend(40, 36, 36, sat(1 - dO / 12) * 0.6);
+    if (dO < 35) plAdd('cinder', sat(1 - dO / 35) * af * 0.85);
+    if (dO < 9) plAdd('lava', sat(1 - dO / 9) * af);
+    // fresh flows run down the Mountain's own flanks only, never out across the plain
+    if (dO < 8) {
+      const flows = Math.abs(noise(Math.atan2(Y + 554, X - 840) * 6, dO * 0.6));
+      if (flows < 0.07) { const t = (1 - flows / 0.07) * sat((8 - dO) / 3) * 0.9; blend(98, 34, 16, t); plRGB(98, 34, 16, t); }
+      blend(40, 36, 36, sat(1 - dO / 6) * 0.6);
     }
   }
   // alpine: rock on steep slopes and high ground, snow above the snowline
@@ -1324,6 +1341,21 @@ function initRiverCarve(floors) {
 }
 // In the channel the ground is set to the floor (a hollow below it fills, as water would); on the valley sides it is
 // only ever lowered. Where valleys meet, the lowest wins.
+// sheer walls either side of a river's channel where the books put a gorge (GEO.GORGES): the channel itself is left
+// as the river carved it, so the water still never climbs
+let GORGES = [];
+function gorgeAt(X, Y) {
+  let add = 0;
+  // walls rise from the nearest point of the whole gorge line: measured per segment, a segment's end would raise a
+  // wall over the river running on past it
+  for (const g of GORGES) { const P = g.pts; let d = Infinity, along = 0;
+    for (let k = 1; k < P.length; k++) { const a = P[k - 1], b = P[k], dx = b[0] - a[0], dy = b[1] - a[1], L = dx * dx + dy * dy;
+      if (X < Math.min(a[0], b[0]) - 2.5 || X > Math.max(a[0], b[0]) + 2.5 || Y < Math.min(a[1], b[1]) - 2.5 || Y > Math.max(a[1], b[1]) + 2.5) continue;
+      const t = Math.max(0, Math.min(1, ((X - a[0]) * dx + (Y - a[1]) * dy) / L)), e = Math.hypot(a[0] + t * dx - X, a[1] + t * dy - Y);
+      if (e < d) { d = e; along = (k === 1 ? sstep(0, 0.35, t) : 1) * (k === P.length - 1 ? sstep(1, 0.65, t) : 1); } }
+    if (d < 2.2) add = Math.max(add, g.h * sstep(0.1, 0.24, d) * sstep(2.2, 1.1, d) * along * (0.85 + 0.15 * noise(X * 4, Y * 4))); }
+  return add;
+}
 function riverCarve(X, Y, h) {
   const l = RCGRID.get(Math.floor(X / RC) * 65536 + Math.floor(Y / RC)); if (!l) return h;
   let side = Infinity, chan = Infinity;
@@ -1414,7 +1446,8 @@ function buildings(si) {
     sp.push({ type: 'tower', kind: 'orthanc', x: s.x, y: s.y, r: 22, h: 150, c: [26, 26, 30], square: 1 });
   }
   if (s.culture === 'rohan') {
-    sp.push({ type: 'arc', x: s.x, y: s.y, r: s.r * 0.9, a0: -Math.PI, a1: Math.PI, w: 3, h: 5, c: [120, 96, 64] });
+    sp.push({ type: 'arc', x: s.x, y: s.y, r: s.r * 0.9, a0: -Math.PI, a1: Math.PI, w: 3, h: 5, c: [120, 96, 64] });          // the fence of stakes
+    if (s.name === 'Edoras') sp.push({ type: 'arc', x: s.x, y: s.y, r: s.r * 0.98, a0: -Math.PI, a1: Math.PI, w: 9, h: 3.5, c: [96, 112, 62] });   // the dike, a green bank about the hill (LR III.6)
     if (s.name === 'Edoras') out.push({ x: s.x + 0.001, y: s.y + 0.002, w: 48, d: 18, a: 0.2, c: [214, 176, 64], h: 16, round: 0 });
   }
   if (s.culture === 'mordor' && s.name === 'Barad-dûr') sp.push({ type: 'tower', kind: 'baraddur', x: s.x, y: s.y, r: 60, h: 420, c: [18, 16, 18], square: 1 });

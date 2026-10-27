@@ -335,7 +335,7 @@ bay = sstep(170, 180, ang) * sstep(266, 254, ang) * sstep(front + 60, front + 40
 f = np.where(bay > 0.5, np.minimum(f, (front - rr) * 0.5 - 3 * (bay - 0.5)), f)
 
 # pins: at each river mouth and coastal place the shore runs straight across, a fraction of a mile seaward of it,
-# the borrowed detail fading back in over ~20 miles; where no sea lay near, a channel is cut to the open sea (the
+# the borrowed detail fading back in between 3 and 10 miles out (1.5 to 4 at tight mouths, 1 to 2.5 for coastal places); where no sea lay near, a channel is cut to the open sea (the
 # coast drawn in to the place). The coast is traced from this field at sub-mile accuracy (below).
 def pin(f, p, d, off, rin, rout):
     proj = (Qx[None, :] - p[0]) * d[0] + (Qy[:, None] - p[1]) * d[1]

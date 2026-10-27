@@ -204,9 +204,13 @@ body.pick #map canvas { cursor: crosshair !important; }
   #rail button[data-tip]:hover::after { display: none; }
   #card { z-index: 12; }
   #panel, #card { left: 8px; right: 8px; width: auto; top: auto; bottom: calc(168px + var(--foot) + env(safe-area-inset-bottom, 0px)); max-height: 48vh; }
-  #timeline { width: calc(100vw - 16px); bottom: calc(66px + var(--foot) + env(safe-area-inset-bottom, 0px)); padding: 8px 12px; gap: 2px 10px; }
-  #tdate { font-size: 16px; }
-  #tmeta select { max-width: 110px; }
+  #timeline { bottom: calc(66px + var(--foot) + env(safe-area-inset-bottom, 0px)); padding: 8px 12px; gap: 2px 10px; }
+  /* phones: the date has the first row to itself (play button beside it), the story and speed menus the next */
+  #timeline { grid-template-columns: auto 1fr; left: 8px; right: 8px; transform: none; width: auto; box-sizing: border-box; }
+  #tdate { font-size: 16px; white-space: normal; }
+  #tdate em { font-size: 12.5px; }
+  #tmeta { grid-column: 1 / -1; justify-content: space-between; }
+  #tmeta select { max-width: 48%; }
   #status { display: none; }
   #ctrl { bottom: auto; top: calc(116px + env(safe-area-inset-top, 0px)); right: 8px; }
   /* On phones the controls dock behind one handle; pinch and drag cover most of them anyway. */

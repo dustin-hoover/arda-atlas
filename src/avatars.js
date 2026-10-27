@@ -423,7 +423,7 @@ function spiderGrid(f) {
   set(34, 17, '#e8e0c8'); set(35, 18, '#e8e0c8'); set(32, 18, '#e8e0c8'); set(33, 19, '#e8e0c8');      // fangs
   return g;
 }
-// Durin's Bane: a Balrog of Morgoth, a great shadow with a mane of fire, horned, its wings of shadow spread;
+// Durin's Bane: a Balrog of Morgoth, a great shadow with a mane of fire, its wings of shadow spread (no horns: the book gives it none);
 // a flaming sword in its right hand and a whip of many thongs in its left (LR II.5)
 function balrogGrid(f) {
   const Wd = 44, Ht = 42, g = Array.from({ length: Ht }, () => Array(Wd).fill(null));
@@ -443,8 +443,8 @@ function balrogGrid(f) {
   rect(16, 12, 28, 28, sh); rect(15, 15, 29, 24, sh); rect(17, 29, 20, 39, sh); rect(24, 29, 27, 39, sh); rect(15, 40, 21, 41, sh); rect(23, 40, 29, 41, sh);
   rect(12, 14, 15, 22, sh); rect(29, 14, 32, 21, sh);
   for (const [x, y] of [[19, 16], [22, 19], [25, 17], [20, 23], [24, 25], [18, 31], [26, 33]]) set(x, y, (x + f) % 3 ? ember : '#ffb040');   // fire within
-  // head and horns, eyes like coals
-  rect(18, 5, 26, 12, sh); for (let k = 0; k < 5; k++) { set(18 - k * 0.6, 5 - k, '#3a2a22'); set(26 + k * 0.6, 5 - k, '#3a2a22'); }
+  // the head, eyes like coals
+  rect(18, 5, 26, 12, sh);
   set(20, 8, '#ffd040'); set(24, 8, '#ffd040'); rect(21, 10, 23, 10, '#ff5a14');
   // the mane of fire: uneven tongues rising from its head and streaming back over the shoulders, gold at the root
   for (let x = 14; x <= 30; x++) {
@@ -1304,8 +1304,8 @@ function fireworksGrid(f, dragon) {
   return g;
 }
 const LCACHE = {};
-// Orthanc: the black, four-horned tower in its ring, crowned by a cold white light (Saruman the White, and the
-// palantír); while he breeds his Uruk-hai the ring is pitted with furnaces and smoke, and after the Ents it is a lake
+// Orthanc: the black, four-horned tower in its ring, crowned by a cold white light (that light is ours: our sign of
+// Saruman the White and the palantír); while he breeds his Uruk-hai the ring is pitted with furnaces and smoke, and after the Ents it is a lake
 function orthancGrid(f, st) {
   const Wd = 44, Ht = 62, g = blank(Wd, Ht), cx = 22, k = '#16161a', k2 = '#26262c', k3 = '#34343c';
   // the light at the summit: a pale halo pulsing

@@ -256,7 +256,7 @@ function build(GEO) {
   begin(); polys(GEO.MARSHES, () => 1); ch[7] = boxBlur(grab(), W, H, 1, 2);
   begin(); polys(GEO.ARID, f => f.v); ch[8] = boxBlur(grab(), W, H, 9, 3);
   begin(); polys(GEO.FARMS, f => f.v); ch[9] = boxBlur(grab(), W, H, 2, 2);
-  begin(); polys(GEO.ASH, f => f.v); ch[10] = boxBlur(grab(), W, H, 2, 2);
+  begin(); polys(GEO.ASH, f => f.v); ch[10] = boxBlur(grab(), W, H, 3, 3);
   begin(); lines(GEO.RIVERS, f => [0, 5, 3.5, 2.4, 1.6, 1.1][f.rank] || 1, f => [0, 1, 0.85, 0.65, 0.45, 0.3][f.rank] || 0.3); ch[11] = boxBlur(grab(), W, H, 2, 2);
   begin(); polys(GEO.UPLIFT, f => f.v); ch[12] = boxBlur(grab(), W, H, 7, 3);
   begin(); polys(GEO.GRASS, f => f.v); ch[13] = boxBlur(grab(), W, H, 6, 3);
@@ -356,6 +356,7 @@ function build(GEO) {
     })(),
     flats: GEO.PLACES.filter(p => p[7] && p[7].r >= 0.3 && p[7].culture !== 'minastirith').map(p => ({ x: p[2], y: p[3], r: p[7].r * 1.6 + 0.3, lift: p[7].culture === 'hobbit' ? 30 : 20, sea: p[1] === 'port' ? 1 : 0 })),
     numenor: GEO.NUMENOR,
+    gorges: GEO.GORGES || [],
     // river mouths and harbours the coast is pinned to (src/shores.js): the renderer's own wobble of the shore fades out there
     pins: SH && SH.pins || [],
     valleys,

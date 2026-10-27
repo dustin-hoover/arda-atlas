@@ -86,8 +86,9 @@ function patchTrees(m) {
     const treeline = 2600 - Math.max(0, Math.abs(GEN.R.lat) - 40) * 55;
     fd *= GEN.sstep(treeline, treeline - 500, h);
     fd = GEN.sstep(0.3, 0.52, fd + 0.28 * GEN.fbmA(X, Y, 4, 0.003, 0.8, 40));
-    // hedgerow and farm trees
-    if (F[9] > 0.2) fd = Math.max(fd, 0.05);
+    // farm trees stand in the hedgerows and in small copses, not spread evenly over the fields
+    if (F[9] > 0.2) { const hl = 1 - Math.abs(GEN.noise(X * 1.7 + 3, Y * 1.7 - 7)), cop = GEN.sstep(0.6, 0.78, GEN.fbm(X * 0.9 + 11, Y * 0.9, 3));
+      fd = Math.max(fd, 0.28 * GEN.sstep(0.9, 0.975, hl) + 0.35 * cop, 0.006); }
     if (F[7] > 0.3) fd *= 0.4;
     dens[j * nC + i] = fd;
     const conifer = T < 3 || h > treeline - 700;

@@ -192,3 +192,10 @@ Phase 1 is porting `gen.js` to run server-side and caching tiles as PMTiles.
   source, capped where rivers meet or branch, and graded back from the mouth at a few metres a mile; the workers get
   the floors in DATA. Deep cuts through ranges become V-shaped gorges.
 - `npm run audit` runs tools/qa/qa_render.py, which measures all of this in the browser.
+- Gorges the books describe (GEO.GORGES, e.g. the Argonath) raise sheer walls either side of the river's drawn
+  channel after the carve, so the water still never climbs. Named passes (rasters.js PASSES) are the only deep cuts in
+  a crest; Mordor's walls (Ephel Dúath, Ered Lithui) stand unbroken; the render gate checks both.
+- Imagery tiles carry the season in their address (`arda://img/z/x/y/mode/g|s`): Lórien is gold from 1 Oct to
+  30 Apr, green with yellow flowers in summer. Crossing either date reloads the imagery once (`refreshImagery`).
+- The Dawnless Day is drawn as a map tint (`lore-dark` layer) when the weather is off; the ground view takes its
+  darkness, and Mordor's reek and haze, from GEN directly.

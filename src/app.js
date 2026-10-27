@@ -231,11 +231,13 @@ const style = {
     src('roads', FC(roadFeats)), src('walls', FC(wallFeats)), src('palantiri', FC(palFeats)), src('beacons', FC([beaconLine])),
     src('realms', FC(realmFeats('TA3018'))), src('realm-labels', FC(realmLabels('TA3018'))), src('admin', FC(adminFeats)), src('admin-labels', FC(adminLabels)),
     src('peoples', FC(peopleFeats)), src('people-labels', FC(peopleLabels)), src('grid', GRID.lines), src('grid-labels', GRID.labels),
-    src('buildings', FC(buildingFeats())), src('journeys', FC([])), src('journey-pos', FC([])), src('battles', FC([])), src('landmarks', FC([])), src('dead', FC([])), src('measure', FC([])), src('isobars', FC([])), src('hl', FC([])), src('lights', FC([])),
+    src('buildings', FC(buildingFeats())), src('journeys', FC([])), src('journey-pos', FC([])), src('battles', FC([])), src('landmarks', FC([])), src('dead', FC([])), src('measure', FC([])), src('lore-dark', FC([])), src('isobars', FC([])), src('hl', FC([])), src('lights', FC([])),
   ]),
   layers: [
     { id: 'bg', type: 'background', paint: { 'background-color': '#0b1a2a' } },
     { id: 'imagery', type: 'raster', source: 'imagery', paint: { 'raster-fade-duration': 180 } },
+    // the lore's own darkness (the Dawnless Day), drawn whether or not the weather is shown
+    { id: 'lore-dark', type: 'fill', source: 'lore-dark', paint: { 'fill-color': '#1c130e', 'fill-opacity': ['get', 'o'], 'fill-antialias': false } },
     { id: 'realms-fill', type: 'fill', source: 'realms', layout: { visibility: 'none' }, paint: { 'fill-color': ['get', 'color'], 'fill-opacity': 0.2 } },
     { id: 'realms-line', type: 'line', source: 'realms', layout: { visibility: 'none' }, paint: { 'line-color': ['get', 'color'], 'line-width': ['interpolate', ['linear'], ['zoom'], 3, 1, 8, 2.4], 'line-dasharray': [3, 1.5] } },
     { id: 'peoples-line', type: 'line', source: 'peoples', layout: { visibility: 'none', 'line-join': 'round' }, paint: { 'line-color': ['get', 'color'], 'line-width': ['interpolate', ['linear'], ['zoom'], 3, 2, 8, 3.5], 'line-opacity': 0.5 } },   // each people's own colour, a solid outline at half opacity
@@ -518,7 +520,7 @@ const EVENTS = {
     ['3018 10 20.4', 'At the Ford of Bruinen Asfaloth bears Frodo across ahead of the Nine; the river rises and sweeps them away (LR I.12)', 400.3, 3.7],
     ['3018 12 1', 'The Nine are mounted on winged steeds (the date is our estimate: one is seen over the Anduin near Sarn Gebir in late February)', 773.6, -597.9],
     ['3001 9 22.77', 'Gandalf\'s fireworks over the Party Field: rockets, fountains and starbursts, and last a dragon that roars over the hobbits', 0.6, 0.1], ['3001 9 22.9', 'The Long-expected Party: on his eleventy-first birthday Bilbo makes his speech, puts on the Ring and vanishes', 0.3, 0.5], ['3001 9 23', 'Bilbo leaves the Shire for Rivendell; Frodo inherits Bag End, and the Ring', 0.3, 0.5], ['3001 10 21', 'Bilbo comes to Rivendell (the day is not recorded)', 420.5, 17.5], ['3018 6 22', 'The Nine ride out of Minas Morgul at Midsummer', 773.6, -597.9], ['3018 7 4', 'Boromir sets out from Minas Tirith for Imladris', 725.1, -599.1], ['3018 6 27', 'Gandalf leaves Bag End, promising to return before Frodo sets out (late June)', 0.3, 0.5], ['3018 9 26', 'Tom Bombadil rescues the hobbits from Old Man Willow', 98, -20], ['3018 9 28', 'Tom Bombadil frees the hobbits from the Barrow-wight', 108.6, -17.4], ['3019 3 9', 'The Muster of Rohan at Dunharrow; the Red Arrow comes from Gondor', 443.2, -489], ['3018 7 10', 'Gandalf is made prisoner in Orthanc', 334, -379.1], ['3018 9 22', 'The Black Riders cross the Shire at Sarn Ford', 81.9, -79.1], ['3018 9 18', 'Gandalf escapes from Orthanc on the Eagle Gwaihir', 334, -379.1], ['3018 9 22', 'Frodo\'s fiftieth birthday at Bag End', 0.3, 0.5], ['3018 9 23', 'Frodo, Sam and Pippin leave Bag End by night', 0.3, 0.5], ['3018 9 24', 'Gildor\'s Elves shelter the hobbits in the Woody End', 44.9, -11.2], ['3018 9 25', 'Across the Brandywine to Crickhollow', 84, -7.4], ['3018 9 26', 'Through the Old Forest to the house of Tom Bombadil', 104.2, -24.2], ['3018 9 28', 'Captured by a Barrow-wight', 112.8, -6.6], ['3018 9 29', 'The Prancing Pony at Bree; Strider', 127.9, 7.4], ['3018 10 6', 'Frodo is stabbed by the Witch-king on Weathertop', 208, 11], ['3018 10 20', 'Flight to the Ford of Bruinen', 400.3, 3.7], ['3018 10 25', 'The Council of Elrond', 420.5, 17.5], ['3018 12 25', 'The Fellowship sets out from Rivendell', 420.5, 17.5], ['3019 1 11', 'Snowstorm on Caradhras turns the Company back', 414.8, -157.6], ['3019 1 13', 'Wolves in Hollin; the Company enters Moria', 380, -159.2], ['3019 1 15', 'The Bridge of Khazad-dûm: Gandalf breaks the bridge and falls with the Balrog', 420.3, -184.9], ['3019 1 23', 'Gandalf pursues the Balrog up the Endless Stair to the peak of Zirakzigil', 423.1, -178], ['3019 1 25', 'The Battle of the Peak: Gandalf casts down the Balrog, and passes out of thought and time', 423.1, -178], ['3019 1 17', 'The Company comes to Caras Galadhon', 454.7, -254.7], ['3019 2 16', 'Farewell to Lórien', 489.1, -297.6], ['3019 2 26', 'Breaking of the Fellowship; death of Boromir', 611.7, -462.2], ['3019 3 1', 'Aragorn meets Gandalf the White in Fangorn', 431.7, -377.3], ['3019 3 3', 'Battle of the Hornburg', 377.3, -451.8], ['3019 3 3', 'The Ents destroy Isengard', 334, -379.1], ['3019 3 7', 'Faramir takes Frodo to Henneth Annûn', 744.5, -565.6], ['3019 3 8', 'The Beacons of Gondor are lit', 694, -582.9], ['3019 3 10', 'The Dawnless Day: the darkness out of Mordor comes over the sky; the Rohirrim muster at Dunharrow', 443.2, -489], ['3019 3 13', 'Frodo captured at Cirith Ungol; Aragorn takes Pelargir', 781.2, -583.9], ['3019 3 15', 'Battle of the Pelennor Fields', 731.5, -602.2], ['3019 3 25.4', 'The Ring is destroyed: Gollum falls into the Fire with it, and Sauron is overthrown', 840.3, -553.1], ['3019 3 26', 'The Eagles bear Frodo and Sam to the Field of Cormallen', 738, -556]],
-  return: [['3019 3 25.47', 'Barad-dûr falls and Sauron\'s shadow is blown away', 895.4, -532.8], ['3019 3 25.65', 'Orodruin bursts asunder (our staging)', 840.1, -554], ['3019 4 8', 'The Field of Cormallen: the Ring-bearers honoured', 738, -556], ['3019 5 1', 'Coronation of King Elessar at Minas Tirith', 725.1, -599.1], ['3019 6 31', 'Arwen comes to the City; the wedding of Aragorn and Arwen at Midsummer', 725.1, -599.1], ['3019 7 19', 'Théoden\'s funeral escort sets out for Rohan', 725.1, -599.1], ['3019 8 10', 'Théoden laid to rest at Edoras; Éomer king; Éowyn betrothed to Faramir', 438, -479.4], ['3019 8 22', 'At Isengard; the Fellowship begins to part', 334, -379.1], ['3019 8 28', 'Saruman met on the road in Dunland', 289, -290.6], ['3019 9 21', 'Return to Rivendell; Bilbo gives Frodo his books', 420.5, 17.5], ['3019 10 6', 'Frodo\'s wound aches on the anniversary of Weathertop', 400.3, 3.7], ['3019 10 28', 'At Bree; Gandalf leaves them to visit Bombadil', 127.9, 7.4], ['3019 11 3', 'The Battle of Bywater; the Scouring of the Shire', 6.3, -2.2], ['3021 9 22', 'Frodo and Sam meet Elrond, Galadriel and Bilbo in the Woody End', 44.9, -11.2], ['3021 9 29', 'The Grey Havens: Frodo and Bilbo sail with the Elves into the West', -170.9, -7.6], ['3021 10 6', '\u201cWell, I\u2019m back.\u201d Sam comes home to Bag End', 0.3, 0.5]],
+  return: [['3019 3 25.47', 'Barad-dûr falls and Sauron\'s shadow is blown away', 895.4, -532.8], ['3019 3 25.65', 'Orodruin bursts asunder (our staging)', 840.1, -554], ['3019 4 8', 'The Field of Cormallen: the Ring-bearers honoured', 738, -556], ['3019 5 1', 'Coronation of King Elessar at Minas Tirith', 725.1, -599.1], ['3019 6 31', 'Arwen comes to the City; the wedding of Aragorn and Arwen at Midsummer', 725.1, -599.1], ['3019 7 19', 'Théoden\'s funeral escort sets out for Rohan', 725.1, -599.1], ['3019 8 10', 'Théoden laid to rest at Edoras; Éomer king; Éowyn betrothed to Faramir', 438, -479.4], ['3019 8 22', 'At Isengard; the Fellowship begins to part', 334, -379.1], ['3019 8 28', 'Saruman met on the road in Dunland', 289, -290.6], ['3019 9 21', 'Return to Rivendell; Bilbo gives Frodo his books', 420.5, 17.5], ['3019 10 6', 'Frodo\'s wound aches on the anniversary of Weathertop', 400.3, 3.7], ['3019 10 28', 'At Bree; Gandalf leaves them to visit Bombadil', 127.9, 7.4], ['3019 11 3', 'The Battle of Bywater; the Scouring of the Shire', 6.3, -2.2], ['3021 9 22', 'Frodo and Sam meet Elrond, Galadriel and Bilbo in the Woody End', 44.9, -11.2], ['3021 9 29', 'The Grey Havens: Frodo and Bilbo sail with the Elves into the West', -157, -7.6], ['3021 10 6', 'Sam comes home to Bag End from the Havens, to Rose and Elanor, and says that he is back', 0.3, 0.5]],
   hobbit: [['2463 5 1.35', 'Déagol finds the One Ring in the Anduin by the Gladden Fields; Sméagol murders him for it (the day is not recorded)', 543, -180.7], ['2463 5 20', 'Sméagol, now called Gollum, is driven out by his kin', 547, -176], ['2470 6 1', 'Gollum hides under the Misty Mountains with the Ring (about this year)', 493.1, 7.2],
     ['2770 5 3.2', 'Smaug the Golden falls on the Lonely Mountain out of the north: Dale is burned and Erebor taken (the day is not recorded)', 768.4, 138], ['2770 5 3.4', 'Thrór and Thráin escape by a secret door; Thorin, abroad, escapes too, and they go south into exile', 768.4, 138],
     ['2890 9 22', 'Bilbo Baggins is born at Bag End, son of Bungo Baggins and Belladonna Took', 0.3, 0.5], ['2941 4 28', 'The Company sets out from Bag End (dates approximate)', 0.3, 0.5], ['2941 5 25', 'Roast Mutton: caught by Bert, Tom and William; at dawn they turn to stone', 361.7, 17.4], ['2941 7 6.6', 'Out of the Frying-Pan: Wargs and goblins at the fir-tree glade; the Eagles come', 514.3, 12.2], ['2941 7 10', 'Queer Lodgings at Beorn\'s house', 565.5, 48.1], ['2941 8 6', 'Flies and Spiders in Mirkwood', 705, 69.6], ['2941 10 17', 'Bilbo finds the Arkenstone in the hoard and keeps it', 768.4, 138], ['2941 11 22', 'Bilbo gives the Arkenstone to Bard and the Elvenking', 769, 128.4], ['2941 6 30', 'Rivendell on Midsummer\'s Eve', 420.5, 17.5], ['2941 7 6', 'Goblin-town; Bilbo finds the Ring (date estimated)', 493.1, 7.2], ['2941 7 9', 'Beorn\'s hall', 565.6, 48.2], ['2941 8 12', 'Taken by the Wood-elves', 713.8, 81.2], ['2941 9 22', 'Barrels out of bond', 735.5, 87.4], ['2941 10 13', 'Inside Information: Bilbo goes down to Smaug', 768.4, 138], ['2941 10 16', 'Fire and Water: Smaug burns Lake-town and Bard slays him (date estimated)', 766.5, 97.5], ['2941 8 25', 'The White Council drives the Necromancer from Dol Guldur', 609.2, -194.2], ['2941 11 23', 'Battle of Five Armies (date estimated)', 769, 128.5], ['2942 6 22', 'Bilbo returns to Bag End', 0.3, 0.5]],
@@ -751,6 +753,7 @@ function setTime(t, fromSlider) {
   const a = WX.parse(st.start), b = WX.parse(st.end);
   S.t = Math.max(a, Math.min(b, t));
   { const se = goldSeason(S.t); if (se !== (S.season || 'g')) { S.season = se; refreshImagery(); } }
+  loreDark();
   const P = WX.parts(S.t);
   $('#tdate').innerHTML = `${esc(P.name)} <em>S.R. ${P.sr} · T.A. ${P.ta} · ${WX.fmtTime(P.hour)}</em>`;
   if (!fromSlider) $('#slider').value = (warpTo(S.story, S.t) * 1000).toFixed(1);
@@ -807,7 +810,9 @@ function updateSky() {
   const sky = mixc([14, 22, 44], [110, 160, 210], day), hor = mixc(mixc([30, 36, 60], [214, 228, 238], day).match(/\w\w/g).map(h => parseInt(h, 16)), [236, 170, 120], dusk * 0.8);
   // aerial perspective: a blue-grey haze thickening toward the horizon, warmer at dusk, as in real oblique imagery
   const fog = mixc(mixc([26, 32, 50], [190, 206, 222], day).match(/\w\w/g).map(h => parseInt(h, 16)), [222, 186, 150], dusk * 0.5);
-  map.setSky({ 'sky-color': sky, 'horizon-color': hor, 'fog-color': fog, 'horizon-fog-blend': 0.75, 'sky-horizon-blend': 0.55, 'fog-ground-blend': 0.55, 'atmosphere-blend': ['interpolate', ['linear'], ['zoom'], 0, 1, 5, 1, 8, 0] });
+  const globe = map.getProjection && map.getProjection() && map.getProjection().type === 'globe';
+  // (no fog on the globe: MapLibre cannot draw it there, and says so on every frame)
+  map.setSky(globe ? { 'sky-color': sky, 'horizon-color': hor, 'sky-horizon-blend': 0.55, 'atmosphere-blend': ['interpolate', ['linear'], ['zoom'], 0, 1, 5, 1, 8, 0] } : { 'sky-color': sky, 'horizon-color': hor, 'fog-color': fog, 'horizon-fog-blend': 0.75, 'sky-horizon-blend': 0.55, 'fog-ground-blend': 0.55, 'atmosphere-blend': ['interpolate', ['linear'], ['zoom'], 0, 1, 5, 1, 8, 0] });
 }
 map.on('moveend', updateSky);
 
@@ -847,10 +852,31 @@ function setWx(k, on) {
   applyWx(k);
   gcT = -1; wxRequest();
 }
+// The Dawnless Day (LR V.1-5) as a sky tint over the map: it grows out of Mordor for a day and a half, reaches
+// Rohan, and lifts on the 15th. With the weather shown, the weather's own darkness draws it instead.
+let loreDarkKey = '';
+function loreDark() {
+  if (!map.getSource('lore-dark')) return;
+  const feats = [];
+  if (!S.wxMaster) for (const L of LORE) {
+    if (L.kind !== 'darkness' || S.t < L.t0 || S.t > L.t1) continue;
+    const prog = Math.min(1, (S.t - L.t0) / 1.5), l2 = Math.max(0, Math.min(1, (S.t - (L.t1 - 0.5)) / 0.5));
+    const reach = L.r * (0.4 + 1.2 * prog) * (1 - l2 * 0.9);
+    for (let k = 1; k <= 4; k++) {
+      const rr = reach * (1.05 - k * 0.15), ring = [];
+      for (let a = 0; a <= 64; a++) { const t = a / 64 * Math.PI * 2, c = Math.cos(t), sx = c < 0 ? 0.7 : 1;    // it reaches less far west
+        ring.push(GEN.toLL(L.x + c * rr * sx, L.y + Math.sin(t) * rr)); }
+      feats.push({ type: 'Feature', properties: { o: 0.13 }, geometry: { type: 'Polygon', coordinates: [ring] } });
+    }
+  }
+  const key = feats.length ? Math.round(S.t * 8) + ':' + S.wxMaster : 'none';
+  if (key !== loreDarkKey) { loreDarkKey = key; map.getSource('lore-dark').setData(FC(feats)); }
+}
 function setWxMaster(on) {
   S.wxMaster = on;
   if (on && !Object.values(S.wx).some(Boolean)) S.wx.clouds = true;
   for (const k in WX_IDS) applyWx(k);
+  loreDark();
   $('#bwx').classList.toggle('on', on);
   $('#bwx').setAttribute('aria-pressed', on ? 'true' : 'false');
   const m = $('#g-weather'); if (m) m.checked = on;
@@ -1203,11 +1229,15 @@ map.on('click', e => {
   }
   showPoint(X, Y);
 });
+let pointerT = -1e9;
 map.on('mousemove', e => {
   const f = map.queryRenderedFeatures(e.point, { layers: ['places-1', 'places-2', 'places-3', 'places-4', 'places-5', 'peaks'].filter(id => map.getLayer(id)) });
   map.getCanvas().style.cursor = S.pick || S.measure ? 'crosshair' : f.length ? 'pointer' : '';
-  statusAt(e.lngLat);
+  pointerT = performance.now(); statusAt(e.lngLat);
 });
+// with no pointer over the map (touch, keyboard, tours) the readout follows the centre of the view
+map.on('moveend', () => { if (performance.now() - pointerT > 1500) { stT = 0; statusAt(map.getCenter()); } });
+map.once('idle', () => { stT = 0; statusAt(map.getCenter()); });
 
 /* ---------------- status ---------------- */
 let stT = 0;
@@ -1292,7 +1322,7 @@ $('#zout').onclick = () => map.zoomOut();
 $('#compass').onclick = () => map.easeTo({ bearing: 0, pitch: 0 });
 map.on('rotate', () => { $('#compass svg').style.transform = `rotate(${-map.getBearing()}deg)`; });
 $('#b3d').onclick = () => { S.terrain = S.terrain === false; map.setTerrain(S.terrain === false ? null : { source: 'dem', exaggeration: S.exag || 1.35 }); $('#b3d').classList.toggle('on', S.terrain !== false); };
-$('#bglobe').onclick = () => { const g = !$('#bglobe').classList.contains('on'); map.setProjection({ type: g ? 'globe' : 'mercator' }); $('#bglobe').classList.toggle('on', g); };
+$('#bglobe').onclick = () => { const g = !$('#bglobe').classList.contains('on'); map.setProjection({ type: g ? 'globe' : 'mercator' }); $('#bglobe').classList.toggle('on', g); updateSky(); };
 $('#bwx').onclick = () => setWxMaster(!S.wxMaster);
 $('#bhome').onclick = () => map.flyTo({ center: ll(483, -361), zoom: 4.1, pitch: 28, bearing: 0, duration: 4500 });
 

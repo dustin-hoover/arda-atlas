@@ -1,4 +1,5 @@
 <title>Arda: a fan atlas of the Third Age</title>
+<link rel="icon" href="data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 32 32'%3E%3Ccircle cx='16' cy='16' r='15' fill='%230a0d12'/%3E%3Cpath d='M16 4l3 9 9 3-9 3-3 9-3-9-9-3 9-3z' fill='%23d9ac52'/%3E%3C/svg%3E">
 <meta name="description" content="A procedurally generated, Earth-like globe of Middle-earth with GIS layers, weather, journeys and a ground-level explorer.">
 <link rel="preconnect" href="https://fonts.googleapis.com">
 <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
@@ -210,9 +211,13 @@ body.pick #map canvas { cursor: crosshair !important; }
   #rail button[data-tip]:hover::after { display: none; }
   #card { z-index: 12; }
   #panel, #card { left: 8px; right: 8px; width: auto; top: auto; bottom: calc(168px + var(--foot) + env(safe-area-inset-bottom, 0px)); max-height: 48vh; }
-  #timeline { width: calc(100vw - 16px); bottom: calc(66px + var(--foot) + env(safe-area-inset-bottom, 0px)); padding: 8px 12px; gap: 2px 10px; }
-  #tdate { font-size: 16px; }
-  #tmeta select { max-width: 110px; }
+  #timeline { bottom: calc(66px + var(--foot) + env(safe-area-inset-bottom, 0px)); padding: 8px 12px; gap: 2px 10px; }
+  /* phones: the date has the first row to itself (play button beside it), the story and speed menus the next */
+  #timeline { grid-template-columns: auto 1fr; left: 8px; right: 8px; transform: none; width: auto; box-sizing: border-box; }
+  #tdate { font-size: 16px; white-space: normal; }
+  #tdate em { font-size: 12.5px; }
+  #tmeta { grid-column: 1 / -1; justify-content: space-between; }
+  #tmeta select { max-width: 48%; }
   #status { display: none; }
   #ctrl { bottom: auto; top: calc(116px + env(safe-area-inset-top, 0px)); right: 8px; }
   /* On phones the controls dock behind one handle; pinch and drag cover most of them anyway. */
@@ -435,8 +440,15 @@ const CH = { land:0, cont:1, mtn:2, hill:3, forest:4, gold:5, dark:6, marsh:7, a
 
 function init(data) {
   M = data.main; G = data.glob; PEAKS = data.peaks || []; RANGEPAL = data.ranges || []; NUM = data.numenor; FLATS = data.flats || [];
-  initCoast(data.coast);
+  initCoast(data.coast); GORGES = data.gorges || [];
   if (data.vectors) initVectors(data.vectors);
+  // a gorge follows the river as it is drawn, not its authored course, so the water runs in the chasm, not on its wall
+  GORGES = GORGES.map(g => { let best = null, bd = 1e9;
+    for (const r of RIV) for (const p of r.pts) { const d = Math.hypot(p[0] - g.pts[1][0], p[1] - g.pts[1][1]); if (d < bd) { bd = d; best = r; } }
+    if (!best) return g;
+    const near = p => { let m = 1e9; for (let k = 1; k < g.pts.length; k++) { const a = g.pts[k - 1], b = g.pts[k], dx = b[0] - a[0], dy = b[1] - a[1], L = dx * dx + dy * dy, t = Math.max(0, Math.min(1, ((p[0] - a[0]) * dx + (p[1] - a[1]) * dy) / L)); m = Math.min(m, Math.hypot(a[0] + t * dx - p[0], a[1] + t * dy - p[1])); } return m; };
+    const pts = best.pts.filter((p, i) => i % 3 === 0 && near(p) < 1.2);
+    return pts.length > 3 ? { ...g, pts } : g; });
   initTex(data.tex); MOUTHS = data.mouths || []; PINS = data.pins || []; initValleys(data.valleys);
   // river floors need the finished terrain, so they are measured last: once, in the page, then handed to the workers
   if (data.vectors) { if (!data.riverFloors) data.riverFloors = measureRiverFloors(); initRiverCarve(data.riverFloors); }
@@ -845,6 +857,7 @@ function evaluate(X, Y, pix) {
       R.mt = sstep(0, 0.35, mtn);
       R.vly = Math.max(c1, c2 * 0.7);
       h -= mm * 5200 * (0.5 * c1 * (2 - c1) + 0.2 * c2 + 0.05 * c3) + mm * 900 * fbmA(X, Y, 1.2, Math.max(pix * 1.1, 0.002), 0.85, 6) * (1 - c1);
+      h = Math.max(h, base * 0.85);                            // a mountain valley floors out at the lowland, never below it
     }
     // regional roughness: rolling country, low hills, broken ground
     const rough = sat(0.35 + 0.9 * fbm(X * 0.004 + 71, Y * 0.004 - 12, 3));
@@ -862,7 +875,9 @@ function evaluate(X, Y, pix) {
       const s1 = sstep(1 - w1 * 3, 1 - w1 * 0.3, v1), s2 = sstep(1 - w2 * 2, 1 - w2 * 0.2, v2) * 0.6;
       str = Math.max(s1, s2) * (1 - sstep(0.3, 0.7, F[8])) * (1 - F[10]) * sstep(0.35, 0.08, pix) * sstep(-0.25, 0.25, noise(X * 0.04 + 7, Y * 0.04 - 3));
       const cv1 = sstep(0.45, 1, v1), cv2 = sstep(0.6, 1, v2);
+      const hb = h;
       h -= (5 + 30 * rough + 70 * hill + 160 * mtn) * Math.max(cv1 * cv1, 0.5 * cv2 * cv2);
+      h = Math.max(h, Math.min(hb, base * 0.7 + 8));          // a stream cuts a gully, never a hole down to the sea
     }
     R.stream = str;
     h *= sstep(0, 0.07, s);
@@ -878,6 +893,7 @@ function evaluate(X, Y, pix) {
     }
     if (PEAKS.length) h += peakAt(X, Y, pix);
     if (RCGRID && !NOCARVE) h = riverCarve(X, Y, h);
+    if (GORGES.length && !NOCARVE) h += gorgeAt(X, Y);
     R.base = base;
     if (h < 0.6) h = 0.6;
   } else {
@@ -1206,6 +1222,10 @@ function colorAt(X, Y, h, slope, pix, mode, dsea) {
     blend(fr, fg, fb, dens);
     FDN = dens;
     plAdd(T < 2 || Math.abs(lat) > 64 ? 'taiga' : (R.mt > 0.3 || gold > 0.3 || conifer > 0.6) ? 'beech' : 'forest', dens * (dk > 0.5 ? 1 : 0.95));
+    // between the zooms that show single crowns and those that show whole woods, the canopy still reads as canopy:
+    // clumps of lighter and darker crowns, stands of different age, sunlit edges of glades (no flat dark blobs)
+    if (pix >= 0.005) { const mot = fbmA(X, Y, 0.16, Math.max(pix, 0.005), 0.8, 47) + 0.6 * fbm(X * 0.12 + 9, Y * 0.12, 3), lm = 1.06 + 0.24 * mot;
+      plRGB(fr * lm, fg * lm * 1.03, fb * lm, dens * 0.32 * sat((pix - 0.005) / 0.004)); }
     // the mallorns' gold lies over the texture of their crowns, from autumn until spring; in summer they are green
     if (gold > 0.05 && GOLDS) { const gv = sat(0.5 + fbm(X * 0.6, Y * 0.6, 3)); plRGB(176 + 30 * gv, 146 + 22 * gv, 58, gold * dens * (0.38 + 0.2 * gv)); }
     if (gold > 0.05 && !GOLDS && pix < 0.01 && hash2(Math.floor(X / 0.0025), Math.floor(Y / 0.0025), 77) < 0.08 * gold) plRGB(226, 204, 70, 0.8);   // yellow flowers in the glades
@@ -1222,7 +1242,8 @@ function colorAt(X, Y, h, slope, pix, mode, dsea) {
   const ash = F[10];
   if (ash > 0.02) {
     const an = fbm(X * 0.08, Y * 0.08, 4);
-    const af = sstep(0.25, 0.55, ash + 0.3 * fbmA(X, Y, 6, Math.max(pix, 0.003), 0.8, 44));
+    // (broad noise breaks the raster's blocky outline of the plain into a natural one)
+    const af = sstep(0.25, 0.55, ash + 0.3 * fbmA(X, Y, 6, Math.max(pix, 0.003), 0.8, 44) + 0.16 * fbm(X * 0.025 + 3, Y * 0.025 - 8, 3));
     blend(62 + 12 * an, 57 + 10 * an, 54 + 8 * an, af * 0.94);
     const dO = Math.hypot(X - 840, Y + 554);
     // Mordor: Icelandic black ash plain, with black Icelandic lava fields spread over Gorgoroth and Hawaiian cinder and young
@@ -1231,12 +1252,13 @@ function colorAt(X, Y, h, slope, pix, mode, dsea) {
     // lava fields end in sharp margins, crinkled at every scale
     const lf = ash * 0.8 + 0.5 * fbm(X * 0.07 + 13, Y * 0.07 - 2, 4) + 0.12 * fbmA(X, Y, 2.5, Math.max(pix, 0.003), 0.8, 61);
     plAdd('blacklava', af * sstep(0.63, 0.63 + Math.max(0.01, pix * 0.25), lf) * 0.92);
-    if (dO < 70) plAdd('cinder', sat(1 - dO / 70) * af * 0.85);
-    if (dO < 25) plAdd('lava', sat(1 - dO / 25) * af);
-    if (dO < 30) {
-      const flows = Math.abs(noise(Math.atan2(Y + 554, X - 840) * 6, dO * 0.25));
-      if (flows < 0.07) { blend(98, 34, 16, (1 - flows / 0.07) * sat(1 - dO / 30) * 0.9); plRGB(98, 34, 16, (1 - flows / 0.07) * sat(1 - dO / 30) * 0.9); }
-      blend(40, 36, 36, sat(1 - dO / 12) * 0.6);
+    if (dO < 35) plAdd('cinder', sat(1 - dO / 35) * af * 0.85);
+    if (dO < 9) plAdd('lava', sat(1 - dO / 9) * af);
+    // fresh flows run down the Mountain's own flanks only, never out across the plain
+    if (dO < 8) {
+      const flows = Math.abs(noise(Math.atan2(Y + 554, X - 840) * 6, dO * 0.6));
+      if (flows < 0.07) { const t = (1 - flows / 0.07) * sat((8 - dO) / 3) * 0.9; blend(98, 34, 16, t); plRGB(98, 34, 16, t); }
+      blend(40, 36, 36, sat(1 - dO / 6) * 0.6);
     }
   }
   // alpine: rock on steep slopes and high ground, snow above the snowline
@@ -1661,6 +1683,21 @@ function initRiverCarve(floors) {
 }
 // In the channel the ground is set to the floor (a hollow below it fills, as water would); on the valley sides it is
 // only ever lowered. Where valleys meet, the lowest wins.
+// sheer walls either side of a river's channel where the books put a gorge (GEO.GORGES): the channel itself is left
+// as the river carved it, so the water still never climbs
+let GORGES = [];
+function gorgeAt(X, Y) {
+  let add = 0;
+  // walls rise from the nearest point of the whole gorge line: measured per segment, a segment's end would raise a
+  // wall over the river running on past it
+  for (const g of GORGES) { const P = g.pts; let d = Infinity, along = 0;
+    for (let k = 1; k < P.length; k++) { const a = P[k - 1], b = P[k], dx = b[0] - a[0], dy = b[1] - a[1], L = dx * dx + dy * dy;
+      if (X < Math.min(a[0], b[0]) - 2.5 || X > Math.max(a[0], b[0]) + 2.5 || Y < Math.min(a[1], b[1]) - 2.5 || Y > Math.max(a[1], b[1]) + 2.5) continue;
+      const t = Math.max(0, Math.min(1, ((X - a[0]) * dx + (Y - a[1]) * dy) / L)), e = Math.hypot(a[0] + t * dx - X, a[1] + t * dy - Y);
+      if (e < d) { d = e; along = (k === 1 ? sstep(0, 0.35, t) : 1) * (k === P.length - 1 ? sstep(1, 0.65, t) : 1); } }
+    if (d < 2.2) add = Math.max(add, g.h * sstep(0.1, 0.24, d) * sstep(2.2, 1.1, d) * along * (0.85 + 0.15 * noise(X * 4, Y * 4))); }
+  return add;
+}
 function riverCarve(X, Y, h) {
   const l = RCGRID.get(Math.floor(X / RC) * 65536 + Math.floor(Y / RC)); if (!l) return h;
   let side = Infinity, chan = Infinity;
@@ -1751,7 +1788,8 @@ function buildings(si) {
     sp.push({ type: 'tower', kind: 'orthanc', x: s.x, y: s.y, r: 22, h: 150, c: [26, 26, 30], square: 1 });
   }
   if (s.culture === 'rohan') {
-    sp.push({ type: 'arc', x: s.x, y: s.y, r: s.r * 0.9, a0: -Math.PI, a1: Math.PI, w: 3, h: 5, c: [120, 96, 64] });
+    sp.push({ type: 'arc', x: s.x, y: s.y, r: s.r * 0.9, a0: -Math.PI, a1: Math.PI, w: 3, h: 5, c: [120, 96, 64] });          // the fence of stakes
+    if (s.name === 'Edoras') sp.push({ type: 'arc', x: s.x, y: s.y, r: s.r * 0.98, a0: -Math.PI, a1: Math.PI, w: 9, h: 3.5, c: [96, 112, 62] });   // the dike, a green bank about the hill (LR III.6)
     if (s.name === 'Edoras') out.push({ x: s.x + 0.001, y: s.y + 0.002, w: 48, d: 18, a: 0.2, c: [214, 176, 64], h: 16, round: 0 });
   }
   if (s.culture === 'mordor' && s.name === 'Barad-dûr') sp.push({ type: 'tower', kind: 'baraddur', x: s.x, y: s.y, r: 60, h: 420, c: [18, 16, 18], square: 1 });
@@ -2205,8 +2243,9 @@ function patchTrees(m) {
     const treeline = 2600 - Math.max(0, Math.abs(GEN.R.lat) - 40) * 55;
     fd *= GEN.sstep(treeline, treeline - 500, h);
     fd = GEN.sstep(0.3, 0.52, fd + 0.28 * GEN.fbmA(X, Y, 4, 0.003, 0.8, 40));
-    // hedgerow and farm trees
-    if (F[9] > 0.2) fd = Math.max(fd, 0.05);
+    // farm trees stand in the hedgerows and in small copses, not spread evenly over the fields
+    if (F[9] > 0.2) { const hl = 1 - Math.abs(GEN.noise(X * 1.7 + 3, Y * 1.7 - 7)), cop = GEN.sstep(0.6, 0.78, GEN.fbm(X * 0.9 + 11, Y * 0.9, 3));
+      fd = Math.max(fd, 0.28 * GEN.sstep(0.9, 0.975, hl) + 0.35 * cop, 0.006); }
     if (F[7] > 0.3) fd *= 0.4;
     dens[j * nC + i] = fd;
     const conifer = T < 3 || h > treeline - 700;
@@ -2441,6 +2480,7 @@ const RANGES = [
   { name:'Ered Nimrais', alt:'The White Mountains', h:3300, w:50, label:true, pts:[[48.8,-703],[81,-624.8],[122.4,-551.2],[113,-511.9],[178.9,-487.2],[262.3,-472.1],[344.9,-462],[397.2,-472.9],[430.2,-495.1],[467.9,-508.2],[509.6,-518.7],[556.3,-533.3],[608.2,-551.1],[653.4,-567.6]] },
   { name:'Ered Nimrais (Mindolluin spur)', alt:'', h:2300, w:14, label:false, pts:[[647.5,-565.2],[682.2,-579.3],[703.2,-588.1]] },
   { name:'Ephel Dúath', alt:'The Mountains of Shadow', h:2400, w:24, label:true, pts:[[753.1,-479],[760.8,-515.2],[769.3,-547.4],[778.1,-578.8],[782.2,-611.5],[775,-648.8],[760.6,-691.9],[767.7,-730.4],[805.5,-767.1],[867.3,-807],[949.4,-845.4],[1033.6,-861.9],[1103.3,-855.8],[1159.5,-835]] },
+  { name:'Barad-dûr spur', alt:'', h:1100, w:12, label:false, pts:[[893.5,-468],[896.5,-492],[897,-514],[895.4,-528]] },   // the spur of the Ash Mountains on which the Dark Tower stands (LR VI.3)
   { name:'Ered Lithui', alt:'The Ash Mountains', h:2400, w:24, label:true, pts:[[764.3,-475.4],[833.3,-468.7],[908.4,-467.2],[983.8,-472.9],[1065.2,-484.3],[1140.1,-498.6],[1209.1,-520.2]] },
   { name:'Mountains of Angmar', alt:'', h:2100, w:40, label:true, pts:[[203.6,274.3],[236.2,275.9],[282.4,263.9],[379.6,229.2]] },
   { name:'Iron Hills', alt:'', h:1700, w:32, label:true, pts:[[950.3,158],[1001.4,168.6],[1052.6,176.9],[1106.6,185.7]] },
@@ -2498,15 +2538,15 @@ const PEAKS = [
   { name:'Amon Hen', alt:'The Hill of Sight', x:609.9, y:-464.6, h:260, r:2.5, kind:'hill' },
   { name:'Amon Lhaw', alt:'The Hill of Hearing', x:626.6, y:-462.2, h:260, r:2.5, kind:'hill' },
   { name:'Amon Dîn', alt:'', x:693.5, y:-581.1, h:260, r:2, kind:'hill' },
-  { name:'Halifirien', alt:'', x:529.4, y:-519.9, h:900, r:4, kind:'mountain' },
+  { name:'Halifirien', alt:'', x:529.4, y:-514.5, h:320, r:2.5, kind:'hill' },   // the beacon hill above the Firien Wood, on the range's northern flank
   { name:'Dol Baran', alt:'', x:368.1, y:-410.7, h:180, r:2.5, kind:'hill' },
   { name:'Bree-hill', alt:'', x:128.6, y:9.4, h:110, r:1.6, kind:'hill' },
-  { name:'The Hill', alt:'Hobbiton Hill', x:0.4, y:0.4, h:45, r:0.45, kind:'hill' },
-  { name:'Carrock', alt:'', x:542.9, y:54.3, h:60, r:0.4, kind:'hill' },
+  { name:'The Hill', alt:'Hobbiton Hill', x:0.4, y:0.4, h:85, r:0.55, kind:'hill' },
+  { name:'Carrock', alt:'', x:547, y:55.1, h:60, r:0.4, kind:'hill' },
   { name:'Dol Guldur', alt:'Amon Lanc', x:609.2, y:-194.2, h:260, r:3, kind:'hill' },
   { name:'Meneltarma', alt:'Pillar of Heaven (drowned)', x:-1500, y:-600, h:3300, r:22, kind:'seamount' },
-  { name:'Edoras hill', alt:'', x:438, y:-479.4, h:50, r:0.6, kind:'hill' },
-  { name:'Cerin Amroth', alt:'', x:454.1, y:-242.6, h:40, r:0.3, kind:'hill' },
+  { name:'Edoras hill', alt:'', x:438, y:-479.4, h:75, r:0.65, kind:'hill' },   // the green hill the town is built on, Meduseld at its top
+  { name:'Cerin Amroth', alt:'', x:451.2, y:-244.4, h:40, r:0.3, kind:'hill' },
 ];
 
 /* Rivers: w0/w1 = width in metres at source / mouth. */
@@ -2549,13 +2589,13 @@ const RIVERS = [
   { name:'Glanduin', w0:8, w1:40, rank:3, pts:[[378,-191.5],[350.1,-193.6],[323.2,-195.6],[291.2,-194.6],[255.4,-187.1],[228.4,-176.1],[202.3,-168.3]] },
   { name:'Sirannon', alt:'The Gate-stream', w0:3, w1:12, rank:5, pts:[[380,-159.2],[366.8,-162.8],[350.3,-169.1],[331.6,-181],[332.6,-194.9]] },
   { name:'Gwathló', alt:'The Greyflood', w0:90, w1:260, rank:2, pts:[[202.3,-168.3],[192.4,-177.9],[167,-210.9],[132.1,-251],[98,-284.4],[66.5,-317.1],[41.9,-347.8],[34,-356.95]] },
-  { name:'Celduin', alt:'The River Running', w0:20, w1:160, rank:2, pts:[[770.5,131.3],[766.1,115.4],[765.8,105.1],[770.9,82.3],[782.9,60.3],[807.6,25.3],[835.6,-11.5],[864,-43.3],[891.6,-74.4],[923.1,-108],[963.5,-143.5],[1010.1,-172.3],[1054.2,-196.1],[1082.7,-214.8],[1077.8,-210.7]] },
+  { name:'Celduin', alt:'The River Running', w0:20, w1:160, rank:2, pts:[[770.5,131.3],[766.1,115.4],[765.8,105.1],[770.9,82.3],[782.9,60.3],[807.6,25.3],[835.6,-11.5],[864,-43.3],[891.6,-74.4],[923.1,-108],[963.5,-143.5],[1010.1,-172.3],[1054.2,-196.1],[1077.8,-210.7]] },
   { name:'Forest River', w0:6, w1:40, rank:3, pts:[[702.7,83.5],[717.5,82.2],[735.4,87.3],[758.8,94.6]] },
-  { name:'Enchanted River', w0:5, w1:20, rank:4, pts:[[680.9,41.4],[693.3,52.2],[706,63.3],[713.8,79.5],[714.1,82.5]] },
+  { name:'Enchanted River', w0:5, w1:20, rank:4, pts:[[663,49.8],[672,45],[680.9,41.4],[693.3,52.2],[706,63.3],[713.8,79.5],[714.1,82.5]] },
   { name:'Carnen', alt:'Redwater', w0:8, w1:60, rank:3, pts:[[1009.5,161.9],[990.1,120.3],[968.2,61.4],[946.2,-1.2],[922.6,-54.1],[904.2,-87.9]] },
-  { name:'Rivers of Nurn (west)', w0:5, w1:30, rank:5, pts:[[874.9,-787.7],[925.4,-757],[974.6,-729.9],[962.1,-734.6]] },
-  { name:'Rivers of Nurn (east)', w0:5, w1:30, rank:5, pts:[[1078.7,-848],[1073,-803.4],[1071.4,-756.4],[1072.3,-770.9]] },
-  { name:'Red River of Rhûn', w0:20, w1:140, rank:3, pts:[[1718.5,40.1],[1574.6,-20.7],[1457,-78.9],[1364.4,-127.2],[1307.7,-174.4],[1311,-168.4]] },
+  { name:'Rivers of Nurn (west)', w0:5, w1:30, rank:5, pts:[[874.9,-787.7],[925.4,-757],[962.1,-734.6]] },
+  { name:'Rivers of Nurn (east)', w0:5, w1:30, rank:5, pts:[[1078.7,-848],[1073,-803.4],[1072.3,-770.9]] },
+  { name:'Red River of Rhûn', w0:20, w1:140, rank:3, pts:[[1718.5,40.1],[1574.6,-20.7],[1457,-78.9],[1364.4,-127.2],[1311,-168.4]] },
   { name:'Great River of Harad', w0:30, w1:320, rank:2, pts:[[1343.9,-1536.4],[1180.2,-1610.6],[1013.2,-1658.3],[836.5,-1682.5],[678.3,-1672.6],[532.6,-1648.7],[383.3,-1608.7],[237,-1542.4],[219,-1543.6],[203.3,-1545]] },
   { name:'Southern River', w0:30, w1:260, rank:3, pts:[[1005.8,-2071.2],[792,-2052.4],[583.1,-2044.9],[375.8,-2050.3],[84.1,-2060.4],[-41.6,-2060.9],[-51.5,-2057.6],[-60.8,-2053]] },
   { name:'River of the East', w0:40, w1:300, rank:3, pts:[[2406.2,6.2],[2554.1,-127.3],[2698.8,-266.6],[2793.4,-335.9]] },
@@ -2739,7 +2779,7 @@ const PLACES = [
   ['Goblin-town','cave',493,7.2,'orcs','Misty Mountains','Orc-caverns beneath the High Pass where Bilbo was lost and found the Ring.',{rank:4}],
   ['High Pass','landmark',485.2,2.1,'other','Misty Mountains','Cirith Forn en Andrath, the high pass over the Misty Mountains east of Rivendell.',{rank:4}],
   // Wilderland
-  ['Carrock','landmark',542.9,54.3,'men','Vales of Anduin','Rock-island in the Anduin with steps carved by Beorn.',{rank:4}],
+  ['Carrock','landmark',547,55.1,'men','Vales of Anduin','Rock-island in the Anduin with steps carved by Beorn.',{rank:4}],
   ['Old Ford','ford',553,24.8,'men','Vales of Anduin','Where the Old Forest Road crosses the Anduin, kept by the Beornings.',{rank:4}],
   ['Beorn\'s house','landmark',565.5,48.1,'men','Vales of Anduin','Timber hall of the skin-changer Beorn amid fields of clover and bees.',{rank:3,culture:'beorning',r:0.25}],
   ['Rhosgobel','landmark',611.6,-20,'other','Mirkwood','Home of Radagast the Brown on the western eaves of Mirkwood.',{rank:4}],
@@ -2759,7 +2799,7 @@ const PLACES = [
   ['Tarnost','village',455,-700,'gondor','Gondor','Hill-town of Dor-en-Ernil between Dol Amroth and Linhir.',{pop:900,rank:5,culture:'gondor',r:0.25}],
   ['Lossarnach','village',692,-618,'gondor','Gondor','Farm-villages of the Lossarnach, whose folk came to the City under Forlong the Fat.',{pop:2000,rank:4,culture:'gondor',r:0.45}],
   ['Caras Galadhon','elven',457.1,-254.8,'elves','Lothlórien','City of the Trees, where Celeborn and Galadriel dwell in a hill-crowned grove of mallorn.',{pop:5000,rank:1,culture:'lorien',r:0.9}],
-  ['Cerin Amroth','landmark',454.1,-242.6,'elves','Lothlórien','A green mound at the heart of old Lórien where elanor and niphredil bloom.',{rank:5}],
+  ['Cerin Amroth','landmark',451.2,-244.4,'elves','Lothlórien','A green mound at the heart of old Lórien where elanor and niphredil bloom.',{rank:5}],
   ['Egladil','landmark',489.1,-297,'elves','Lothlórien','The Tongue, the Naith of Lórien: the green angle between Silverlode and Anduin.',{rank:5}],
   // Rohan
   ['Edoras','city',438,-479.4,'rohirrim','Rohan','The courts of the Mark on a green hill, crowned by the golden hall Meduseld.',{pop:5000,rank:1,culture:'rohan',r:0.55}],
@@ -3099,7 +3139,7 @@ const JOURNEYS = {
   ],
   'hobbit': [
     { name:'Bilbo & Thorin\'s Company', color:'#f2d06b', pts:[
-      [0.3,0.5,'2941 4 28.1'],[6.3,-2.2,'2941 4 28.4'],[72,4.9,'2941 4 30'],[127.9,7.4,'2941 5 4'],[208,11,'2941 5 12'],[317.5,12,'2941 5 20'],[361.7,17.4,'2941 5 25.75'],[361.7,17.4,'2941 5 26.4'],[420.5,17.5,'2941 6 16'],[420.5,17.5,'2941 6 30.9'],[457.4,16.5,'2941 7 2'],[485.2,2.1,'2941 7 5'],[493,7.2,'2941 7 6'],[514.3,12.2,'2941 7 6.7'],[514.3,12.2,'2941 7 7'],[542.9,54.3,'2941 7 8'],[565.5,48.1,'2941 7 9'],[565.5,48.1,'2941 7 11.5'],[587,71.1,'2941 7 14'],[624.8,62.7,'2941 7 20'],[665.9,59,'2941 7 30'],[705,69.6,'2941 8 6'],[705,69.6,'2941 8 7.5'],[713.5,81,'2941 8 12'],[735.4,87.3,'2941 9 22'],[766.5,97.5,'2941 9 23'],[766.5,97.5,'2941 10 1'],[766.1,115.4,'2941 10 3'],[763.4,136.7,'2941 10 8'],[763.4,136.7,'2941 10 16'],[770,131.4,'2941 10 18'],[770,131.4,'2941 11 23'],[769,128.4,'2941 11 23.8'],[770,131.4,'2941 11 26'],[565.5,48.1,'2941 12 30'],[565.5,48.1,'2942 3 30'],[420.5,17.5,'2942 5 1'],[208,11,'2942 5 25'],[127.9,7.4,'2942 6 5'],[0.3,0.5,'2942 6 22']
+      [0.3,0.5,'2941 4 28.1'],[6.3,-2.2,'2941 4 28.4'],[72,4.9,'2941 4 30'],[127.9,7.4,'2941 5 4'],[208,11,'2941 5 12'],[317.5,12,'2941 5 20'],[361.7,17.4,'2941 5 25.75'],[361.7,17.4,'2941 5 26.4'],[420.5,17.5,'2941 6 16'],[420.5,17.5,'2941 6 30.9'],[457.4,16.5,'2941 7 2'],[485.2,2.1,'2941 7 5'],[493,7.2,'2941 7 6'],[514.3,12.2,'2941 7 6.7'],[514.3,12.2,'2941 7 7'],[547,55.1,'2941 7 8'],[565.5,48.1,'2941 7 9'],[565.5,48.1,'2941 7 11.5'],[587,71.1,'2941 7 14'],[624.8,62.7,'2941 7 20'],[665.9,59,'2941 7 30'],[705,69.6,'2941 8 6'],[705,69.6,'2941 8 7.5'],[713.5,81,'2941 8 12'],[735.4,87.3,'2941 9 22'],[766.5,97.5,'2941 9 23'],[766.5,97.5,'2941 10 1'],[766.1,115.4,'2941 10 3'],[763.4,136.7,'2941 10 8'],[763.4,136.7,'2941 10 16'],[770,131.4,'2941 10 18'],[770,131.4,'2941 11 23'],[769,128.4,'2941 11 23.8'],[770,131.4,'2941 11 26'],[565.5,48.1,'2941 12 30'],[565.5,48.1,'2942 3 30'],[420.5,17.5,'2942 5 1'],[208,11,'2942 5 25'],[127.9,7.4,'2942 6 5'],[0.3,0.5,'2942 6 22']
     ]},
     { name:'Gandalf: the White Council at Dol Guldur', hide:true, color:'#c8c8d8', pts:[[565.5,48.1,'2941 7 14'],[587,71.1,'2941 7 18'],[553,25,'2941 7 22'],[540,-60,'2941 7 28'],[609.2,-194.2,'2941 8 5'],[609.2,-194.2,'2941 8 25'],[560,-60,'2941 9 15'],[553,25,'2941 10 1'],[646,0,'2941 10 25'],[759,-14,'2941 11 10'],[769,128.4,'2941 11 22']] },
     // The Shadow of the Past (LR I.2; AppB 2463, 2470; the days are not recorded): Sméagol and his friend Déagol go
@@ -3247,6 +3287,12 @@ const FIREWORKS = [
   { name:'Gandalf\'s fireworks', story:'war', x:0.6, y:0.1, from:'3001 9 22.77', to:'3001 9 22.865', dragon:'3001 9 22.85' },
 ];
 
+// Gorges the books describe, where the river runs between sheer walls: [course along the river, wall height m]
+const GORGES = [
+  // the chasm of the Argonath above Nen Hithoel: the river runs swift between cliffs, the Pillars of the Kings at its
+  // gate (LR II.9)
+  { name:'Gates of Argonath', pts:[[603,-417.5],[606.4,-423],[611.9,-433.1],[614.7,-440.4]], h:240 },
+];
 const LORE_WEATHER = [
   { name:'Blizzard on Caradhras', x:413.8, y:-159.4, r:40, from:'3019 1 11', to:'3019 1 12.8', kind:'snow' },
   { name:'Storm out of Isengard', x:373.6, y:-440.2, r:80, from:'3019 3 3', to:'3019 3 4.3', kind:'storm' },
@@ -3255,7 +3301,7 @@ const LORE_WEATHER = [
 ];
 
 return { MODES, BATTLES, DEATHS, COAST, ISLANDS, RANGES, HILLS, RELIEF, PEAKS, RIVERS, LAKES, FORESTS, MARSHES, ARID, FARMS, GRASS, ASH, UPLIFT, ICE, NUMENOR,
-  PLACES, REGION_LABELS, SEA_LABELS, REALMS, ADMIN, PEOPLES, ROADS, WALLS, PALANTIRI, BEACONS, JOURNEYS, STORIES, LORE_WEATHER, FIREWORKS };
+  PLACES, REGION_LABELS, SEA_LABELS, REALMS, ADMIN, PEOPLES, ROADS, WALLS, PALANTIRI, BEACONS, JOURNEYS, STORIES, LORE_WEATHER, FIREWORKS, GORGES };
 })();
 if (typeof self !== 'undefined') self.GEO = GEO;
 </script>
@@ -3375,7 +3421,7 @@ const PLACES = {
   'Mount Gundabad': ['map', 'H 17; LR AppA; CTmap'],
   'Goblin-town': ['text', 'H 4', 'Under the High Pass; the position follows the story.'],
   'High Pass': ['warp', 'H 4; Wild'],
-  'Carrock': ['map', 'H 7; Wild; CTmap'],
+  'Carrock': ['map', 'H 7; Wild; CTmap', 'A rock in the river (H 7): set in the channel, 4 mi east of where it was first measured on the land.'],
   'Old Ford': ['map', 'H 7; Wild; CTmap'],
   'Beorn\'s house': ['warp', 'H 7; Wild'],
   'Rhosgobel': ['atlas', 'LR II.2; Fonstad'],
@@ -3409,7 +3455,7 @@ const PLACES = {
   'Wellinghall': ['text', 'LR III.4'],
   'Derndingle': ['text', 'LR III.4'],
   'Edhellond': ['text', 'UT II.4', 'The Elf-haven near Dol Amroth.'],
-  'Minas Tirith': ['map', 'LR V.1; CTmap; CTgondor; Letters 294', 'Tolkien: 600 mi south of Hobbiton, about the latitude of Florence.'],
+  'Minas Tirith': ['map', 'LR V.1; CTmap; CTgondor; Letters 294; Baynes', 'Placed by the published map: 725 mi east and 599 mi south of Hobbiton (Letters 294: about the latitude of Florence). Tolkien\'s two Baynes notes (about 900 mi east; the latitude of Ravenna, about 510 mi south) disagree with it and are recorded, not used.'],
   'Osgiliath': ['map', 'LR V.4; CTmap; CTgondor'],
   'Harlond': ['warp', 'LR V.6; CTgondor'],
   'Pelargir': ['map', 'LR V.9; CTmap; Letters 294; Silm'],
@@ -3945,7 +3991,7 @@ function spiderGrid(f) {
   set(34, 17, '#e8e0c8'); set(35, 18, '#e8e0c8'); set(32, 18, '#e8e0c8'); set(33, 19, '#e8e0c8');      // fangs
   return g;
 }
-// Durin's Bane: a Balrog of Morgoth, a great shadow with a mane of fire, horned, its wings of shadow spread;
+// Durin's Bane: a Balrog of Morgoth, a great shadow with a mane of fire, its wings of shadow spread (no horns: the book gives it none);
 // a flaming sword in its right hand and a whip of many thongs in its left (LR II.5)
 function balrogGrid(f) {
   const Wd = 44, Ht = 42, g = Array.from({ length: Ht }, () => Array(Wd).fill(null));
@@ -3965,8 +4011,8 @@ function balrogGrid(f) {
   rect(16, 12, 28, 28, sh); rect(15, 15, 29, 24, sh); rect(17, 29, 20, 39, sh); rect(24, 29, 27, 39, sh); rect(15, 40, 21, 41, sh); rect(23, 40, 29, 41, sh);
   rect(12, 14, 15, 22, sh); rect(29, 14, 32, 21, sh);
   for (const [x, y] of [[19, 16], [22, 19], [25, 17], [20, 23], [24, 25], [18, 31], [26, 33]]) set(x, y, (x + f) % 3 ? ember : '#ffb040');   // fire within
-  // head and horns, eyes like coals
-  rect(18, 5, 26, 12, sh); for (let k = 0; k < 5; k++) { set(18 - k * 0.6, 5 - k, '#3a2a22'); set(26 + k * 0.6, 5 - k, '#3a2a22'); }
+  // the head, eyes like coals
+  rect(18, 5, 26, 12, sh);
   set(20, 8, '#ffd040'); set(24, 8, '#ffd040'); rect(21, 10, 23, 10, '#ff5a14');
   // the mane of fire: uneven tongues rising from its head and streaming back over the shoulders, gold at the root
   for (let x = 14; x <= 30; x++) {
@@ -4826,8 +4872,8 @@ function fireworksGrid(f, dragon) {
   return g;
 }
 const LCACHE = {};
-// Orthanc: the black, four-horned tower in its ring, crowned by a cold white light (Saruman the White, and the
-// palantír); while he breeds his Uruk-hai the ring is pitted with furnaces and smoke, and after the Ents it is a lake
+// Orthanc: the black, four-horned tower in its ring, crowned by a cold white light (that light is ours: our sign of
+// Saruman the White and the palantír); while he breeds his Uruk-hai the ring is pitted with furnaces and smoke, and after the Ents it is a lake
 function orthancGrid(f, st) {
   const Wd = 44, Ht = 62, g = blank(Wd, Ht), cx = 22, k = '#16161a', k2 = '#26262c', k3 = '#34343c';
   // the light at the summit: a pale halo pulsing
@@ -5146,7 +5192,7 @@ function build(GEO) {
   begin(); polys(GEO.MARSHES, () => 1); ch[7] = boxBlur(grab(), W, H, 1, 2);
   begin(); polys(GEO.ARID, f => f.v); ch[8] = boxBlur(grab(), W, H, 9, 3);
   begin(); polys(GEO.FARMS, f => f.v); ch[9] = boxBlur(grab(), W, H, 2, 2);
-  begin(); polys(GEO.ASH, f => f.v); ch[10] = boxBlur(grab(), W, H, 2, 2);
+  begin(); polys(GEO.ASH, f => f.v); ch[10] = boxBlur(grab(), W, H, 3, 3);
   begin(); lines(GEO.RIVERS, f => [0, 5, 3.5, 2.4, 1.6, 1.1][f.rank] || 1, f => [0, 1, 0.85, 0.65, 0.45, 0.3][f.rank] || 0.3); ch[11] = boxBlur(grab(), W, H, 2, 2);
   begin(); polys(GEO.UPLIFT, f => f.v); ch[12] = boxBlur(grab(), W, H, 7, 3);
   begin(); polys(GEO.GRASS, f => f.v); ch[13] = boxBlur(grab(), W, H, 6, 3);
@@ -5246,6 +5292,7 @@ function build(GEO) {
     })(),
     flats: GEO.PLACES.filter(p => p[7] && p[7].r >= 0.3 && p[7].culture !== 'minastirith').map(p => ({ x: p[2], y: p[3], r: p[7].r * 1.6 + 0.3, lift: p[7].culture === 'hobbit' ? 30 : 20, sea: p[1] === 'port' ? 1 : 0 })),
     numenor: GEO.NUMENOR,
+    gorges: GEO.GORGES || [],
     // river mouths and harbours the coast is pinned to (src/shores.js): the renderer's own wobble of the shore fades out there
     pins: SH && SH.pins || [],
     valleys,
@@ -5778,11 +5825,13 @@ const style = {
     src('roads', FC(roadFeats)), src('walls', FC(wallFeats)), src('palantiri', FC(palFeats)), src('beacons', FC([beaconLine])),
     src('realms', FC(realmFeats('TA3018'))), src('realm-labels', FC(realmLabels('TA3018'))), src('admin', FC(adminFeats)), src('admin-labels', FC(adminLabels)),
     src('peoples', FC(peopleFeats)), src('people-labels', FC(peopleLabels)), src('grid', GRID.lines), src('grid-labels', GRID.labels),
-    src('buildings', FC(buildingFeats())), src('journeys', FC([])), src('journey-pos', FC([])), src('battles', FC([])), src('landmarks', FC([])), src('dead', FC([])), src('measure', FC([])), src('isobars', FC([])), src('hl', FC([])), src('lights', FC([])),
+    src('buildings', FC(buildingFeats())), src('journeys', FC([])), src('journey-pos', FC([])), src('battles', FC([])), src('landmarks', FC([])), src('dead', FC([])), src('measure', FC([])), src('lore-dark', FC([])), src('isobars', FC([])), src('hl', FC([])), src('lights', FC([])),
   ]),
   layers: [
     { id: 'bg', type: 'background', paint: { 'background-color': '#0b1a2a' } },
     { id: 'imagery', type: 'raster', source: 'imagery', paint: { 'raster-fade-duration': 180 } },
+    // the lore's own darkness (the Dawnless Day), drawn whether or not the weather is shown
+    { id: 'lore-dark', type: 'fill', source: 'lore-dark', paint: { 'fill-color': '#1c130e', 'fill-opacity': ['get', 'o'], 'fill-antialias': false } },
     { id: 'realms-fill', type: 'fill', source: 'realms', layout: { visibility: 'none' }, paint: { 'fill-color': ['get', 'color'], 'fill-opacity': 0.2 } },
     { id: 'realms-line', type: 'line', source: 'realms', layout: { visibility: 'none' }, paint: { 'line-color': ['get', 'color'], 'line-width': ['interpolate', ['linear'], ['zoom'], 3, 1, 8, 2.4], 'line-dasharray': [3, 1.5] } },
     { id: 'peoples-line', type: 'line', source: 'peoples', layout: { visibility: 'none', 'line-join': 'round' }, paint: { 'line-color': ['get', 'color'], 'line-width': ['interpolate', ['linear'], ['zoom'], 3, 2, 8, 3.5], 'line-opacity': 0.5 } },   // each people's own colour, a solid outline at half opacity
@@ -6065,7 +6114,7 @@ const EVENTS = {
     ['3018 10 20.4', 'At the Ford of Bruinen Asfaloth bears Frodo across ahead of the Nine; the river rises and sweeps them away (LR I.12)', 400.3, 3.7],
     ['3018 12 1', 'The Nine are mounted on winged steeds (the date is our estimate: one is seen over the Anduin near Sarn Gebir in late February)', 773.6, -597.9],
     ['3001 9 22.77', 'Gandalf\'s fireworks over the Party Field: rockets, fountains and starbursts, and last a dragon that roars over the hobbits', 0.6, 0.1], ['3001 9 22.9', 'The Long-expected Party: on his eleventy-first birthday Bilbo makes his speech, puts on the Ring and vanishes', 0.3, 0.5], ['3001 9 23', 'Bilbo leaves the Shire for Rivendell; Frodo inherits Bag End, and the Ring', 0.3, 0.5], ['3001 10 21', 'Bilbo comes to Rivendell (the day is not recorded)', 420.5, 17.5], ['3018 6 22', 'The Nine ride out of Minas Morgul at Midsummer', 773.6, -597.9], ['3018 7 4', 'Boromir sets out from Minas Tirith for Imladris', 725.1, -599.1], ['3018 6 27', 'Gandalf leaves Bag End, promising to return before Frodo sets out (late June)', 0.3, 0.5], ['3018 9 26', 'Tom Bombadil rescues the hobbits from Old Man Willow', 98, -20], ['3018 9 28', 'Tom Bombadil frees the hobbits from the Barrow-wight', 108.6, -17.4], ['3019 3 9', 'The Muster of Rohan at Dunharrow; the Red Arrow comes from Gondor', 443.2, -489], ['3018 7 10', 'Gandalf is made prisoner in Orthanc', 334, -379.1], ['3018 9 22', 'The Black Riders cross the Shire at Sarn Ford', 81.9, -79.1], ['3018 9 18', 'Gandalf escapes from Orthanc on the Eagle Gwaihir', 334, -379.1], ['3018 9 22', 'Frodo\'s fiftieth birthday at Bag End', 0.3, 0.5], ['3018 9 23', 'Frodo, Sam and Pippin leave Bag End by night', 0.3, 0.5], ['3018 9 24', 'Gildor\'s Elves shelter the hobbits in the Woody End', 44.9, -11.2], ['3018 9 25', 'Across the Brandywine to Crickhollow', 84, -7.4], ['3018 9 26', 'Through the Old Forest to the house of Tom Bombadil', 104.2, -24.2], ['3018 9 28', 'Captured by a Barrow-wight', 112.8, -6.6], ['3018 9 29', 'The Prancing Pony at Bree; Strider', 127.9, 7.4], ['3018 10 6', 'Frodo is stabbed by the Witch-king on Weathertop', 208, 11], ['3018 10 20', 'Flight to the Ford of Bruinen', 400.3, 3.7], ['3018 10 25', 'The Council of Elrond', 420.5, 17.5], ['3018 12 25', 'The Fellowship sets out from Rivendell', 420.5, 17.5], ['3019 1 11', 'Snowstorm on Caradhras turns the Company back', 414.8, -157.6], ['3019 1 13', 'Wolves in Hollin; the Company enters Moria', 380, -159.2], ['3019 1 15', 'The Bridge of Khazad-dûm: Gandalf breaks the bridge and falls with the Balrog', 420.3, -184.9], ['3019 1 23', 'Gandalf pursues the Balrog up the Endless Stair to the peak of Zirakzigil', 423.1, -178], ['3019 1 25', 'The Battle of the Peak: Gandalf casts down the Balrog, and passes out of thought and time', 423.1, -178], ['3019 1 17', 'The Company comes to Caras Galadhon', 454.7, -254.7], ['3019 2 16', 'Farewell to Lórien', 489.1, -297.6], ['3019 2 26', 'Breaking of the Fellowship; death of Boromir', 611.7, -462.2], ['3019 3 1', 'Aragorn meets Gandalf the White in Fangorn', 431.7, -377.3], ['3019 3 3', 'Battle of the Hornburg', 377.3, -451.8], ['3019 3 3', 'The Ents destroy Isengard', 334, -379.1], ['3019 3 7', 'Faramir takes Frodo to Henneth Annûn', 744.5, -565.6], ['3019 3 8', 'The Beacons of Gondor are lit', 694, -582.9], ['3019 3 10', 'The Dawnless Day: the darkness out of Mordor comes over the sky; the Rohirrim muster at Dunharrow', 443.2, -489], ['3019 3 13', 'Frodo captured at Cirith Ungol; Aragorn takes Pelargir', 781.2, -583.9], ['3019 3 15', 'Battle of the Pelennor Fields', 731.5, -602.2], ['3019 3 25.4', 'The Ring is destroyed: Gollum falls into the Fire with it, and Sauron is overthrown', 840.3, -553.1], ['3019 3 26', 'The Eagles bear Frodo and Sam to the Field of Cormallen', 738, -556]],
-  return: [['3019 3 25.47', 'Barad-dûr falls and Sauron\'s shadow is blown away', 895.4, -532.8], ['3019 3 25.65', 'Orodruin bursts asunder (our staging)', 840.1, -554], ['3019 4 8', 'The Field of Cormallen: the Ring-bearers honoured', 738, -556], ['3019 5 1', 'Coronation of King Elessar at Minas Tirith', 725.1, -599.1], ['3019 6 31', 'Arwen comes to the City; the wedding of Aragorn and Arwen at Midsummer', 725.1, -599.1], ['3019 7 19', 'Théoden\'s funeral escort sets out for Rohan', 725.1, -599.1], ['3019 8 10', 'Théoden laid to rest at Edoras; Éomer king; Éowyn betrothed to Faramir', 438, -479.4], ['3019 8 22', 'At Isengard; the Fellowship begins to part', 334, -379.1], ['3019 8 28', 'Saruman met on the road in Dunland', 289, -290.6], ['3019 9 21', 'Return to Rivendell; Bilbo gives Frodo his books', 420.5, 17.5], ['3019 10 6', 'Frodo\'s wound aches on the anniversary of Weathertop', 400.3, 3.7], ['3019 10 28', 'At Bree; Gandalf leaves them to visit Bombadil', 127.9, 7.4], ['3019 11 3', 'The Battle of Bywater; the Scouring of the Shire', 6.3, -2.2], ['3021 9 22', 'Frodo and Sam meet Elrond, Galadriel and Bilbo in the Woody End', 44.9, -11.2], ['3021 9 29', 'The Grey Havens: Frodo and Bilbo sail with the Elves into the West', -170.9, -7.6], ['3021 10 6', '\u201cWell, I\u2019m back.\u201d Sam comes home to Bag End', 0.3, 0.5]],
+  return: [['3019 3 25.47', 'Barad-dûr falls and Sauron\'s shadow is blown away', 895.4, -532.8], ['3019 3 25.65', 'Orodruin bursts asunder (our staging)', 840.1, -554], ['3019 4 8', 'The Field of Cormallen: the Ring-bearers honoured', 738, -556], ['3019 5 1', 'Coronation of King Elessar at Minas Tirith', 725.1, -599.1], ['3019 6 31', 'Arwen comes to the City; the wedding of Aragorn and Arwen at Midsummer', 725.1, -599.1], ['3019 7 19', 'Théoden\'s funeral escort sets out for Rohan', 725.1, -599.1], ['3019 8 10', 'Théoden laid to rest at Edoras; Éomer king; Éowyn betrothed to Faramir', 438, -479.4], ['3019 8 22', 'At Isengard; the Fellowship begins to part', 334, -379.1], ['3019 8 28', 'Saruman met on the road in Dunland', 289, -290.6], ['3019 9 21', 'Return to Rivendell; Bilbo gives Frodo his books', 420.5, 17.5], ['3019 10 6', 'Frodo\'s wound aches on the anniversary of Weathertop', 400.3, 3.7], ['3019 10 28', 'At Bree; Gandalf leaves them to visit Bombadil', 127.9, 7.4], ['3019 11 3', 'The Battle of Bywater; the Scouring of the Shire', 6.3, -2.2], ['3021 9 22', 'Frodo and Sam meet Elrond, Galadriel and Bilbo in the Woody End', 44.9, -11.2], ['3021 9 29', 'The Grey Havens: Frodo and Bilbo sail with the Elves into the West', -157, -7.6], ['3021 10 6', 'Sam comes home to Bag End from the Havens, to Rose and Elanor, and says that he is back', 0.3, 0.5]],
   hobbit: [['2463 5 1.35', 'Déagol finds the One Ring in the Anduin by the Gladden Fields; Sméagol murders him for it (the day is not recorded)', 543, -180.7], ['2463 5 20', 'Sméagol, now called Gollum, is driven out by his kin', 547, -176], ['2470 6 1', 'Gollum hides under the Misty Mountains with the Ring (about this year)', 493.1, 7.2],
     ['2770 5 3.2', 'Smaug the Golden falls on the Lonely Mountain out of the north: Dale is burned and Erebor taken (the day is not recorded)', 768.4, 138], ['2770 5 3.4', 'Thrór and Thráin escape by a secret door; Thorin, abroad, escapes too, and they go south into exile', 768.4, 138],
     ['2890 9 22', 'Bilbo Baggins is born at Bag End, son of Bungo Baggins and Belladonna Took', 0.3, 0.5], ['2941 4 28', 'The Company sets out from Bag End (dates approximate)', 0.3, 0.5], ['2941 5 25', 'Roast Mutton: caught by Bert, Tom and William; at dawn they turn to stone', 361.7, 17.4], ['2941 7 6.6', 'Out of the Frying-Pan: Wargs and goblins at the fir-tree glade; the Eagles come', 514.3, 12.2], ['2941 7 10', 'Queer Lodgings at Beorn\'s house', 565.5, 48.1], ['2941 8 6', 'Flies and Spiders in Mirkwood', 705, 69.6], ['2941 10 17', 'Bilbo finds the Arkenstone in the hoard and keeps it', 768.4, 138], ['2941 11 22', 'Bilbo gives the Arkenstone to Bard and the Elvenking', 769, 128.4], ['2941 6 30', 'Rivendell on Midsummer\'s Eve', 420.5, 17.5], ['2941 7 6', 'Goblin-town; Bilbo finds the Ring (date estimated)', 493.1, 7.2], ['2941 7 9', 'Beorn\'s hall', 565.6, 48.2], ['2941 8 12', 'Taken by the Wood-elves', 713.8, 81.2], ['2941 9 22', 'Barrels out of bond', 735.5, 87.4], ['2941 10 13', 'Inside Information: Bilbo goes down to Smaug', 768.4, 138], ['2941 10 16', 'Fire and Water: Smaug burns Lake-town and Bard slays him (date estimated)', 766.5, 97.5], ['2941 8 25', 'The White Council drives the Necromancer from Dol Guldur', 609.2, -194.2], ['2941 11 23', 'Battle of Five Armies (date estimated)', 769, 128.5], ['2942 6 22', 'Bilbo returns to Bag End', 0.3, 0.5]],
@@ -6298,6 +6347,7 @@ function setTime(t, fromSlider) {
   const a = WX.parse(st.start), b = WX.parse(st.end);
   S.t = Math.max(a, Math.min(b, t));
   { const se = goldSeason(S.t); if (se !== (S.season || 'g')) { S.season = se; refreshImagery(); } }
+  loreDark();
   const P = WX.parts(S.t);
   $('#tdate').innerHTML = `${esc(P.name)} <em>S.R. ${P.sr} · T.A. ${P.ta} · ${WX.fmtTime(P.hour)}</em>`;
   if (!fromSlider) $('#slider').value = (warpTo(S.story, S.t) * 1000).toFixed(1);
@@ -6354,7 +6404,9 @@ function updateSky() {
   const sky = mixc([14, 22, 44], [110, 160, 210], day), hor = mixc(mixc([30, 36, 60], [214, 228, 238], day).match(/\w\w/g).map(h => parseInt(h, 16)), [236, 170, 120], dusk * 0.8);
   // aerial perspective: a blue-grey haze thickening toward the horizon, warmer at dusk, as in real oblique imagery
   const fog = mixc(mixc([26, 32, 50], [190, 206, 222], day).match(/\w\w/g).map(h => parseInt(h, 16)), [222, 186, 150], dusk * 0.5);
-  map.setSky({ 'sky-color': sky, 'horizon-color': hor, 'fog-color': fog, 'horizon-fog-blend': 0.75, 'sky-horizon-blend': 0.55, 'fog-ground-blend': 0.55, 'atmosphere-blend': ['interpolate', ['linear'], ['zoom'], 0, 1, 5, 1, 8, 0] });
+  const globe = map.getProjection && map.getProjection() && map.getProjection().type === 'globe';
+  // (no fog on the globe: MapLibre cannot draw it there, and says so on every frame)
+  map.setSky(globe ? { 'sky-color': sky, 'horizon-color': hor, 'sky-horizon-blend': 0.55, 'atmosphere-blend': ['interpolate', ['linear'], ['zoom'], 0, 1, 5, 1, 8, 0] } : { 'sky-color': sky, 'horizon-color': hor, 'fog-color': fog, 'horizon-fog-blend': 0.75, 'sky-horizon-blend': 0.55, 'fog-ground-blend': 0.55, 'atmosphere-blend': ['interpolate', ['linear'], ['zoom'], 0, 1, 5, 1, 8, 0] });
 }
 map.on('moveend', updateSky);
 
@@ -6394,10 +6446,31 @@ function setWx(k, on) {
   applyWx(k);
   gcT = -1; wxRequest();
 }
+// The Dawnless Day (LR V.1-5) as a sky tint over the map: it grows out of Mordor for a day and a half, reaches
+// Rohan, and lifts on the 15th. With the weather shown, the weather's own darkness draws it instead.
+let loreDarkKey = '';
+function loreDark() {
+  if (!map.getSource('lore-dark')) return;
+  const feats = [];
+  if (!S.wxMaster) for (const L of LORE) {
+    if (L.kind !== 'darkness' || S.t < L.t0 || S.t > L.t1) continue;
+    const prog = Math.min(1, (S.t - L.t0) / 1.5), l2 = Math.max(0, Math.min(1, (S.t - (L.t1 - 0.5)) / 0.5));
+    const reach = L.r * (0.4 + 1.2 * prog) * (1 - l2 * 0.9);
+    for (let k = 1; k <= 4; k++) {
+      const rr = reach * (1.05 - k * 0.15), ring = [];
+      for (let a = 0; a <= 64; a++) { const t = a / 64 * Math.PI * 2, c = Math.cos(t), sx = c < 0 ? 0.7 : 1;    // it reaches less far west
+        ring.push(GEN.toLL(L.x + c * rr * sx, L.y + Math.sin(t) * rr)); }
+      feats.push({ type: 'Feature', properties: { o: 0.13 }, geometry: { type: 'Polygon', coordinates: [ring] } });
+    }
+  }
+  const key = feats.length ? Math.round(S.t * 8) + ':' + S.wxMaster : 'none';
+  if (key !== loreDarkKey) { loreDarkKey = key; map.getSource('lore-dark').setData(FC(feats)); }
+}
 function setWxMaster(on) {
   S.wxMaster = on;
   if (on && !Object.values(S.wx).some(Boolean)) S.wx.clouds = true;
   for (const k in WX_IDS) applyWx(k);
+  loreDark();
   $('#bwx').classList.toggle('on', on);
   $('#bwx').setAttribute('aria-pressed', on ? 'true' : 'false');
   const m = $('#g-weather'); if (m) m.checked = on;
@@ -6750,11 +6823,15 @@ map.on('click', e => {
   }
   showPoint(X, Y);
 });
+let pointerT = -1e9;
 map.on('mousemove', e => {
   const f = map.queryRenderedFeatures(e.point, { layers: ['places-1', 'places-2', 'places-3', 'places-4', 'places-5', 'peaks'].filter(id => map.getLayer(id)) });
   map.getCanvas().style.cursor = S.pick || S.measure ? 'crosshair' : f.length ? 'pointer' : '';
-  statusAt(e.lngLat);
+  pointerT = performance.now(); statusAt(e.lngLat);
 });
+// with no pointer over the map (touch, keyboard, tours) the readout follows the centre of the view
+map.on('moveend', () => { if (performance.now() - pointerT > 1500) { stT = 0; statusAt(map.getCenter()); } });
+map.once('idle', () => { stT = 0; statusAt(map.getCenter()); });
 
 /* ---------------- status ---------------- */
 let stT = 0;
@@ -6839,7 +6916,7 @@ $('#zout').onclick = () => map.zoomOut();
 $('#compass').onclick = () => map.easeTo({ bearing: 0, pitch: 0 });
 map.on('rotate', () => { $('#compass svg').style.transform = `rotate(${-map.getBearing()}deg)`; });
 $('#b3d').onclick = () => { S.terrain = S.terrain === false; map.setTerrain(S.terrain === false ? null : { source: 'dem', exaggeration: S.exag || 1.35 }); $('#b3d').classList.toggle('on', S.terrain !== false); };
-$('#bglobe').onclick = () => { const g = !$('#bglobe').classList.contains('on'); map.setProjection({ type: g ? 'globe' : 'mercator' }); $('#bglobe').classList.toggle('on', g); };
+$('#bglobe').onclick = () => { const g = !$('#bglobe').classList.contains('on'); map.setProjection({ type: g ? 'globe' : 'mercator' }); $('#bglobe').classList.toggle('on', g); updateSky(); };
 $('#bwx').onclick = () => setWxMaster(!S.wxMaster);
 $('#bhome').onclick = () => map.flyTo({ center: ll(483, -361), zoom: 4.1, pitch: 28, bearing: 0, duration: 4500 });
 
@@ -7222,13 +7299,17 @@ function buildBuildings(B, X0, Y0, hAt) {
   for (const b of B.list) {
     if (b.culture === 'lorien' || b.culture === 'elf') continue;
     const x = (b.x - X0) * MI, z = -(b.y - Y0) * MI;
-    const y0 = hAt(x, z) - 0.5;
+    // a house on a slope stands on its lowest corner, its walls running down to the ground: none floats
+    const hc = hAt(x, z); let lo = hc;
+    { const ca = Math.cos(-b.a || 0), sa = Math.sin(-b.a || 0), hw = (b.w || 6) / 2, hd = (b.d || b.w || 6) / 2;
+      for (const [u, v] of [[-hw, -hd], [hw, -hd], [hw, hd], [-hw, hd]]) lo = Math.min(lo, hAt(x + u * ca - v * sa, z + u * sa + v * ca)); }
+    const y0 = lo - 0.5, sink = hc - lo;
     const roof = b.c.map(v => Math.pow(v / 255, 2.2));
     const wall = (WALLC[b.culture] || [0.6, 0.55, 0.5]).map(v => Math.pow(v, 1.5));
     if (b.culture === 'hobbit' && b.round) { const doors = [[0.1, 0.25, 0.1], [0.6, 0.45, 0.1], [0.15, 0.25, 0.45], [0.5, 0.12, 0.08]]; mound(x, z, b.w * 0.8, y0, doors[Math.floor(Math.abs(b.x * 1e5)) % 4]); continue; }
     if (b.round) { box(x, z, b.w * 0.8, b.w * 0.8, b.a, y0, b.h * 0.6, roof, roof, true); continue; }
     const gable = !['harad', 'minastirith', 'gondor', 'osgiliath', 'mordor', 'isengard', 'dwarf', 'ruin'].includes(b.culture) || (b.culture === 'gondor' && b.w < 13);
-    box(x, z, b.w, b.d, b.a, y0, b.h * (b.ruin ? 0.4 : 1), wall, roof, gable, b.ruin);
+    box(x, z, b.w, b.d, b.a, y0, b.h * (b.ruin ? 0.4 : 1) + sink, wall, roof, gable, b.ruin);
   }
   for (const s of B.special) {
     const cx = (s.x - X0) * MI, cz = -(s.y - Y0) * MI;
@@ -7341,6 +7422,7 @@ function updateAtmos(recompute) {
   const zen = mixC(new THREE.Color(0x05070f), new THREE.Color(0x2f62a8), day).lerp(new THREE.Color(0x8a939c), cl * 0.75 * day);
   let hor = mixC(new THREE.Color(0x0d1220), new THREE.Color(0xc4d7e6), day).lerp(new THREE.Color(0xf0a36a), dusk * 0.7 * (1 - cl)).lerp(new THREE.Color(0xaab2b8), cl * 0.6 * day);
   if (dark > 0.05) { zen.lerp(new THREE.Color(0x1c130e), dark * 0.9); hor.lerp(new THREE.Color(0x3a2a20), dark * 0.85); }
+  if (reek > 0.05) { zen.lerp(new THREE.Color(0x4a3a30), reek * 0.6 * day); hor.lerp(new THREE.Color(0x6a5446), reek * 0.7 * day); }   // reek and haze over Mordor
   const u = G.skyMat.uniforms;
   u.sunDir.value.copy(dir.y > -0.05 ? dir : dir.clone().negate()); u.zen.value.copy(zen); u.hor.value.copy(hor);
   u.cloud.value = Math.min(1, cl * 1.05 + dark * 0.6);
@@ -7360,7 +7442,6 @@ function updateAtmos(recompute) {
   if (G.grassMat) G.grassMat.color.setScalar(0.25 + 0.75 * day * (1 - cl * 0.3) * (1 - dark * 0.7));
   G.hemi.color.copy(mixC(new THREE.Color(0x303a58), zen.clone().lerp(new THREE.Color(0xffffff), 0.4), day));
   G.scene.fog.color.copy(hor);
-  if (reek > 0.05) { zen.lerp(new THREE.Color(0x4a3a30), reek * 0.6 * day); hor.lerp(new THREE.Color(0x6a5446), reek * 0.7 * day); G.scene.fog.color.copy(hor); }   // reek and haze over Mordor
   const vis = (G.wx.R > 0.3 ? 12000 : 90000) * (1 - cl * 0.35) * (1 - dark * 0.7) * (1 - 0.55 * reek);
   G.scene.fog.near = Math.min(3000, vis * 0.08); G.scene.fog.far = vis;
   G.renderer.toneMappingExposure = 0.55 + 0.6 * day;
@@ -7385,8 +7466,11 @@ function buildLabels() {
     if (d < 200 || d > 110000) continue;
     list.push({ name: p.name, x: dx, z: dz, d, rank: 2, peak: p.h, top: window.GEN ? GEN.evaluate(p.x, p.y, 0.05) : 0 });
   }
-  list.sort((a, b) => a.rank - b.rank || a.d - b.d);
-  G.labels = list.slice(0, 18);
+  // a mountain that is also a place (Orodruin) is named once, at its summit
+  const peakNames = new Set(list.filter(l => l.peak).map(l => l.name));
+  const one = list.filter(l => l.peak || !peakNames.has(l.name));
+  one.sort((a, b) => a.rank - b.rank || a.d - b.d);
+  G.labels = one.slice(0, 18);
   $('#glabels').innerHTML = G.labels.map(() => '<div hidden></div>').join('');
   const dirs = ['N', 'NE', 'E', 'SE', 'S', 'SW', 'W', 'NW'];
   let s = '';
@@ -7602,7 +7686,7 @@ async function loadNear(Xc, Yc, offX, offZ) {
   placeGrass();
 }
 async function loadFar(X, Y) {
-  const run = G.o.run, half = 60000, n = 241;
+  const run = G.o.run, half = 60000, n = 321;                     // 375 m between far samples: the White Mountains keep their peaks
   const [hr, tx] = await Promise.all([run({ type: 'ph', X, Y, half, n, doom: G.doom }), textureFor(run, X, Y, half, 1024, 4)]);
   G.farHeights = hr.h;
   G.farH = heightFn(hr.h, n, half);
