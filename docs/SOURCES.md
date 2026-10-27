@@ -1,6 +1,6 @@
 # Source audit
 
-Places: 124. Grades: map 36, warp 49, text 24, atlas 8, invented 7. References checked against the text: 0 of 124.
+Places: 124. Grades: map 36, warp 49, text 24, atlas 8, invented 6, baynes 1. References checked against the text: 0 of 124.
 
 ## Statements measured on the map
 
@@ -30,3 +30,15 @@ Places: 124. Grades: map 36, warp 49, text 24, atlas 8, invented 7. References c
 | ok | 29 Sept 3021: Frodo and Bilbo depart over Sea with the Three Keepers. | LR AppB | 0 mi away | ≤ 3 mi |
 
 All firm statements hold. "note" marks places where Tolkien's own notes disagree with his published map; the map is kept.
+
+## Distant features
+
+| Feature | Grade | Source | Note |
+|---|---|---|---|
+| Yellow Mountains | Tolkien's drafts | HoMe4 | A name from Tolkien's early world maps; where it lies and its shape are this atlas's. |
+| Mountains of Far Harad | ours | — | The atlas's own range for the unmapped far south. |
+| Lake of Harad | ours | — | The atlas's own lake for the unmapped south. |
+| Great River of Harad | ours | — | The atlas's own river for the unmapped south. |
+| River of the East | Tolkien's drafts | HoMe4 | After the early world maps; its course is this atlas's. |
+| The New Lands | Tolkien's drafts | HoMe4 | The lands of the west after the world was made round, from the early world maps; procedural here. |
+| Ered Gorgoroth of the East | ours | — | The atlas's own range for the unmapped east. |

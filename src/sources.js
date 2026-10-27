@@ -9,7 +9,11 @@
      atlas    measured on Karen Wynn Fonstad's Third Age map (tools/refit/fanchors.json); not on CT's
      warp     named on Tolkien's maps, carried into place by the refit warp but not measured on its own
      text     not on Tolkien's maps; placed from the text's description
+     baynes   position from map: Tolkien's own notes on the Baynes poster map
      invented the atlas's own stand-in for something the texts name without placing
+   Letters, the History of Middle-earth, the Baynes notes and Strachey are marked `tier: 'drafts'`: Tolkien's drafts
+   and later sources, weaker than the published books and maps. FEATURES grades the distant ranges, rivers and lands
+   that come only from drafts ('draft') or from this atlas ('ours').
    `chk` is 0 until each reference has been checked against the text (the first pass was made from
    memory); the audit lists what is still unchecked. */
 const SOURCES = (() => {
@@ -23,16 +27,17 @@ const BIB = {
   CTgondor: { t: 'Rohan, Gondor and Mordor (LR; large-scale redrawing 1980)', a: 'Christopher Tolkien after J.R.R. Tolkien', y: 1955, kind: 'primary map' },
   Silm:     { t: 'The Silmarillion', a: 'J.R.R. Tolkien, ed. Christopher Tolkien', y: 1977, kind: 'primary', cite: 'chapter' },
   UT:       { t: 'Unfinished Tales', a: 'J.R.R. Tolkien, ed. Christopher Tolkien', y: 1980, kind: 'primary', cite: 'part.chapter' },
-  Letters:  { t: 'The Letters of J.R.R. Tolkien', a: 'ed. Humphrey Carpenter', y: 1981, kind: 'primary', cite: 'letter number' },
-  HoMe6:    { t: 'The Return of the Shadow (History of Middle-earth 6)', a: 'ed. Christopher Tolkien', y: 1988, kind: 'primary drafts', note: 'Early maps and the Shire-to-Rivendell chronology.' },
-  HoMe7:    { t: 'The Treason of Isengard (HoMe 7)', a: 'ed. Christopher Tolkien', y: 1989, kind: 'primary drafts', note: 'The First Map, redrawn, with Tolkien\'s distance notes.' },
-  HoMe8:    { t: 'The War of the Ring (HoMe 8)', a: 'ed. Christopher Tolkien', y: 1990, kind: 'primary drafts', note: 'The 1943 map of Rohan, Gondor and Mordor; dated itineraries.' },
-  HoMe9:    { t: 'Sauron Defeated (HoMe 9)', a: 'ed. Christopher Tolkien', y: 1992, kind: 'primary drafts' },
-  HoMe12:   { t: 'The Peoples of Middle-earth (HoMe 12)', a: 'ed. Christopher Tolkien', y: 1996, kind: 'primary drafts', note: 'Drafts of the Tale of Years and the Appendices.' },
+  Letters:  { tier: 'drafts', t: 'The Letters of J.R.R. Tolkien', a: 'ed. Humphrey Carpenter', y: 1981, kind: 'primary', cite: 'letter number' },
+  HoMe4:    { tier: 'drafts', t: 'The Shaping of Middle-earth (HoMe 4), with the Ambarkanta and its world maps', a: 'ed. Christopher Tolkien', y: 1986, kind: 'primary drafts' },
+  HoMe6:    { tier: 'drafts', t: 'The Return of the Shadow (History of Middle-earth 6)', a: 'ed. Christopher Tolkien', y: 1988, kind: 'primary drafts', note: 'Early maps and the Shire-to-Rivendell chronology.' },
+  HoMe7:    { tier: 'drafts', t: 'The Treason of Isengard (HoMe 7)', a: 'ed. Christopher Tolkien', y: 1989, kind: 'primary drafts', note: 'The First Map, redrawn, with Tolkien\'s distance notes.' },
+  HoMe8:    { tier: 'drafts', t: 'The War of the Ring (HoMe 8)', a: 'ed. Christopher Tolkien', y: 1990, kind: 'primary drafts', note: 'The 1943 map of Rohan, Gondor and Mordor; dated itineraries.' },
+  HoMe9:    { tier: 'drafts', t: 'Sauron Defeated (HoMe 9)', a: 'ed. Christopher Tolkien', y: 1992, kind: 'primary drafts' },
+  HoMe12:   { tier: 'drafts', t: 'The Peoples of Middle-earth (HoMe 12)', a: 'ed. Christopher Tolkien', y: 1996, kind: 'primary drafts', note: 'Drafts of the Tale of Years and the Appendices.' },
   NoME:     { t: 'The Nature of Middle-earth', a: 'J.R.R. Tolkien, ed. Carl F. Hostetter', y: 2021, kind: 'primary' },
-  Baynes:   { t: 'Tolkien\'s annotated copy of the Baynes map (found 2015)', a: 'J.R.R. Tolkien, Pauline Baynes', y: 1969, kind: 'primary annotations', note: 'Known from published reports and the Bodleian exhibition; latitudes and notes in Tolkien\'s hand.' },
+  Baynes:   { tier: 'drafts', t: 'Tolkien\'s annotated copy of the Baynes map (found 2015)', a: 'J.R.R. Tolkien, Pauline Baynes', y: 1969, kind: 'primary annotations', note: 'Known from published reports and the Bodleian exhibition; latitudes and notes in Tolkien\'s hand.' },
   Fonstad:  { t: 'The Atlas of Middle-earth (revised edition)', a: 'Karen Wynn Fonstad', y: 1991, kind: 'secondary', note: 'Read for rough positions of 66 places. Forest, marsh and island outlines once sampled from it (2026-10-01) were redrawn in round 4 from position and text alone (tools/generalize/redraw_text.py); tools/qa/trace_check.py gates that no more than 20% of any outline lies within 2 mi of the old trace (LAWS I.2a).' },
-  Strachey: { t: 'Journeys of Frodo', a: 'Barbara Strachey', y: 1981, kind: 'secondary', note: 'Day-by-day maps of the journeys.' },
+  Strachey: { tier: 'drafts', t: 'Journeys of Frodo', a: 'Barbara Strachey', y: 1981, kind: 'secondary', note: 'Day-by-day maps of the journeys.' },
   RC:       { t: 'The Lord of the Rings: A Reader\'s Companion', a: 'Wayne G. Hammond & Christina Scull', y: 2005, kind: 'secondary' },
   TG:       { t: 'Tolkien Gateway', a: 'community wiki', y: 2026, kind: 'tertiary', note: 'For cross-checking only.' },
   EoA:      { t: 'The Encyclopedia of Arda', a: 'Mark Fisher', y: 2026, kind: 'tertiary', note: 'For cross-checking only.' },
@@ -159,7 +164,7 @@ const PLACES = {
   'Mouths of Entwash': ['text', 'LR III.2; CTmap', 'At the Entwash\'s mouth on the atlas, north of the Wetwang as on CT\'s map.'],
   'Andrast': ['text', 'UT', 'The long cape west of the Lefnui (Ras Morthil); placed on the atlas\'s own coast there.'],
   'Umbar': ['map', 'LR AppA; UT; CTmap', 'Measured on CT\'s map at the City of the Corsairs, at the head of the firth (the first reading fell on the Havens label mid-firth, 65 mi to the west). The firth itself is our own outline, sized after the map; Appendix A gives the great cape and land-locked firth.'],
-  'Dorwinion vineyards': ['invented', 'H 9; Baynes', 'The wine is in The Hobbit; Dorwinion\'s place by the Sea of Rhûn follows the Baynes map.'],
+  'Dorwinion vineyards': ['baynes', 'H 9; Baynes', 'The wine is in The Hobbit; Dorwinion\'s place by the Sea of Rhûn follows the Baynes map.'],
   'Khand': ['invented', 'LR AppA; CTmap', 'A marker for the land, not a town.'],
   'Tents of the Easterlings': ['invented', 'LR AppA'],
   'City of the Haradrim': ['invented', 'LR IV.4', 'Harad has no named city in the texts.'],
@@ -216,6 +221,16 @@ const TODO = [
   'Reader\'s Companion: notes on places and dates where Tolkien\'s texts disagree.',
 ];
 
-return { BIB, PLACES, STATEMENTS, TODO };
+// distant features with no place on the published maps: [grade, refs, note]
+const FEATURES = {
+  'Yellow Mountains': ['draft', 'HoMe4', 'A name from Tolkien\'s early world maps; where it lies and its shape are this atlas\'s.'],
+  'Mountains of Far Harad': ['ours', '', 'The atlas\'s own range for the unmapped far south.'],
+  'Lake of Harad': ['ours', '', 'The atlas\'s own lake for the unmapped south.'],
+  'Great River of Harad': ['ours', '', 'The atlas\'s own river for the unmapped south.'],
+  'River of the East': ['draft', 'HoMe4', 'After the early world maps; its course is this atlas\'s.'],
+  'The New Lands': ['draft', 'HoMe4', 'The lands of the west after the world was made round, from the early world maps; procedural here.'],
+  'Ered Gorgoroth of the East': ['ours', '', 'The atlas\'s own range for the unmapped east.'],
+};
+return { FEATURES, BIB, PLACES, STATEMENTS, TODO };
 })();
 if (typeof self !== 'undefined') self.SOURCES = SOURCES;

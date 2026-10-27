@@ -73,5 +73,10 @@ for (const s of SOURCES.STATEMENTS) {
   say(`| ${mark} | ${s.claim} | ${s.src}${s.conf === 'high' ? '' : ' · ' + s.conf} | ${r.got.toFixed(0)} mi${r.abs ? ' away' : pct} | ${r.abs ? '≤ ' + r.tol : r.want + ' ± ' + Math.round(lim)} mi |`);
 }
 say(`\n${fails ? fails + ' statement(s) off.' : 'All firm statements hold.'} "note" marks places where Tolkien's own notes disagree with his published map; the map is kept.`);
+// 3. distant features that come only from Tolkien's drafts, or from this atlas
+say('\n## Distant features\n');
+say('| Feature | Grade | Source | Note |');
+say('|---|---|---|---|');
+for (const [n, e] of Object.entries(SOURCES.FEATURES || {})) say(`| ${n} | ${e[0] === 'draft' ? "Tolkien's drafts" : 'ours'} | ${e[1] || '—'} | ${e[2] || ''} |`);
 const md = process.argv.indexOf('--md'); if (md > 0) fs.writeFileSync(process.argv[md + 1], out.join('\n') + '\n');
 process.exitCode = problems.length ? 1 : 0;
